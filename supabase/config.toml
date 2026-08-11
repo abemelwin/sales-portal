@@ -1,0 +1,87 @@
+# Supabase CLI Configuration
+# Reference: https://supabase.com/docs/guides/cli/config
+# This file configures the local Supabase development environment
+# and documents production settings for the Supabase dashboard.
+
+[project]
+id = ""  # Set to your Supabase project ID
+
+# =============================================================================
+# Authentication Configuration
+# Requirements: 1.1 (email/password auth), 1.7 (HTTPS enforcement), 1.8 (password policy)
+# =============================================================================
+
+[auth]
+enabled = true
+
+# JWT Configuration
+# JWT access tokens expire after 1 hour (3600 seconds) — Supabase default
+# This ensures sessions are short-lived for security while refresh tokens
+# provide seamless session continuity.
+site_url = "http://localhost:5173"  # Local dev; production URL set in Supabase dashboard
+jwt_expiry = 3600
+
+# Refresh Token Rotation
+# When enabled, each refresh token can only be used once. A new refresh token
+# is issued with each token refresh request, preventing token reuse attacks.
+enable_refresh_token_rotation = true
+
+# Refresh token reuse interval (seconds) — grace period for concurrent requests
+# that may use the same refresh token before rotation takes effect.
+refresh_token_rotation_default_reuse_interval = 10
+
+# Security settings
+# HTTPS is enforced by Supabase in production by default (Requirement 1.7)
+# Double-write detection prevents replay attacks
+enable_signup = true
+double_confirm_changes = true
+
+# Minimum password length (Requirement 1.8: 8-128 characters)
+# Note: max length is enforced at the application/validation layer
+min_password_length = 8
+
+[auth.email]
+# Email/password authentication provider (Requirement 1.1)
+enable_signup = true
+enable_confirmations = false  # Set to true in production for email verification
+
+# Rate limiting for auth endpoints
+# Helps mitigate brute-force attacks alongside the app-level lockout (5 attempts)
+max_frequency = "60s"
+
+[auth.external]
+# External OAuth providers — disabled for this project
+# Only email/password authentication is used per requirements
+
+# =============================================================================
+# Additional Auth Notes (for Supabase Dashboard configuration)
+# =============================================================================
+#
+# The following settings should be configured in the Supabase Dashboard
+# (Authentication > Settings) for the production project:
+#
+# 1. Auth Providers:
+#    - Email: ENABLED (primary authentication method)
+#    - All other providers: DISABLED
+#
+# 2. JWT Settings:
+#    - JWT expiry: 3600 seconds (1 hour)
+#    - Refresh token rotation: ENABLED
+#    - Reuse interval: 10 seconds
+#
+# 3. Password Policy:
+#    - Minimum length: 8 characters
+#    - Maximum length: 128 characters (enforced at application layer via validation)
+#    - Note: Supabase natively enforces min length; max length is validated
+#      client-side in the auth store before submission to Supabase
+#
+# 4. Security:
+#    - HTTPS: Enforced by default on all Supabase production projects
+#    - Site URL: Set to production domain (e.g., https://sales-portal.pages.dev)
+#    - Redirect URLs: Add production and preview deployment URLs
+#
+# 5. Rate Limiting:
+#    - Email rate limit: 60 seconds between signup/signin attempts per email
+#    - Combined with application-level account lockout after 5 failed attempts
+#
+# =============================================================================

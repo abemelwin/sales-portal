@@ -1,0 +1,358 @@
+/* ==========================================================================
+   ESPMI Sales Portal — Global Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties (Theming)
+   -------------------------------------------------------------------------- */
+:root {
+  /* Brand colors */
+  --color-primary: #1a56db;
+  --color-primary-hover: #1648b8;
+  --color-primary-light: #e1effe;
+  --color-secondary: #1c64f2;
+  --color-secondary-hover: #1a56db;
+
+  /* Neutral palette */
+  --color-white: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Semantic colors */
+  --color-success: #059669;
+  --color-success-light: #d1fae5;
+  --color-warning: #d97706;
+  --color-warning-light: #fef3c7;
+  --color-error: #dc2626;
+  --color-error-light: #fee2e2;
+  --color-info: #2563eb;
+  --color-info-light: #dbeafe;
+
+  /* Typography */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo,
+    monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Borders */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+  --border-color: var(--color-gray-200);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Layout */
+  --nav-height: 3.5rem;
+  --sidebar-width: 16rem;
+  --content-max-width: 80rem;
+}
+
+/* --------------------------------------------------------------------------
+   Base Reset & Defaults
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-gray-900);
+  background-color: var(--color-gray-50);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 var(--space-4);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+p {
+  margin: 0 0 var(--space-4);
+}
+
+/* --------------------------------------------------------------------------
+   Form Inputs — Prevent iOS Zoom (Requirement 14.4)
+   Font size >= 16px for all text inputs
+   -------------------------------------------------------------------------- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select {
+  font-size: 16px;
+  font-family: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Element Touch Targets (Requirement 14.1)
+   Minimum touch target size of 44x44px
+   -------------------------------------------------------------------------- */
+button,
+[role="button"],
+a,
+input[type="checkbox"],
+input[type="radio"],
+select,
+summary {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile-First Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+
+/* Small mobile — 375px and up (base styles apply below this) */
+@media screen and (min-width: 375px) {
+  :root {
+    --content-padding: var(--space-4);
+  }
+}
+
+/* Tablet — 768px and up */
+@media screen and (min-width: 768px) {
+  :root {
+    --content-padding: var(--space-6);
+  }
+}
+
+/* Desktop — 1024px and up */
+@media screen and (min-width: 1024px) {
+  :root {
+    --content-padding: var(--space-8);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Print Styles (Requirements 6.1, 6.2, 6.3, 6.6, 6.8)
+   -------------------------------------------------------------------------- */
+@page {
+  size: A4;
+  margin: 8mm;
+}
+
+@media print {
+  /* Hide form panel — only show A4 preview (Requirement 6.1) */
+  .form-panel,
+  #form-panel,
+  .quote-builder-view__form {
+    display: none !important;
+  }
+
+  /* Hide navigation and non-print UI elements */
+  nav,
+  .navbar,
+  .sidebar,
+  .mobile-tabs,
+  .no-print,
+  .quote-builder-view__toolbar,
+  .quote-builder-view__notification {
+    display: none !important;
+  }
+
+  /* Preserve colors and backgrounds in print output (Requirement 6.2) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Reset page background */
+  body {
+    background: var(--color-white) !important;
+    color: var(--color-gray-900);
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset layout containers to allow natural flow */
+  .quote-builder-view,
+  .quote-builder-view__layout {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure the preview panel fills the page */
+  .preview-panel,
+  #preview-panel,
+  .quote-builder-view__preview {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  /* A4 paper element — render at exact print dimensions (Requirement 6.6) */
+  .quote-paper,
+  .a4-paper {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+  }
+
+  /* Prevent page breaks inside critical elements */
+  table,
+  figure,
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Closing docs: hide inactive tabs when printing a specific document */
+  .closing-docs-view__tab-content:not(.closing-docs-view__tab-content--active) {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Closing Document Print Mode
+   When body has [data-print-doc], only the closing doc A4 paper prints.
+   Hides all other content (nav, tabs, header, non-active panels).
+   Requirements: 8.4, 8.5
+   -------------------------------------------------------------------------- */
+@media print {
+  body[data-print-doc] .closing-docs-view .tab-nav,
+  body[data-print-doc] .closing-docs-view .closing-docs-header,
+  body[data-print-doc] .closing-docs-view .loading-state,
+  body[data-print-doc] .closing-docs-view .error-state,
+  body[data-print-doc] .closing-docs-view .print-error-banner {
+    display: none !important;
+  }
+
+  body[data-print-doc] .closing-docs-view .closing-docs-content {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body[data-print-doc] .closing-docs-view .tab-panel {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body[data-print-doc] .closing-docs-view .closing-doc-paper {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 15mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body[data-print-doc] .closing-doc-letterhead {
+    display: block !important;
+  }
+
+  body[data-print-doc] .closing-doc-letterhead__img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Printing Mode — Applied via JS before window.print()
+   Ensures transforms are removed and mobile scaling is reset
+   (Requirement 6.3: correct A4 dimensions on mobile)
+   -------------------------------------------------------------------------- */
+body.printing-mode .a4-paper,
+body.printing-mode .quote-paper {
+  transform: none !important;
+}
+
+body.printing-mode .preview-panel__spacer {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes
+   -------------------------------------------------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.no-print {
+  /* Visible on screen, hidden in print (handled above) */
+}
