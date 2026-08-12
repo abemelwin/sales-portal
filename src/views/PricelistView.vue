@@ -1,239 +1,139 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
-import { usePagination } from '@/composables/usePagination'
-import { useExportExcel } from '@/composables/useExportExcel'
 import { useRealtime } from '@/composables/useRealtime'
-import type { Machine, PricelistRow } from '@/types'
+import type { PricelistRow } from '@/types'
 
-// ─── Store & Composables ────────────────────────────────────────────────────
-
+// --- Store & Realtime ---
 const catalogStore = useCatalogStore()
-const pagination = usePagination({ pageSize: 25 })
-const { exportToExcel } = useExportExcel()
-
-// ─── Realtime Subscriptions ─────────────────────────────────────────────────
-// Subscribe to machines table changes so that catalog updates from any admin
-// are reflected within 30 seconds for all active sessions (Requirement 7.4)
 
 const { subscribe: subscribeMachines } = useRealtime('machines', () => {
   catalogStore.fetchMachines({ is_active: true })
 })
-
-const { subscribe: subscribeFeatures } = useRealtime('machine_features', () => {
-  catalogStore.fetchMachines({ is_active: true })
-})
-
 const { subscribe: subscribeConsumables } = useRealtime('machine_consumables', () => {
   catalogStore.fetchMachines({ is_active: true })
 })
-
-const { subscribe: subscribeInclusions } = useRealtime('machine_inclusions', () => {
-  catalogStore.fetchMachines({ is_active: true })
-})
-
-const { subscribe: subscribeExclusions } = useRealtime('machine_exclusions', () => {
-  catalogStore.fetchMachines({ is_active: true })
-})
-
 const { subscribe: subscribeAddons } = useRealtime('machine_addons', () => {
   catalogStore.fetchMachines({ is_active: true })
 })
 
-// ─── Filter State ───────────────────────────────────────────────────────────
-
+// --- Filter ---
 const brandFilter = ref('')
-const modelFilter = ref('')
-const unitConditionFilter = ref('')
 
-// ─── Sort State ─────────────────────────────────────────────────────────────
-
-type SortColumn = 'brand' | 'model' | 'sub_model' | 'unit_condition' | 'cost_price' | 'sell_price' | 'margin'
-type SortDirection = 'asc' | 'desc'
-
-const sortColumn = ref<SortColumn>('brand')
-const sortDirection = ref<SortDirection>('asc')
-
-// ─── Error & Notification State ─────────────────────────────────────────────
-
-const exportError = ref<string | null>(null)
-const exportSuccess = ref(false)
-
-// ─── Derived Data ───────────────────────────────────────────────────────────
-
-/** Map machines to pricelist rows with computed pricing fields */
-function machineToPricelistRow(machine: Machine): PricelistRow {
-  // Compute cost_price from consumables default prices sum (or 0 if none)
-  // In a real scenario, cost/sell/margin would come from dedicated DB columns.
-  // For this implementation, we use placeholder values since the Machine type
-  // doesn't have explicit cost/sell/margin fields — these would typically be added
-  // to the machines table or computed from a pricing table.
-  return {
-    id: machine.id,
-    brand: machine.brand,
-    model: machine.model,
-    sub_model: machine.sub_model,
-    unit_condition: machine.unit_condition,
-    cost_price: undefined,
-    sell_price: undefined,
-    margin: undefined,
-  }
-}
-
-/** Unique filter options derived from loaded machines */
+// --- Derived Data ---
 const brandOptions = computed(() => {
-  const brands = [...new Set(catalogStore.machines.map((m) => m.brand))]
-  return brands.sort()
+  const counts: Record<string, number> = {}
+  catalogStore.machines.forEach((m) => {
+    counts[m.brand] = (counts[m.brand] || 0) + 1
+  })
+  return Object.keys(counts).sort().map((b) => ({ brand: b, count: counts[b] }))
 })
 
-const modelOptions = computed(() => {
-  let machines = catalogStore.machines
+const totalCount = computed(() => catalogStore.machines.length)
+
+const filteredMachines = computed(() => {
+  let machines = [...catalogStore.machines]
   if (brandFilter.value) {
     machines = machines.filter((m) => m.brand === brandFilter.value)
   }
-  const models = [...new Set(machines.map((m) => m.model))]
-  return models.sort()
+  machines.sort((a, b) => a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model))
+  return machines
 })
 
-const unitConditionOptions = computed(() => {
-  const conditions = [...new Set(catalogStore.machines.map((m) => m.unit_condition))]
-  return conditions.sort()
-})
+const filteredCount = computed(() => filteredMachines.value.length)
 
-/** Filtered rows — applies brand, model, and unit condition filters */
-const filteredRows = computed<PricelistRow[]>(() => {
-  let rows = catalogStore.machines.map(machineToPricelistRow)
-
-  if (brandFilter.value) {
-    rows = rows.filter((r) => r.brand === brandFilter.value)
-  }
-  if (modelFilter.value) {
-    rows = rows.filter((r) => r.model === modelFilter.value)
-  }
-  if (unitConditionFilter.value) {
-    rows = rows.filter((r) => r.unit_condition === unitConditionFilter.value)
-  }
-
-  return rows
-})
-
-/** Sorted rows — applies current sort column and direction */
-const sortedRows = computed<PricelistRow[]>(() => {
-  const rows = [...filteredRows.value]
-  const col = sortColumn.value
-  const dir = sortDirection.value
-
-  rows.sort((a, b) => {
-    let aVal = a[col] ?? ''
-    let bVal = b[col] ?? ''
-
-    // Secondary sort by model when primary sort is brand
-    if (col === 'brand' && aVal === bVal) {
-      aVal = a.model
-      bVal = b.model
-    }
-
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return dir === 'asc' ? aVal - bVal : bVal - aVal
-    }
-
-    const aStr = String(aVal).toLowerCase()
-    const bStr = String(bVal).toLowerCase()
-    if (aStr < bStr) return dir === 'asc' ? -1 : 1
-    if (aStr > bStr) return dir === 'asc' ? 1 : -1
-    return 0
-  })
-
-  return rows
-})
-
-/** Paginated rows — slices sorted data for current page */
-const paginatedRows = computed<PricelistRow[]>(() => {
-  const start = pagination.offset.value
-  const end = start + pagination.pageSize.value
-  return sortedRows.value.slice(start, end)
-})
-
-// ─── Watchers ───────────────────────────────────────────────────────────────
-
-// Update total count when filtered data changes
-watch(filteredRows, (rows) => {
-  pagination.setTotalCount(rows.length)
-}, { immediate: true })
-
-// Reset to page 1 when filters change
-watch([brandFilter, modelFilter, unitConditionFilter], () => {
-  pagination.goToPage(1)
-})
-
-// Reset model filter when brand changes (model options are dependent on brand)
-watch(brandFilter, () => {
-  modelFilter.value = ''
-})
-
-// ─── Actions ────────────────────────────────────────────────────────────────
-
-async function loadData() {
-  await catalogStore.fetchMachines({ is_active: true })
-}
-
-function toggleSort(column: SortColumn) {
-  if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortColumn.value = column
-    sortDirection.value = 'asc'
-  }
-}
-
-function getSortIndicator(column: SortColumn): string {
-  if (sortColumn.value !== column) return ''
-  return sortDirection.value === 'asc' ? ' \u25B2' : ' \u25BC'
-}
-
-function handleExport() {
-  exportError.value = null
-  exportSuccess.value = false
-
-  const exportData = filteredRows.value.map((row) => ({
-    Brand: row.brand,
-    Model: row.model,
-    'Sub-Model': row.sub_model ?? '',
-    'Unit Condition': row.unit_condition,
-    'Cost Price': row.cost_price ?? '',
-    'Sell Price': row.sell_price ?? '',
-    Margin: row.margin ?? '',
+// --- Pricelist rows ---
+const pricelistRows = computed<PricelistRow[]>(() => {
+  return filteredMachines.value.map((m) => ({
+    id: m.id,
+    brand: m.brand,
+    model: m.model,
+    sub_model: m.sub_model,
+    srp: m.srp ?? 0,
+    lbp: m.lbp ?? 0,
+    cash_price: m.cash_price ?? 0,
+    machine_warranty_months: m.machine_warranty_months ?? 0,
+    printhead_warranty: m.printhead_warranty ?? null,
   }))
+})
 
-  const result = exportToExcel(exportData, {
-    filename: 'Machine_Pricelist',
-    sheetName: 'Pricelist',
+// --- Consumables rows ---
+interface ConsumableRow {
+  brand: string
+  model: string
+  item: string
+  pkg: string
+  price: number
+}
+
+const consumableRows = computed<ConsumableRow[]>(() => {
+  const rows: ConsumableRow[] = []
+  filteredMachines.value.forEach((m) => {
+    ;(m.consumables || []).forEach((c) => {
+      rows.push({
+        brand: m.brand,
+        model: m.model,
+        item: c.item_name,
+        pkg: c.package_description || '',
+        price: c.default_price,
+      })
+    })
   })
+  return rows
+})
 
-  if (!result.success) {
-    exportError.value = result.error ?? 'Export failed'
-  } else {
-    exportSuccess.value = true
-    setTimeout(() => { exportSuccess.value = false }, 3000)
+// --- Add-Ons rows ---
+interface AddonRow {
+  brand: string
+  model: string
+  addon: string
+}
+
+const addonRows = computed<AddonRow[]>(() => {
+  const rows: AddonRow[] = []
+  filteredMachines.value.forEach((m) => {
+    ;(m.addons || []).forEach((a) => {
+      rows.push({
+        brand: m.brand,
+        model: m.model,
+        addon: a.description,
+      })
+    })
+  })
+  return rows
+})
+
+// --- Helpers ---
+function peso(n: number): string {
+  if (!n || n <= 0) return '\u2014'
+  return '\u20B1' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function warr(v: number | string | null | undefined): string {
+  if (v === '' || v == null) return '\u2014'
+  const s = String(v).trim()
+  if (/^\d+$/.test(s)) return s + ' mo.'
+  return s
+}
+
+// Brand banding helper � returns true/false for alternating brand groups
+function getBandClass(rows: { brand: string }[], idx: number): string {
+  let band = false
+  let prev = ''
+  for (let i = 0; i <= idx; i++) {
+    if (rows[i]!.brand !== prev) {
+      band = !band
+      prev = rows[i]!.brand
+    }
   }
+  return band ? 'band' : ''
 }
 
-function clearFilters() {
-  brandFilter.value = ''
-  modelFilter.value = ''
-  unitConditionFilter.value = ''
-}
-
-// ─── Lifecycle ──────────────────────────────────────────────────────────────
-
+// --- Lifecycle ---
 onMounted(() => {
-  loadData()
-  // Activate realtime subscriptions for live updates
+  catalogStore.fetchMachines({ is_active: true })
   subscribeMachines()
-  subscribeFeatures()
   subscribeConsumables()
-  subscribeInclusions()
-  subscribeExclusions()
   subscribeAddons()
 })
 </script>
@@ -241,451 +141,274 @@ onMounted(() => {
 <template>
   <div class="pricelist-view">
     <!-- Header -->
-    <div class="pricelist-header">
-      <h1>Machine Pricelist</h1>
-      <button
-        class="btn btn-primary"
-        :disabled="filteredRows.length === 0"
-        @click="handleExport"
-      >
-        Export to Excel
-      </button>
+    <div class="pl-head">
+      <h2>Machine Price List</h2>
+      <select v-model="brandFilter" class="pl-brand-select">
+        <option value="">All Brands ({{ totalCount }})</option>
+        <option v-for="b in brandOptions" :key="b.brand" :value="b.brand">
+          {{ b.brand }} ({{ b.count }})
+        </option>
+      </select>
+      <span class="pl-count">{{ filteredCount }} machine{{ filteredCount === 1 ? '' : 's' }}</span>
+      <span class="spacer"></span>
+      <span class="pl-sub">Prices in &#8369; &middot; Warranty in months</span>
     </div>
 
-    <!-- Export notifications -->
-    <div v-if="exportError" class="notification notification-error" role="alert">
-      {{ exportError }}
-      <button class="notification-close" @click="exportError = null">&times;</button>
-    </div>
-    <div v-if="exportSuccess" class="notification notification-success" role="status">
-      Pricelist exported successfully.
+    <!-- Loading -->
+    <div v-if="catalogStore.loading" class="pl-loading">Loading pricelist data...</div>
+
+    <!-- Error -->
+    <div v-else-if="catalogStore.error" class="pl-error">
+      {{ catalogStore.error }}
+      <button @click="catalogStore.fetchMachines({ is_active: true })">Retry</button>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-bar">
-      <div class="filter-group">
-        <label for="filter-brand" class="filter-label">Brand</label>
-        <select id="filter-brand" v-model="brandFilter" class="filter-select">
-          <option value="">All Brands</option>
-          <option v-for="brand in brandOptions" :key="brand" :value="brand">
-            {{ brand }}
-          </option>
-        </select>
+    <template v-else>
+      <!-- Machine Price Table -->
+      <div class="pl-table-wrap">
+        <table class="pricelist">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Model</th>
+              <th class="num">SRP</th>
+              <th class="num">LBP</th>
+              <th class="num">Cash Price</th>
+              <th class="ctr">Machine Warranty</th>
+              <th class="ctr">Printhead / Laser Tube Warranty</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!pricelistRows.length">
+              <td colspan="7" class="empty-row">No machines.</td>
+            </tr>
+            <tr
+              v-for="(row, idx) in pricelistRows"
+              :key="row.id"
+              :class="getBandClass(pricelistRows, idx)"
+            >
+              <td>{{ row.brand }}</td>
+              <td class="ml">{{ row.model }}</td>
+              <td class="num">{{ peso(row.srp) }}</td>
+              <td class="num">{{ peso(row.lbp) }}</td>
+              <td class="num">{{ peso(row.cash_price) }}</td>
+              <td class="ctr">{{ warr(row.machine_warranty_months) }}</td>
+              <td class="ctr">{{ warr(row.printhead_warranty) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div class="filter-group">
-        <label for="filter-model" class="filter-label">Model</label>
-        <select id="filter-model" v-model="modelFilter" class="filter-select">
-          <option value="">All Models</option>
-          <option v-for="model in modelOptions" :key="model" :value="model">
-            {{ model }}
-          </option>
-        </select>
+      <!-- Consumables -->
+      <h3 class="pl-sec">Consumables</h3>
+      <div class="pl-table-wrap">
+        <table class="pricelist">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Model</th>
+              <th>Item</th>
+              <th>Package</th>
+              <th class="num">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!consumableRows.length">
+              <td colspan="5" class="empty-row">No consumables.</td>
+            </tr>
+            <tr
+              v-for="(row, idx) in consumableRows"
+              :key="idx"
+              :class="getBandClass(consumableRows, idx)"
+            >
+              <td>{{ row.brand }}</td>
+              <td class="ml">{{ row.model }}</td>
+              <td>{{ row.item }}</td>
+              <td>{{ row.pkg }}</td>
+              <td class="num">{{ peso(row.price) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div class="filter-group">
-        <label for="filter-condition" class="filter-label">Unit Condition</label>
-        <select id="filter-condition" v-model="unitConditionFilter" class="filter-select">
-          <option value="">All Conditions</option>
-          <option v-for="cond in unitConditionOptions" :key="cond" :value="cond">
-            {{ cond }}
-          </option>
-        </select>
+      <!-- Optional Add-Ons -->
+      <h3 class="pl-sec">Optional Add-Ons</h3>
+      <div class="pl-table-wrap">
+        <table class="pricelist">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Model</th>
+              <th>Add-On</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!addonRows.length">
+              <td colspan="3" class="empty-row">No add-ons.</td>
+            </tr>
+            <tr
+              v-for="(row, idx) in addonRows"
+              :key="idx"
+              :class="getBandClass(addonRows, idx)"
+            >
+              <td>{{ row.brand }}</td>
+              <td class="ml">{{ row.model }}</td>
+              <td>{{ row.addon }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <button
-        v-if="brandFilter || modelFilter || unitConditionFilter"
-        class="btn btn-text"
-        @click="clearFilters"
-      >
-        Clear Filters
-      </button>
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="catalogStore.loading" class="state-card state-loading" role="status">
-      <p>Loading pricelist data...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="catalogStore.error" class="state-card state-error" role="alert">
-      <p>{{ catalogStore.error }}</p>
-      <button class="btn btn-primary" @click="loadData">Retry</button>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="filteredRows.length === 0" class="state-card state-empty">
-      <p>No machines found matching the current filters.</p>
-    </div>
-
-    <!-- Data Table -->
-    <div v-else class="table-wrapper">
-      <table class="data-table" aria-label="Machine Pricelist">
-        <thead>
-          <tr>
-            <th
-              class="sortable-header"
-              @click="toggleSort('brand')"
-              aria-sort="none"
-            >
-              Brand{{ getSortIndicator('brand') }}
-            </th>
-            <th
-              class="sortable-header"
-              @click="toggleSort('model')"
-            >
-              Model{{ getSortIndicator('model') }}
-            </th>
-            <th
-              class="sortable-header"
-              @click="toggleSort('sub_model')"
-            >
-              Sub-Model{{ getSortIndicator('sub_model') }}
-            </th>
-            <th
-              class="sortable-header"
-              @click="toggleSort('unit_condition')"
-            >
-              Unit Condition{{ getSortIndicator('unit_condition') }}
-            </th>
-            <th
-              class="sortable-header"
-              @click="toggleSort('cost_price')"
-            >
-              Cost Price{{ getSortIndicator('cost_price') }}
-            </th>
-            <th
-              class="sortable-header"
-              @click="toggleSort('sell_price')"
-            >
-              Sell Price{{ getSortIndicator('sell_price') }}
-            </th>
-            <th
-              class="sortable-header"
-              @click="toggleSort('margin')"
-            >
-              Margin{{ getSortIndicator('margin') }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in paginatedRows" :key="row.id">
-            <td>{{ row.brand }}</td>
-            <td>{{ row.model }}</td>
-            <td>{{ row.sub_model ?? '—' }}</td>
-            <td>{{ row.unit_condition }}</td>
-            <td class="cell-numeric">{{ row.cost_price != null ? row.cost_price.toLocaleString() : '—' }}</td>
-            <td class="cell-numeric">{{ row.sell_price != null ? row.sell_price.toLocaleString() : '—' }}</td>
-            <td class="cell-numeric">{{ row.margin != null ? row.margin.toLocaleString() : '—' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <div v-if="!catalogStore.loading && !catalogStore.error && filteredRows.length > 0" class="pagination-bar">
-      <span class="pagination-info">
-        Showing {{ pagination.offset.value + 1 }}–{{ Math.min(pagination.offset.value + pagination.pageSize.value, filteredRows.length) }}
-        of {{ filteredRows.length }} machines
-      </span>
-      <div class="pagination-controls">
-        <button
-          class="btn btn-sm"
-          :disabled="pagination.currentPage.value <= 1"
-          @click="pagination.prevPage()"
-        >
-          Previous
-        </button>
-        <span class="pagination-page">
-          Page {{ pagination.currentPage.value }} of {{ pagination.totalPages.value }}
-        </span>
-        <button
-          class="btn btn-sm"
-          :disabled="pagination.currentPage.value >= pagination.totalPages.value"
-          @click="pagination.nextPage()"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .pricelist-view {
-  padding: var(--space-6);
-  max-width: var(--content-max-width);
-  margin: 0 auto;
+  padding: 12px 16px;
+  overflow-y: auto;
+  height: calc(100vh - 56px);
 }
 
-.pricelist-header {
+/* --- Header --- */
+.pl-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-6);
+  gap: 12px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
-  gap: var(--space-4);
 }
 
-.pricelist-header h1 {
+.pl-head h2 {
   margin: 0;
-  font-size: var(--font-size-2xl);
+  font-size: 18px;
+  font-weight: 700;
 }
 
-/* ─── Buttons ──────────────────────────────────────────────────────────────── */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+.pl-brand-select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
 }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pl-count {
+  font-size: 13px;
+  color: #666;
 }
 
-.btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-white);
-  border-color: var(--color-primary);
+.spacer {
+  flex: 1;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+.pl-sub {
+  font-size: 12px;
+  color: #888;
 }
 
-.btn-sm {
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--font-size-xs);
-  min-height: 36px;
+/* --- Section headings --- */
+.pl-sec {
+  margin: 24px 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
 }
 
-.btn-text {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
-}
-
-.btn-text:hover {
-  text-decoration: underline;
-}
-
-/* ─── Notifications ────────────────────────────────────────────────────────── */
-
-.notification {
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: var(--font-size-sm);
-}
-
-.notification-error {
-  background-color: var(--color-error-light);
-  color: var(--color-error);
-  border: 1px solid var(--color-error);
-}
-
-.notification-success {
-  background-color: var(--color-success-light);
-  color: var(--color-success);
-  border: 1px solid var(--color-success);
-}
-
-.notification-close {
-  background: none;
-  border: none;
-  font-size: var(--font-size-lg);
-  cursor: pointer;
-  padding: 0 var(--space-2);
-  min-height: auto;
-  min-width: auto;
-  line-height: 1;
-}
-
-/* ─── Filters ──────────────────────────────────────────────────────────────── */
-
-.filters-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  align-items: flex-end;
-  margin-bottom: var(--space-6);
-  padding: var(--space-4);
-  background-color: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.filter-label {
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  color: var(--color-gray-600);
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.filter-select {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background-color: var(--color-white);
-  min-width: 160px;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
-}
-
-/* ─── State Cards ──────────────────────────────────────────────────────────── */
-
-.state-card {
-  text-align: center;
-  padding: var(--space-12) var(--space-6);
-  background-color: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-}
-
-.state-card p {
-  margin-bottom: var(--space-4);
-  color: var(--color-gray-600);
-}
-
-.state-error p {
-  color: var(--color-error);
-}
-
-/* ─── Table ────────────────────────────────────────────────────────────────── */
-
-.table-wrapper {
+/* --- Table wrapper --- */
+.pl-table-wrap {
   overflow-x: auto;
-  background-color: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
 }
 
-.data-table {
+/* --- Pricelist table --- */
+.pricelist {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--font-size-sm);
-}
-
-.data-table thead {
-  background-color: var(--color-gray-50);
-  border-bottom: 2px solid var(--border-color);
-}
-
-.data-table th {
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
-  font-weight: 600;
-  color: var(--color-gray-700);
+  font-size: 12px;
   white-space: nowrap;
 }
 
-.data-table td {
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-gray-100);
-  color: var(--color-gray-800);
+.pricelist thead {
+  background: #8b1a1a;
+  color: #fff;
 }
 
-.data-table tbody tr:hover {
-  background-color: var(--color-gray-50);
+.pricelist th {
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.sortable-header {
-  cursor: pointer;
-  user-select: none;
-  transition: color var(--transition-fast);
+.pricelist td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #eee;
+  color: #333;
 }
 
-.sortable-header:hover {
-  color: var(--color-primary);
+.pricelist tbody tr:hover {
+  background: #fff3cd !important;
 }
 
-.cell-numeric {
-  text-align: right;
+/* Brand banding */
+.pricelist tbody tr.band {
+  background: #f8f9fa;
+}
+
+/* Numeric columns */
+.num {
+  text-align: right !important;
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Pagination ───────────────────────────────────────────────────────────── */
-
-.pagination-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--space-4);
-  flex-wrap: wrap;
-  gap: var(--space-3);
+/* Center columns */
+.ctr {
+  text-align: center !important;
 }
 
-.pagination-info {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.pagination-page {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
+/* Model column (slightly bolder) */
+.ml {
   font-weight: 500;
 }
 
-/* ─── Responsive ───────────────────────────────────────────────────────────── */
+.empty-row {
+  text-align: center;
+  padding: 20px !important;
+  color: #999;
+}
 
+/* --- States --- */
+.pl-loading,
+.pl-error {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.pl-error {
+  color: #dc3545;
+}
+
+.pl-error button {
+  margin-top: 8px;
+  padding: 4px 12px;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  background: #fff;
+  color: #dc3545;
+  cursor: pointer;
+}
+
+/* --- Responsive --- */
 @media screen and (max-width: 767px) {
-  .pricelist-view {
-    padding: var(--space-4);
-  }
-
-  .pricelist-header {
+  .pl-head {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
-
-  .filters-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-select {
-    min-width: 100%;
-  }
-
-  .pagination-bar {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-  }
-
-  .pagination-controls {
-    justify-content: center;
+  .spacer {
+    display: none;
   }
 }
 </style>

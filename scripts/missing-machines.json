@@ -1,0 +1,82 @@
+[
+  {
+    "key": "BERNINA_475_QE",
+    "brand": "Bernina",
+    "model": "BERNINA 475 QE (QUILTER'S EDITION) SEWING MACHINE",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  },
+  {
+    "key": "HAPPYJAPAN_HCU2_1H_15N",
+    "brand": "Happy Japan",
+    "model": "HAPPYJAPAN HCU2 SINGLE HEAD 15-NEEDLE EMBROIDERY MACHINE",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  },
+  {
+    "key": "MUTOH_VJ1604X_ECO",
+    "brand": "Mutoh",
+    "model": "MUTOH VALUEJET 1604X ECOSOLVENT PRINTER",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "12"
+  },
+  {
+    "key": "ZOJE_ZJ-UF-180P-A",
+    "brand": "Zoje",
+    "model": "ZOJE ZJ-UF-180P-A SNAP PRESS MACHINE",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  },
+  {
+    "key": "ZOJE_ZJ2293S_ZIGZAG",
+    "brand": "Zoje",
+    "model": "ZOJE ZJ2293S ZIGZAG SEWING MACHINE",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  },
+  {
+    "key": "ZOJE_ZJ_740TM_452_E_02_W_SX",
+    "brand": "Zoje",
+    "model": "ZOJE ZJ-740TM-452-E-02-W-SX CURVED ARM FLATSEAMER",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  },
+  {
+    "key": "ZOJE_ZJ_APW_2520",
+    "brand": "Zoje",
+    "model": "ZOJE ZJ-APW-2520 AUTOMATED ELECTRONIC POCKET WELTING MACHINE",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  },
+  {
+    "key": "ZOJE_ZJ_M3_S500_SF_X_LK2_V2",
+    "brand": "Zoje",
+    "model": "ZOJE ZJ-M3-S500-SF-X-LK2-V2 PATTERN SEWING MACHINE",
+    "srp": 0,
+    "lbp": 0,
+    "cashPrice": 0,
+    "machineWarranty": 12,
+    "printheadWarranty": "0"
+  }
+]

@@ -1,440 +1,323 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { supabase } from '@/services/supabase'
-import { usePagination } from '@/composables/usePagination'
-import { useRealtime } from '@/composables/useRealtime'
+import { ref, computed } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const { role } = useAuth()
+const isAdmin = computed(() => ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor'].includes(role.value || ''))
 
-interface ConsumableRow {
+interface PriceListItem {
   id: string
-  item_name: string
-  package_description: string | null
-  default_price: number
+  name: string
+  date: string
+  source: 'Built-in' | 'Uploaded'
+  blob?: Blob
+  url?: string
 }
 
-type SortColumn = 'item_name' | 'package_description' | 'default_price'
-type SortDirection = 'asc' | 'desc'
+const BUILTIN_PRICELISTS: PriceListItem[] = [
+  { id: 'acrylic_sintra', name: 'Acrylic & Sintra Price List', date: 'June 22, 2026', source: 'Built-in', url: '/pricelists/acrylic_sintra.pdf' },
+  { id: 'artistic_wallpaper', name: 'Artistic & Wallpaper Price List', date: 'July 25, 2025', source: 'Built-in', url: '/pricelists/artistic_wallpaper.pdf' },
+  { id: '3m_graphic', name: '3M Graphic Film Price List', date: 'July 1, 2026', source: 'Built-in', url: '/pricelists/3m_graphic.pdf' },
+  { id: '3m_reflective', name: '3M Reflective Film Price List', date: 'July 1, 2026', source: 'Built-in', url: '/pricelists/3m_reflective.pdf' },
+  { id: 'solvent_media', name: 'Solvent Media Price List', date: 'July 3, 2026', source: 'Built-in', url: '/pricelists/solvent_media.pdf' },
+  { id: 'textile_media', name: 'Textile Media Price List', date: 'July 23, 2026', source: 'Built-in', url: '/pricelists/textile_media.pdf' },
+  { id: '3d_patch', name: '3D Patch Price List', date: 'November 13, 2019', source: 'Built-in', url: '/pricelists/3d_patch.pdf' },
+]
 
-// ─── State ────────────────────────────────────────────────────────────────────
+const uploadedLists = ref<PriceListItem[]>([])
+const viewingItem = ref<PriceListItem | null>(null)
+const viewerUrl = ref<string | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
-const consumables = ref<ConsumableRow[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
-const filterText = ref('')
-const sortColumn = ref<SortColumn>('item_name')
-const sortDirection = ref<SortDirection>('asc')
+const allLists = computed(() => [...BUILTIN_PRICELISTS, ...uploadedLists.value])
+const listCount = computed(() => allLists.value.length)
 
-// ─── Pagination ───────────────────────────────────────────────────────────────
+function openPriceList(item: PriceListItem) {
+  viewingItem.value = item
+  if (item.blob) {
+    if (viewerUrl.value) URL.revokeObjectURL(viewerUrl.value)
+    viewerUrl.value = URL.createObjectURL(item.blob)
+  } else {
+    viewerUrl.value = item.url || null
+  }
+}
 
-const { currentPage, pageSize, totalPages, totalCount, nextPage, prevPage, goToPage, setTotalCount } =
-  usePagination({ pageSize: 25 })
+function triggerUpload() {
+  fileInput.value?.click()
+}
 
-// ─── Realtime Subscription ────────────────────────────────────────────────────
-// Subscribe to machine_consumables table changes so that catalog updates
-// are reflected within 30 seconds for all active sessions (Requirement 7.4)
+function handleUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = input.files
+  if (!files || files.length === 0) return
 
-const { subscribe: subscribeConsumables } = useRealtime('machine_consumables', () => {
-  fetchConsumables()
-})
-
-// ─── Computed ─────────────────────────────────────────────────────────────────
-
-/** Filter consumables by item name */
-const filteredConsumables = computed(() => {
-  const filter = filterText.value.trim().toLowerCase()
-  if (!filter) return consumables.value
-  return consumables.value.filter((c) =>
-    c.item_name.toLowerCase().includes(filter)
-  )
-})
-
-/** Sort filtered consumables */
-const sortedConsumables = computed(() => {
-  const items = [...filteredConsumables.value]
-  const col = sortColumn.value
-  const dir = sortDirection.value
-
-  items.sort((a, b) => {
-    let aVal: string | number = ''
-    let bVal: string | number = ''
-
-    if (col === 'item_name') {
-      aVal = a.item_name.toLowerCase()
-      bVal = b.item_name.toLowerCase()
-    } else if (col === 'package_description') {
-      aVal = (a.package_description ?? '').toLowerCase()
-      bVal = (b.package_description ?? '').toLowerCase()
-    } else if (col === 'default_price') {
-      aVal = a.default_price
-      bVal = b.default_price
-    }
-
-    if (aVal < bVal) return dir === 'asc' ? -1 : 1
-    if (aVal > bVal) return dir === 'asc' ? 1 : -1
-    return 0
+  Array.from(files).forEach(file => {
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    uploadedLists.value.push({
+      id: `uploaded_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      name: file.name,
+      date: dateStr,
+      source: 'Uploaded',
+      blob: file,
+    })
   })
 
-  return items
-})
+  input.value = ''
+}
 
-/** Paginated slice of sorted consumables */
-const paginatedConsumables = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return sortedConsumables.value.slice(start, end)
-})
-
-// ─── Watchers ─────────────────────────────────────────────────────────────────
-
-// Update total count whenever filtered list changes
-watch(sortedConsumables, (items) => {
-  setTotalCount(items.length)
-}, { immediate: true })
-
-// Reset to first page when filter changes
-watch(filterText, () => {
-  goToPage(1)
-})
-
-// ─── Actions ──────────────────────────────────────────────────────────────────
-
-async function fetchConsumables(): Promise<void> {
-  loading.value = true
-  error.value = null
-
-  try {
-    const { data, error: fetchError } = await supabase
-      .from('machine_consumables')
-      .select('id, item_name, package_description, default_price')
-      .order('item_name', { ascending: true })
-
-    if (fetchError) {
-      error.value = fetchError.message
-      return
-    }
-
-    consumables.value = (data as ConsumableRow[]) ?? []
-  } catch (err) {
-    error.value = 'An unexpected error occurred while loading consumables data.'
-  } finally {
-    loading.value = false
+function deleteUploaded(id: string) {
+  if (!confirm('Remove this price list?')) return
+  uploadedLists.value = uploadedLists.value.filter(item => item.id !== id)
+  if (viewingItem.value?.id === id) {
+    viewingItem.value = null
+    viewerUrl.value = null
   }
 }
-
-function toggleSort(column: SortColumn): void {
-  if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortColumn.value = column
-    sortDirection.value = 'asc'
-  }
-}
-
-function getSortIndicator(column: SortColumn): string {
-  if (sortColumn.value !== column) return ''
-  return sortDirection.value === 'asc' ? ' ▲' : ' ▼'
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(price)
-}
-
-// ─── Lifecycle ────────────────────────────────────────────────────────────────
-
-onMounted(() => {
-  fetchConsumables()
-  // Activate realtime subscription for live updates
-  subscribeConsumables()
-})
 </script>
 
 <template>
-  <div class="consumables-view">
-    <h1>Consumables Pricelist</h1>
-
-    <!-- Filter bar -->
-    <div class="toolbar">
-      <div class="filter-group">
-        <label for="item-filter">Filter by item name:</label>
-        <input
-          id="item-filter"
-          v-model="filterText"
-          type="text"
-          placeholder="Search consumables..."
-          class="filter-input"
-        />
-      </div>
+  <div class="cons-page">
+    <!-- Header -->
+    <div class="cons-head">
+      <h1>Consumables Pricelist</h1>
+      <span class="cons-status">{{ listCount }} price lists</span>
+      <button v-if="isAdmin" class="cons-up" @click="triggerUpload">
+        &#8593; Upload Price List (PDF/Excel)
+      </button>
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".pdf,.xlsx,.xls,.csv"
+        multiple
+        hidden
+        @change="handleUpload"
+      />
     </div>
 
-    <!-- Loading state -->
-    <div v-if="loading" class="state-message loading-state">
-      <p>Loading consumables data...</p>
-    </div>
+    <!-- Subtitle -->
+    <p class="cons-note">
+      Click a price list to view it below (PDF). Built-in lists are available to everyone;
+      authorized roles can add more (PDF or Excel), stored in this browser.
+    </p>
 
-    <!-- Error state -->
-    <div v-else-if="error" class="state-message error-state">
-      <p>{{ error }}</p>
-      <button class="retry-btn" @click="fetchConsumables">Retry</button>
-    </div>
-
-    <!-- Data table -->
-    <div v-else>
-      <div v-if="sortedConsumables.length === 0" class="state-message empty-state">
-        <p>No consumables found{{ filterText ? ' matching your filter' : '' }}.</p>
-      </div>
-
-      <div v-else class="table-container">
-        <table class="consumables-table">
-          <thead>
-            <tr>
-              <th
-                class="sortable"
-                @click="toggleSort('item_name')"
-                role="columnheader"
-                aria-sort="none"
-              >
-                Item Name{{ getSortIndicator('item_name') }}
-              </th>
-              <th
-                class="sortable"
-                @click="toggleSort('package_description')"
-                role="columnheader"
-                aria-sort="none"
-              >
-                Packaging{{ getSortIndicator('package_description') }}
-              </th>
-              <th
-                class="sortable"
-                @click="toggleSort('default_price')"
-                role="columnheader"
-                aria-sort="none"
-              >
-                Price{{ getSortIndicator('default_price') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="consumable in paginatedConsumables" :key="consumable.id">
-              <td>{{ consumable.item_name }}</td>
-              <td>{{ consumable.package_description ?? '—' }}</td>
-              <td class="price-cell">{{ formatPrice(consumable.default_price) }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Pagination controls -->
-        <div class="pagination">
-          <button
-            class="pagination-btn"
-            :disabled="currentPage <= 1"
-            @click="prevPage"
+    <!-- Table -->
+    <div class="cons-table-wrap">
+      <table class="cons-table">
+        <thead>
+          <tr>
+            <th>Price List</th>
+            <th>As Of</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(item, idx) in allLists"
+            :key="item.id"
+            :class="{ band: idx % 2 === 1 }"
           >
-            Previous
-          </button>
-          <span class="pagination-info">
-            Page {{ currentPage }} of {{ totalPages }} ({{ totalCount }} items)
-          </span>
-          <button
-            class="pagination-btn"
-            :disabled="currentPage >= totalPages"
-            @click="nextPage"
-          >
-            Next
-          </button>
-        </div>
+            <td>
+              <span class="cons-link" @click="openPriceList(item)">
+                &#x1F4C4; {{ item.name }}
+              </span>
+              <button
+                v-if="item.source === 'Uploaded' && isAdmin"
+                class="cons-del"
+                style="margin-left: 8px;"
+                @click="deleteUploaded(item.id)"
+              >
+                ✕
+              </button>
+            </td>
+            <td>{{ item.date }}</td>
+            <td>{{ item.source }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Viewer -->
+    <div v-if="viewingItem" class="cons-viewer">
+      <div class="cons-viewer-hd">
+        <span>&#x1F4C4; {{ viewingItem.name }}</span>
+        <a v-if="viewerUrl" :href="viewerUrl" target="_blank" rel="noopener">Download</a>
+      </div>
+      <iframe
+        v-if="viewerUrl"
+        class="cons-frame"
+        :src="viewerUrl"
+      ></iframe>
+      <div v-else class="cons-placeholder">
+        PDF viewer — file not available in this version. Upload a PDF to view it here.
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.consumables-view {
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+.cons-page {
+  padding: 16px 20px;
+  background: #eef0f2;
+  min-height: calc(100vh - 40px);
 }
 
-.consumables-view h1 {
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.toolbar {
+.cons-head {
   display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.cons-head h1 {
+  font-size: 16px;
+  color: #c0392b;
+  margin: 0;
+  flex: 1;
 }
 
-.filter-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
+.cons-status {
+  font-size: 11px;
+  color: #888;
 }
 
-.filter-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border, #d1d5db);
-  border-radius: 4px;
-  font-size: 1rem;
-  min-width: 220px;
-  min-height: 44px;
-}
-
-.filter-input:focus {
-  outline: 2px solid var(--color-primary, #2563eb);
-  outline-offset: 1px;
-}
-
-.state-message {
-  padding: 2rem;
-  text-align: center;
-  border-radius: 8px;
-}
-
-.loading-state {
-  color: var(--color-text-muted, #6b7280);
-}
-
-.error-state {
-  background: var(--color-error-bg, #fef2f2);
-  border: 1px solid var(--color-error-border, #fecaca);
-  color: var(--color-error, #dc2626);
-}
-
-.error-state p {
-  margin-bottom: 1rem;
-}
-
-.retry-btn {
-  padding: 0.5rem 1.25rem;
-  background: var(--color-primary, #2563eb);
+.cons-up {
+  padding: 7px 12px;
+  background: #c0392b;
   color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 0.875rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
   cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
 }
 
-.retry-btn:hover {
-  background: var(--color-primary-hover, #1d4ed8);
+.cons-up:hover {
+  background: #a93226;
 }
 
-.empty-state {
-  color: var(--color-text-muted, #6b7280);
+.cons-note {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 12px;
+  line-height: 1.5;
 }
 
-.table-container {
-  overflow-x: auto;
-}
-
-.consumables-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.consumables-table th,
-.consumables-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
-}
-
-.consumables-table thead th {
-  background: var(--color-table-header-bg, #f9fafb);
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  white-space: nowrap;
-}
-
-.consumables-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  min-height: 44px;
-}
-
-.consumables-table th.sortable:hover {
-  background: var(--color-table-header-hover, #f3f4f6);
-}
-
-.consumables-table tbody tr:hover {
-  background: var(--color-row-hover, #f9fafb);
-}
-
-.price-cell {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem 0;
-}
-
-.pagination-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--color-border, #d1d5db);
-  border-radius: 4px;
+/* Table */
+.cons-table-wrap {
   background: #fff;
-  font-size: 0.875rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.cons-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+.cons-table thead th {
+  background: #c0392b;
+  color: #fff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.cons-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.cons-table tbody tr:hover td {
+  background: #fff3cd;
+}
+
+.cons-table .band td {
+  background: #fbeeec;
+}
+
+.cons-link {
+  color: #c0392b;
   cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
+  text-decoration: none;
+  font-weight: 600;
 }
 
-.pagination-btn:hover:not(:disabled) {
-  background: var(--color-table-header-bg, #f9fafb);
+.cons-link:hover {
+  text-decoration: underline;
 }
 
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Viewer */
+.cons-viewer {
+  margin-top: 10px;
 }
 
-.pagination-info {
-  font-size: 0.875rem;
-  color: var(--color-text-muted, #6b7280);
+.cons-viewer-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-weight: 700;
+  color: #c0392b;
+  font-size: 13px;
 }
 
-@media (max-width: 768px) {
-  .consumables-view {
-    padding: 1rem;
-  }
+.cons-viewer-hd a {
+  color: #2a6fb0;
+  text-decoration: none;
+  font-weight: 600;
+}
 
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.cons-viewer-hd a:hover {
+  text-decoration: underline;
+}
 
-  .filter-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.cons-frame {
+  width: 100%;
+  height: 72vh;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
 
-  .filter-input {
-    min-width: unset;
-    width: 100%;
-  }
+.cons-unavailable {
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+}
+
+.cons-download-link {
+  color: #2a6fb0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.cons-download-link:hover {
+  text-decoration: underline;
+}
+
+.cons-del {
+  padding: 3px 8px;
+  background: #fff;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cons-del:hover {
+  background: #fdecea;
 }
 </style>

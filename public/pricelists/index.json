@@ -1,0 +1,37 @@
+[
+  {
+    "id": "acrylic_sintra",
+    "name": "Acrylic & Sintra Price List",
+    "date": "June 22, 2026"
+  },
+  {
+    "id": "artistic_wallpaper",
+    "name": "Artistic & Wallpaper Price List",
+    "date": "July 25, 2025"
+  },
+  {
+    "id": "3m_graphic",
+    "name": "3M Graphic Film Price List",
+    "date": "July 1, 2026"
+  },
+  {
+    "id": "3m_reflective",
+    "name": "3M Reflective Film Price List",
+    "date": "July 1, 2026"
+  },
+  {
+    "id": "solvent_media",
+    "name": "Solvent Media Price List",
+    "date": "July 3, 2026"
+  },
+  {
+    "id": "textile_media",
+    "name": "Textile Media Price List",
+    "date": "July 23, 2026"
+  },
+  {
+    "id": "3d_patch",
+    "name": "3D Patch Price List",
+    "date": "November 13, 2019"
+  }
+]
