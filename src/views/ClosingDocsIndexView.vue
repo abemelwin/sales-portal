@@ -94,8 +94,6 @@ onMounted(() => {
 /* Page container */
 .closing-docs-index {
   padding: var(--space-6);
-  max-width: var(--content-max-width);
-  margin: 0 auto;
 }
 
 /* Heading */

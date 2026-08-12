@@ -450,19 +450,23 @@ watch(
   overflow: hidden;
 }
 
-/* Desktop: side-by-side panels (60/40 split) */
+/* Desktop: fixed form panel + fluid preview panel */
 @media screen and (min-width: 768px) {
   .quote-builder-view__layout {
     flex-direction: row;
   }
 
   .quote-builder-view__form {
-    width: 60%;
+    width: 320px;
+    min-width: 280px;
+    flex-shrink: 0;
     border-right: 1px solid var(--border-color);
   }
 
   .quote-builder-view__preview {
-    width: 40%;
+    flex: 1;
+    min-width: 0;
+    width: auto;
   }
 }
 

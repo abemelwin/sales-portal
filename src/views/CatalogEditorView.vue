@@ -1,237 +1,31 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
-import { useCatalogImport } from '@/composables/useCatalogImport'
-import type { Machine, MachineInput, UnitCondition, Letterhead, ImportResult } from '@/types'
+import type { Machine, MachineInput } from '@/types'
 
 const catalogStore = useCatalogStore()
-const { importFile, importing: importingFile, error: importError } = useCatalogImport()
 
-// ─── Import State ─────────────────────────────────────────────────────────────
-const showImportSection = ref(false)
-const importResult = ref<ImportResult | null>(null)
-const fileInputRef = ref<HTMLInputElement | null>(null)
+// ─── Machine Selector ─────────────────────────────────────────────────────────
+const selectedMachineId = ref('')
 
-async function handleImport(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
+const machineSelectorOptions = computed(() =>
+  catalogStore.machines.map((m) => ({
+    id: m.id,
+    brand: m.brand,
+    model: m.model,
+    label: `${m.brand} \u2014 ${m.model}${m.sub_model ? ' ' + m.sub_model : ''}`,
+  }))
+)
 
-  importResult.value = null
-  const result = await importFile(file)
-  importResult.value = result
-
-  // Refresh catalog after successful import
-  if (result.added > 0 || result.updated > 0) {
-    await catalogStore.fetchMachines()
-  }
-
-  // Reset the file input so the same file can be re-selected
-  if (fileInputRef.value) {
-    fileInputRef.value.value = ''
-  }
-}
-
-function toggleImportSection() {
-  showImportSection.value = !showImportSection.value
-  if (!showImportSection.value) {
-    importResult.value = null
-  }
-}
-
-// ─── Mode & Selection ─────────────────────────────────────────────────────────
-type EditorMode = 'list' | 'create' | 'edit'
-const mode = ref<EditorMode>('list')
-const selectedMachine = ref<Machine | null>(null)
-
-// ─── Success / Error Messages ─────────────────────────────────────────────────
-const successMessage = ref('')
-const duplicateError = ref('')
-let successTimeout: ReturnType<typeof setTimeout> | null = null
-
-// ─── Form State ───────────────────────────────────────────────────────────────
-const form = reactive({
-  brand: '',
-  model: '',
-  sub_model: '',
-  unit_condition: 'Brand New' as UnitCondition,
-  letterhead: 'ES Print Media Inc.' as Letterhead,
+watch(selectedMachineId, (id) => {
+  if (!id) return
+  const machine = catalogStore.machines.find((m) => m.id === id)
+  if (machine) populateForm(machine)
 })
 
-const unitConditionOptions: UnitCondition[] = ['Brand New', 'Re-certified', 'Demo Unit']
-const letterheadOptions: Letterhead[] = ['ES Print Media Inc.', 'ACS / Alternative']
-
-// ─── Dynamic Lists ────────────────────────────────────────────────────────────
-interface ListItem {
-  description: string
-  sort_order: number
-}
-interface ConsumableItem {
-  item_name: string
-  package_description: string
-  default_price: number | null
-  sort_order: number
-}
-
-const features = ref<ListItem[]>([])
-const inclusions = ref<ListItem[]>([])
-const exclusions = ref<ListItem[]>([])
-const addons = ref<ListItem[]>([])
-const consumables = ref<ConsumableItem[]>([])
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-const MAX_LIST_ITEMS = 50
-const formErrors = reactive<Record<string, string>>({})
-
-function validateForm(): boolean {
-  // Clear previous errors
-  Object.keys(formErrors).forEach((k) => delete formErrors[k])
-  duplicateError.value = ''
-
-  if (!form.brand.trim()) formErrors.brand = 'Brand is required'
-  else if (form.brand.length > 100) formErrors.brand = 'Brand must be 100 characters or less'
-
-  if (!form.model.trim()) formErrors.model = 'Model is required'
-  else if (form.model.length > 100) formErrors.model = 'Model must be 100 characters or less'
-
-  if (form.sub_model && form.sub_model.length > 100)
-    formErrors.sub_model = 'Sub-model must be 100 characters or less'
-
-  if (features.value.length > MAX_LIST_ITEMS)
-    formErrors.features = `Maximum ${MAX_LIST_ITEMS} features allowed`
-  if (inclusions.value.length > MAX_LIST_ITEMS)
-    formErrors.inclusions = `Maximum ${MAX_LIST_ITEMS} inclusions allowed`
-  if (exclusions.value.length > MAX_LIST_ITEMS)
-    formErrors.exclusions = `Maximum ${MAX_LIST_ITEMS} exclusions allowed`
-  if (addons.value.length > MAX_LIST_ITEMS)
-    formErrors.addons = `Maximum ${MAX_LIST_ITEMS} add-ons allowed`
-  if (consumables.value.length > MAX_LIST_ITEMS)
-    formErrors.consumables = `Maximum ${MAX_LIST_ITEMS} consumables allowed`
-
-  // Validate consumable fields
-  for (let i = 0; i < consumables.value.length; i++) {
-    const c = consumables.value[i]!
-    if (!c.item_name.trim()) {
-      formErrors[`consumable_${i}_name`] = 'Item name is required'
-    } else if (c.item_name.length > 150) {
-      formErrors[`consumable_${i}_name`] = 'Item name must be 150 characters or less'
-    }
-    if (c.package_description && c.package_description.length > 300) {
-      formErrors[`consumable_${i}_desc`] = 'Package description must be 300 characters or less'
-    }
-    if (c.default_price === null || c.default_price < 0.01 || c.default_price > 999999999.99) {
-      formErrors[`consumable_${i}_price`] = 'Price must be between 0.01 and 999,999,999.99'
-    }
-  }
-
-  return Object.keys(formErrors).length === 0
-}
-
-// ─── List Management ──────────────────────────────────────────────────────────
-function addListItem(list: ListItem[]) {
-  if (list.length >= MAX_LIST_ITEMS) return
-  list.push({ description: '', sort_order: list.length })
-}
-
-function removeListItem(list: ListItem[], index: number) {
-  list.splice(index, 1)
-  list.forEach((item, i) => (item.sort_order = i))
-}
-
-function addConsumable() {
-  if (consumables.value.length >= MAX_LIST_ITEMS) return
-  consumables.value.push({
-    item_name: '',
-    package_description: '',
-    default_price: null,
-    sort_order: consumables.value.length,
-  })
-}
-
-function removeConsumable(index: number) {
-  consumables.value.splice(index, 1)
-  consumables.value.forEach((item, i) => (item.sort_order = i))
-}
-
-// ─── Form Reset / Population ──────────────────────────────────────────────────
-function resetForm() {
-  form.brand = ''
-  form.model = ''
-  form.sub_model = ''
-  form.unit_condition = 'Brand New'
-  form.letterhead = 'ES Print Media Inc.'
-  features.value = []
-  inclusions.value = []
-  exclusions.value = []
-  addons.value = []
-  consumables.value = []
-  Object.keys(formErrors).forEach((k) => delete formErrors[k])
-  duplicateError.value = ''
-  successMessage.value = ''
-}
-
-function populateForm(machine: Machine) {
-  form.brand = machine.brand
-  form.model = machine.model
-  form.sub_model = machine.sub_model ?? ''
-  form.unit_condition = machine.unit_condition
-  form.letterhead = machine.letterhead
-  features.value = machine.features.map((f) => ({
-    description: f.description,
-    sort_order: f.sort_order,
-  }))
-  inclusions.value = machine.inclusions.map((i) => ({
-    description: i.description,
-    sort_order: i.sort_order,
-  }))
-  exclusions.value = machine.exclusions.map((e) => ({
-    description: e.description,
-    sort_order: e.sort_order,
-  }))
-  addons.value = machine.addons.map((a) => ({
-    description: a.description,
-    sort_order: a.sort_order,
-  }))
-  consumables.value = machine.consumables.map((c) => ({
-    item_name: c.item_name,
-    package_description: c.package_description ?? '',
-    default_price: c.default_price,
-    sort_order: c.sort_order,
-  }))
-}
-
-// ─── CRUD Operations ──────────────────────────────────────────────────────────
-function buildInput(): MachineInput {
-  return {
-    brand: form.brand.trim(),
-    model: form.model.trim(),
-    sub_model: form.sub_model.trim() || null,
-    unit_condition: form.unit_condition,
-    letterhead: form.letterhead,
-    features: features.value.filter((f) => f.description.trim()).map((f) => ({
-      description: f.description.trim(),
-      sort_order: f.sort_order,
-    })),
-    consumables: consumables.value.filter((c) => c.item_name.trim()).map((c) => ({
-      item_name: c.item_name.trim(),
-      package_description: c.package_description.trim() || null,
-      default_price: c.default_price ?? 0,
-      sort_order: c.sort_order,
-    })),
-    inclusions: inclusions.value.filter((i) => i.description.trim()).map((i) => ({
-      description: i.description.trim(),
-      sort_order: i.sort_order,
-    })),
-    exclusions: exclusions.value.filter((e) => e.description.trim()).map((e) => ({
-      description: e.description.trim(),
-      sort_order: e.sort_order,
-    })),
-    addons: addons.value.filter((a) => a.description.trim()).map((a) => ({
-      description: a.description.trim(),
-      sort_order: a.sort_order,
-    })),
-  }
-}
+// ─── Success Message ──────────────────────────────────────────────────────────
+const successMessage = ref('')
+let successTimeout: ReturnType<typeof setTimeout> | null = null
 
 function showSuccess(msg: string) {
   successMessage.value = msg
@@ -241,103 +35,226 @@ function showSuccess(msg: string) {
   }, 5000)
 }
 
-function isDuplicateError(errMsg: string): boolean {
-  const lower = errMsg.toLowerCase()
-  return lower.includes('duplicate') || lower.includes('unique') || lower.includes('already exists')
-    || lower.includes('23505')
+// ─── Form State ───────────────────────────────────────────────────────────────
+const form = reactive({
+  key: '',
+  quoteTitle: '',
+  brand: '',
+  category: '',
+  srp: null as number | null,
+  lbp: null as number | null,
+  cashPrice: null as number | null,
+  defaultMonths: null as number | null,
+  hasTradeIn: false,
+  hasPrinthead: false,
+  machineWarranty: null as number | null,
+  printheadWarranty: '',
+  serviceFee: null as number | null,
+  imageKey: '',
+  availability: '',
+})
+
+const featuresText = ref('')
+const inclusionsText = ref('')
+const exclusivesText = ref('')
+
+// ─── Consumables Table ────────────────────────────────────────────────────────
+interface ConsumableRow {
+  name: string
+  uom: string
+  price: string
+}
+const consumables = ref<ConsumableRow[]>([])
+
+function addConsumableRow() {
+  consumables.value.push({ name: '', uom: '', price: '' })
 }
 
+function removeConsumableRow(idx: number) {
+  consumables.value.splice(idx, 1)
+}
+
+// ─── Optional Add-Ons Table ──────────────────────────────────────────────────
+interface AddonRow {
+  name: string
+  uom: string
+  price: string
+}
+const addons = ref<AddonRow[]>([])
+
+function addAddonRow() {
+  addons.value.push({ name: '', uom: '', price: '' })
+}
+
+function removeAddonRow(idx: number) {
+  addons.value.splice(idx, 1)
+}
+
+// ─── Form Reset / Population ──────────────────────────────────────────────────
+function resetForm() {
+  form.key = ''
+  form.quoteTitle = ''
+  form.brand = ''
+  form.category = ''
+  form.srp = null
+  form.lbp = null
+  form.cashPrice = null
+  form.defaultMonths = null
+  form.hasTradeIn = false
+  form.hasPrinthead = false
+  form.machineWarranty = null
+  form.printheadWarranty = ''
+  form.serviceFee = null
+  form.imageKey = ''
+  form.availability = ''
+  featuresText.value = ''
+  inclusionsText.value = ''
+  exclusivesText.value = ''
+  consumables.value = []
+  addons.value = []
+  successMessage.value = ''
+}
+
+function generateKey(brand: string, model: string): string {
+  return `${brand}_${model}`.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
+}
+
+function populateForm(machine: Machine) {
+  form.key = generateKey(machine.brand, machine.model)
+  form.quoteTitle = `${machine.brand} ${machine.model}${machine.sub_model ? ' ' + machine.sub_model : ''}`
+  form.brand = machine.brand
+  form.category = machine.unit_condition
+  form.srp = null
+  form.lbp = null
+  form.cashPrice = null
+  form.defaultMonths = null
+  form.hasTradeIn = false
+  form.hasPrinthead = false
+  form.machineWarranty = machine.warranty_machine_duration ? parseInt(machine.warranty_machine_duration) || null : null
+  form.printheadWarranty = machine.warranty_printhead_duration ?? ''
+  form.serviceFee = null
+  form.imageKey = machine.image_key ?? ''
+  form.availability = ''
+
+  featuresText.value = machine.features
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((f) => f.description)
+    .join('\n')
+
+  inclusionsText.value = machine.inclusions
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((i) => i.description)
+    .join('\n')
+
+  exclusivesText.value = machine.exclusions
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((e) => e.description)
+    .join('\n')
+
+  consumables.value = machine.consumables
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((c) => ({
+      name: c.item_name,
+      uom: c.package_description ?? '',
+      price: c.default_price != null ? String(c.default_price) : '',
+    }))
+
+  addons.value = machine.addons
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((a) => ({
+      name: a.description,
+      uom: '',
+      price: '',
+    }))
+}
+
+// ─── CRUD Operations ──────────────────────────────────────────────────────────
 const saving = ref(false)
 
-async function handleCreate() {
-  if (!validateForm()) return
+function buildInput(): MachineInput {
+  const featuresArr = featuresText.value
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const inclusionsArr = inclusionsText.value
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const exclusionsArr = exclusivesText.value
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  return {
+    brand: form.brand.trim(),
+    model: form.quoteTitle.trim() || form.brand.trim(),
+    sub_model: null,
+    unit_condition: (form.category as 'Brand New' | 'Re-certified' | 'Demo Unit') || 'Brand New',
+    letterhead: 'ES Print Media Inc.',
+    features: featuresArr.map((desc, i) => ({ description: desc, sort_order: i })),
+    consumables: consumables.value
+      .filter((c) => c.name.trim())
+      .map((c, i) => ({
+        item_name: c.name.trim(),
+        package_description: c.uom.trim() || null,
+        default_price: parseFloat(c.price) || 0,
+        sort_order: i,
+      })),
+    inclusions: inclusionsArr.map((desc, i) => ({ description: desc, sort_order: i })),
+    exclusions: exclusionsArr.map((desc, i) => ({ description: desc, sort_order: i })),
+    addons: addons.value
+      .filter((a) => a.name.trim())
+      .map((a, i) => ({ description: a.name.trim(), sort_order: i })),
+  }
+}
+
+async function save() {
   saving.value = true
   const input = buildInput()
-  const result = await catalogStore.createMachine(input)
-  saving.value = false
 
+  if (selectedMachineId.value) {
+    // Update existing
+    const result = await catalogStore.updateMachine(selectedMachineId.value, input)
+    if (result.success) {
+      showSuccess('Saved successfully!')
+    }
+  } else {
+    // Create new
+    const result = await catalogStore.createMachine(input)
+    if (result.success) {
+      showSuccess('Machine created successfully!')
+    }
+  }
+  saving.value = false
+}
+
+function createNew() {
+  selectedMachineId.value = ''
+  resetForm()
+}
+
+async function deleteMachine() {
+  if (!selectedMachineId.value) return
+  if (!confirm('Delete this machine?')) return
+  saving.value = true
+  const result = await catalogStore.softDeleteMachine(selectedMachineId.value)
   if (result.success) {
-    showSuccess('Machine created successfully!')
+    showSuccess('Machine deleted.')
+    selectedMachineId.value = ''
     resetForm()
-    mode.value = 'list'
-  } else if (result.error && isDuplicateError(result.error)) {
-    duplicateError.value = `A machine with brand "${form.brand}", model "${form.model}"${form.sub_model ? `, sub-model "${form.sub_model}"` : ''} already exists.`
   }
-}
-
-async function handleUpdate() {
-  if (!selectedMachine.value) return
-  if (!validateForm()) return
-  saving.value = true
-  const input = buildInput()
-  const result = await catalogStore.updateMachine(selectedMachine.value.id, input)
   saving.value = false
-
-  if (result.success) {
-    showSuccess('Machine updated successfully!')
-    mode.value = 'list'
-    selectedMachine.value = null
-  } else if (result.error && isDuplicateError(result.error)) {
-    duplicateError.value = `A machine with brand "${form.brand}", model "${form.model}"${form.sub_model ? `, sub-model "${form.sub_model}"` : ''} already exists.`
-  }
 }
 
-const confirmDelete = ref(false)
-const deletingId = ref<string | null>(null)
-
-function promptDelete(machine: Machine) {
-  confirmDelete.value = true
-  deletingId.value = machine.id
-}
-
-async function handleDelete() {
-  if (!deletingId.value) return
-  saving.value = true
-  const result = await catalogStore.softDeleteMachine(deletingId.value)
-  saving.value = false
-  confirmDelete.value = false
-  deletingId.value = null
-
-  if (result.success) {
-    showSuccess('Machine deleted successfully!')
-  }
-}
-
-function cancelDelete() {
-  confirmDelete.value = false
-  deletingId.value = null
-}
-
-// ─── Navigation ───────────────────────────────────────────────────────────────
-function startCreate() {
+async function revert() {
+  if (!confirm('Revert catalog to built-in defaults? This will refresh from the server.')) return
+  await catalogStore.fetchMachines()
+  selectedMachineId.value = ''
   resetForm()
-  mode.value = 'create'
+  showSuccess('Reverted to built-in catalog.')
 }
-
-function startEdit(machine: Machine) {
-  selectedMachine.value = machine
-  populateForm(machine)
-  mode.value = 'edit'
-}
-
-function backToList() {
-  resetForm()
-  selectedMachine.value = null
-  mode.value = 'list'
-}
-
-// ─── Search / Filter ──────────────────────────────────────────────────────────
-const searchQuery = ref('')
-const filteredMachines = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim()
-  if (!q) return catalogStore.machines
-  return catalogStore.machines.filter(
-    (m) =>
-      m.brand.toLowerCase().includes(q) ||
-      m.model.toLowerCase().includes(q) ||
-      (m.sub_model && m.sub_model.toLowerCase().includes(q))
-  )
-})
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(() => {
@@ -346,871 +263,413 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="catalog-editor-view">
-    <header class="page-header">
-      <h1>Catalog Editor</h1>
-      <div v-if="mode === 'list'" class="header-actions">
-        <button
-          class="btn btn-secondary"
-          @click="toggleImportSection"
-        >
-          {{ showImportSection ? 'Hide Import' : 'Import .xlsx' }}
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="startCreate"
-        >
-          + New Machine
-        </button>
-      </div>
-      <button
-        v-if="mode !== 'list'"
-        class="btn btn-secondary"
-        @click="backToList"
-      >
-        &larr; Back to List
-      </button>
-    </header>
+  <div class="cat-page">
+    <!-- Top bar -->
+    <div class="cat-top">
+      <h2>Machine Catalog Editor</h2>
+      <select v-model="selectedMachineId" class="cat-machine-sel">
+        <option value="" disabled>Select a machine...</option>
+        <option v-for="m in machineSelectorOptions" :key="m.id" :value="m.id">
+          {{ m.label }}
+        </option>
+      </select>
+      <button class="cat-btn" @click="createNew">+ New</button>
+      <button class="cat-btn cat-del" :disabled="!selectedMachineId" @click="deleteMachine">Delete</button>
+      <span style="flex:1"></span>
+      <button class="cat-btn cat-revert" @click="revert">Revert to built-in</button>
+    </div>
 
-    <!-- Success Message -->
-    <div v-if="successMessage" class="alert alert-success" role="alert">
-      {{ successMessage }}
+    <!-- Note -->
+    <p class="cat-note">
+      Add or revise machines here. Changes save in <b>this browser</b> and are used everywhere in the app
+      (quotes, price list, product info). Prices in &#8369;. For list fields, put <b>one item per line</b>.
+      Consumables format per line: <code>Name | Package | Price</code>.
+    </p>
+
+    <!-- Form -->
+    <div class="cat-form">
+      <div class="cf-row">
+        <label>Key (unique ID)</label>
+        <input v-model="form.key" class="fp-in" />
+      </div>
+      <div class="cf-row">
+        <label>Quote Title</label>
+        <input v-model="form.quoteTitle" class="fp-in" />
+      </div>
+      <div class="cf-row">
+        <label>Brand</label>
+        <input v-model="form.brand" class="fp-in" />
+      </div>
+      <div class="cf-row">
+        <label>Category</label>
+        <input v-model="form.category" class="fp-in" />
+      </div>
+      <div class="cf-row">
+        <label>SRP</label>
+        <input v-model.number="form.srp" class="fp-in" inputmode="decimal" />
+      </div>
+      <div class="cf-row">
+        <label>LBP</label>
+        <input v-model.number="form.lbp" class="fp-in" inputmode="decimal" />
+      </div>
+      <div class="cf-row">
+        <label>Cash Price</label>
+        <input v-model.number="form.cashPrice" class="fp-in" inputmode="decimal" />
+      </div>
+      <div class="cf-row">
+        <label>Default Months</label>
+        <input v-model.number="form.defaultMonths" class="fp-in" type="number" />
+      </div>
+      <div class="cf-row">
+        <label>Has Trade-In</label>
+        <input v-model="form.hasTradeIn" type="checkbox" />
+      </div>
+      <div class="cf-row">
+        <label>Has Printhead / Laser Tube</label>
+        <input v-model="form.hasPrinthead" type="checkbox" />
+      </div>
+      <div class="cf-row">
+        <label>Machine Warranty (months)</label>
+        <input v-model.number="form.machineWarranty" class="fp-in" inputmode="decimal" />
+      </div>
+      <div class="cf-row">
+        <label>Printhead/Laser Tube Warranty</label>
+        <input v-model="form.printheadWarranty" class="fp-in" placeholder="e.g. 6, or free text" />
+      </div>
+      <div class="cf-row">
+        <label>Service Fee (after warranty)</label>
+        <input v-model.number="form.serviceFee" class="fp-in" inputmode="decimal" />
+      </div>
+      <div class="cf-row">
+        <label>Image Key (optional)</label>
+        <input v-model="form.imageKey" class="fp-in" />
+      </div>
+      <div class="cf-row full">
+        <label>Availability</label>
+        <input v-model="form.availability" class="fp-in" />
+      </div>
+
+      <!-- Textareas -->
+      <div class="cf-row full">
+        <label>Features (one per line)</label>
+        <textarea v-model="featuresText" rows="4" class="fp-in"></textarea>
+      </div>
+      <div class="cf-row full">
+        <label>Standard Package / Inclusions (one per line)</label>
+        <textarea v-model="inclusionsText" rows="4" class="fp-in"></textarea>
+      </div>
+      <div class="cf-row full">
+        <label>Exclusives (one per line)</label>
+        <textarea v-model="exclusivesText" rows="3" class="fp-in"></textarea>
+      </div>
+
+      <!-- Consumables table -->
+      <div class="cf-row full">
+        <label>Consumables</label>
+        <table class="cf-tbl">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Unit of Measure</th>
+              <th>Unit Price</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, idx) in consumables" :key="idx">
+              <td><input v-model="row.name" class="cf-c-name" /></td>
+              <td><input v-model="row.uom" class="cf-c-uom" /></td>
+              <td><input v-model="row.price" class="cf-c-price" inputmode="decimal" /></td>
+              <td><button type="button" class="cf-rowdel" @click="removeConsumableRow(idx)">&times;</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="cf-addrow" @click="addConsumableRow()">+ Add Consumable</button>
+      </div>
+
+      <!-- Optional Add-Ons table -->
+      <div class="cf-row full">
+        <label>Optional Add-Ons</label>
+        <table class="cf-tbl">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Unit of Measure</th>
+              <th>Unit Price</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, idx) in addons" :key="idx">
+              <td><input v-model="row.name" class="cf-c-name" /></td>
+              <td><input v-model="row.uom" class="cf-c-uom" /></td>
+              <td><input v-model="row.price" class="cf-c-price" inputmode="decimal" /></td>
+              <td><button type="button" class="cf-rowdel" @click="removeAddonRow(idx)">&times;</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="cf-addrow" @click="addAddonRow()">+ Add Add-On</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="cat-actions">
+      <button class="cat-save" :disabled="saving" @click="save">&#128190; Save Changes</button>
+      <span v-if="successMessage" class="cat-msg">{{ successMessage }}</span>
     </div>
 
     <!-- Store Error -->
-    <div v-if="catalogStore.error" class="alert alert-error" role="alert">
-      {{ catalogStore.error }}
-    </div>
-
-    <!-- ═══ Import Section ═══ -->
-    <section v-if="showImportSection && mode === 'list'" class="import-section">
-      <h2>Import Catalog from .xlsx</h2>
-      <p class="import-description">
-        Upload an .xlsx file with columns: <code>brand</code>, <code>model</code>,
-        <code>sub_model</code>, <code>unit_condition</code>, <code>letterhead</code>.
-        Maximum file size: 10 MB. Maximum rows: 5,000.
-      </p>
-
-      <div class="import-upload">
-        <input
-          ref="fileInputRef"
-          type="file"
-          accept=".xlsx,.xls"
-          class="file-input"
-          :disabled="importingFile"
-          aria-label="Choose .xlsx file to import"
-          @change="handleImport"
-        />
-      </div>
-
-      <div v-if="importingFile" class="import-status loading-state">
-        Importing... Please wait.
-      </div>
-
-      <!-- Import Error -->
-      <div v-if="importError && !importingFile" class="alert alert-error" role="alert">
-        {{ importError }}
-      </div>
-
-      <!-- Import Result -->
-      <div v-if="importResult && !importingFile" class="import-result">
-        <h3>Import Results</h3>
-        <ul class="result-summary">
-          <li><strong>Added:</strong> {{ importResult.added }}</li>
-          <li><strong>Updated:</strong> {{ importResult.updated }}</li>
-          <li><strong>Skipped:</strong> {{ importResult.skipped }}</li>
-        </ul>
-        <div v-if="importResult.errors.length > 0" class="import-errors">
-          <h4>Errors ({{ importResult.errors.length }})</h4>
-          <ul class="error-list">
-            <li v-for="(err, idx) in importResult.errors" :key="idx">{{ err }}</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ Machine List Mode ═══ -->
-    <section v-if="mode === 'list'" class="machine-list-section">
-      <div class="search-bar">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search by brand, model, or sub-model..."
-          class="input-field search-input"
-          aria-label="Search machines"
-        />
-      </div>
-
-      <div v-if="catalogStore.loading" class="loading-state">Loading machines...</div>
-
-      <div v-else-if="filteredMachines.length === 0" class="empty-state">
-        <p>No machines found.</p>
-      </div>
-
-      <table v-else class="machine-table" aria-label="Machine catalog">
-        <thead>
-          <tr>
-            <th>Brand</th>
-            <th>Model</th>
-            <th>Sub-Model</th>
-            <th>Condition</th>
-            <th>Letterhead</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="machine in filteredMachines" :key="machine.id">
-            <td>{{ machine.brand }}</td>
-            <td>{{ machine.model }}</td>
-            <td>{{ machine.sub_model || '—' }}</td>
-            <td>{{ machine.unit_condition }}</td>
-            <td>{{ machine.letterhead }}</td>
-            <td class="actions-cell">
-              <button class="btn btn-sm btn-secondary" @click="startEdit(machine)">Edit</button>
-              <button class="btn btn-sm btn-danger" @click="promptDelete(machine)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- ═══ Create / Edit Form ═══ -->
-    <section v-if="mode === 'create' || mode === 'edit'" class="machine-form-section">
-      <h2>{{ mode === 'create' ? 'Create New Machine' : 'Edit Machine' }}</h2>
-
-      <!-- Duplicate Error -->
-      <div v-if="duplicateError" class="alert alert-error inline-error" role="alert">
-        {{ duplicateError }}
-      </div>
-
-      <form @submit.prevent="mode === 'create' ? handleCreate() : handleUpdate()" novalidate>
-        <!-- Main Fields -->
-        <fieldset class="form-fieldset">
-          <legend>Machine Details</legend>
-
-          <div class="form-group">
-            <label for="brand">Brand <span class="required">*</span></label>
-            <input
-              id="brand"
-              v-model="form.brand"
-              type="text"
-              maxlength="100"
-              class="input-field"
-              :class="{ 'input-error': formErrors.brand }"
-              aria-required="true"
-            />
-            <span v-if="formErrors.brand" class="field-error">{{ formErrors.brand }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="model">Model <span class="required">*</span></label>
-            <input
-              id="model"
-              v-model="form.model"
-              type="text"
-              maxlength="100"
-              class="input-field"
-              :class="{ 'input-error': formErrors.model }"
-              aria-required="true"
-            />
-            <span v-if="formErrors.model" class="field-error">{{ formErrors.model }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="sub_model">Sub-Model</label>
-            <input
-              id="sub_model"
-              v-model="form.sub_model"
-              type="text"
-              maxlength="100"
-              class="input-field"
-              :class="{ 'input-error': formErrors.sub_model }"
-            />
-            <span v-if="formErrors.sub_model" class="field-error">{{ formErrors.sub_model }}</span>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="unit_condition">Unit Condition <span class="required">*</span></label>
-              <select
-                id="unit_condition"
-                v-model="form.unit_condition"
-                class="input-field"
-                aria-required="true"
-              >
-                <option v-for="opt in unitConditionOptions" :key="opt" :value="opt">
-                  {{ opt }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="letterhead">Letterhead <span class="required">*</span></label>
-              <select
-                id="letterhead"
-                v-model="form.letterhead"
-                class="input-field"
-                aria-required="true"
-              >
-                <option v-for="opt in letterheadOptions" :key="opt" :value="opt">
-                  {{ opt }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- Features List -->
-        <fieldset class="form-fieldset">
-          <legend>
-            Features
-            <span class="list-count">({{ features.length }}/{{ MAX_LIST_ITEMS }})</span>
-          </legend>
-          <span v-if="formErrors.features" class="field-error">{{ formErrors.features }}</span>
-          <div v-for="(item, idx) in features" :key="idx" class="list-item-row">
-            <input
-              v-model="item.description"
-              type="text"
-              placeholder="Feature description"
-              class="input-field list-input"
-            />
-            <button
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="removeListItem(features, idx)"
-              aria-label="Remove feature"
-            >
-              &times;
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-secondary add-item-btn"
-            :disabled="features.length >= MAX_LIST_ITEMS"
-            @click="addListItem(features)"
-          >
-            + Add Feature
-          </button>
-        </fieldset>
-
-        <!-- Consumables List -->
-        <fieldset class="form-fieldset">
-          <legend>
-            Consumables
-            <span class="list-count">({{ consumables.length }}/{{ MAX_LIST_ITEMS }})</span>
-          </legend>
-          <span v-if="formErrors.consumables" class="field-error">{{ formErrors.consumables }}</span>
-          <div v-for="(item, idx) in consumables" :key="idx" class="consumable-row">
-            <div class="consumable-fields">
-              <div class="form-group consumable-name">
-                <input
-                  v-model="item.item_name"
-                  type="text"
-                  maxlength="150"
-                  placeholder="Item name"
-                  class="input-field"
-                  :class="{ 'input-error': formErrors[`consumable_${idx}_name`] }"
-                />
-                <span v-if="formErrors[`consumable_${idx}_name`]" class="field-error">
-                  {{ formErrors[`consumable_${idx}_name`] }}
-                </span>
-              </div>
-              <div class="form-group consumable-desc">
-                <input
-                  v-model="item.package_description"
-                  type="text"
-                  maxlength="300"
-                  placeholder="Package description"
-                  class="input-field"
-                  :class="{ 'input-error': formErrors[`consumable_${idx}_desc`] }"
-                />
-                <span v-if="formErrors[`consumable_${idx}_desc`]" class="field-error">
-                  {{ formErrors[`consumable_${idx}_desc`] }}
-                </span>
-              </div>
-
-              <div class="form-group consumable-price">
-                <input
-                  v-model.number="item.default_price"
-                  type="number"
-                  min="0.01"
-                  max="999999999.99"
-                  step="0.01"
-                  placeholder="Price"
-                  class="input-field"
-                  :class="{ 'input-error': formErrors[`consumable_${idx}_price`] }"
-                />
-                <span v-if="formErrors[`consumable_${idx}_price`]" class="field-error">
-                  {{ formErrors[`consumable_${idx}_price`] }}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="removeConsumable(idx)"
-              aria-label="Remove consumable"
-            >
-              &times;
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-secondary add-item-btn"
-            :disabled="consumables.length >= MAX_LIST_ITEMS"
-            @click="addConsumable"
-          >
-            + Add Consumable
-          </button>
-        </fieldset>
-
-        <!-- Inclusions List -->
-        <fieldset class="form-fieldset">
-          <legend>
-            Package Inclusions
-            <span class="list-count">({{ inclusions.length }}/{{ MAX_LIST_ITEMS }})</span>
-          </legend>
-          <span v-if="formErrors.inclusions" class="field-error">{{ formErrors.inclusions }}</span>
-          <div v-for="(item, idx) in inclusions" :key="idx" class="list-item-row">
-            <input
-              v-model="item.description"
-              type="text"
-              placeholder="Inclusion description"
-              class="input-field list-input"
-            />
-            <button
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="removeListItem(inclusions, idx)"
-              aria-label="Remove inclusion"
-            >
-              &times;
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-secondary add-item-btn"
-            :disabled="inclusions.length >= MAX_LIST_ITEMS"
-            @click="addListItem(inclusions)"
-          >
-            + Add Inclusion
-          </button>
-        </fieldset>
-
-        <!-- Exclusions List -->
-        <fieldset class="form-fieldset">
-          <legend>
-            Exclusions
-            <span class="list-count">({{ exclusions.length }}/{{ MAX_LIST_ITEMS }})</span>
-          </legend>
-          <span v-if="formErrors.exclusions" class="field-error">{{ formErrors.exclusions }}</span>
-          <div v-for="(item, idx) in exclusions" :key="idx" class="list-item-row">
-            <input
-              v-model="item.description"
-              type="text"
-              placeholder="Exclusion description"
-              class="input-field list-input"
-            />
-            <button
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="removeListItem(exclusions, idx)"
-              aria-label="Remove exclusion"
-            >
-              &times;
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-secondary add-item-btn"
-            :disabled="exclusions.length >= MAX_LIST_ITEMS"
-            @click="addListItem(exclusions)"
-          >
-            + Add Exclusion
-          </button>
-        </fieldset>
-
-        <!-- Add-ons List -->
-        <fieldset class="form-fieldset">
-          <legend>
-            Optional Add-ons
-            <span class="list-count">({{ addons.length }}/{{ MAX_LIST_ITEMS }})</span>
-          </legend>
-          <span v-if="formErrors.addons" class="field-error">{{ formErrors.addons }}</span>
-          <div v-for="(item, idx) in addons" :key="idx" class="list-item-row">
-            <input
-              v-model="item.description"
-              type="text"
-              placeholder="Add-on description"
-              class="input-field list-input"
-            />
-            <button
-              type="button"
-              class="btn btn-sm btn-danger"
-              @click="removeListItem(addons, idx)"
-              aria-label="Remove add-on"
-            >
-              &times;
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-secondary add-item-btn"
-            :disabled="addons.length >= MAX_LIST_ITEMS"
-            @click="addListItem(addons)"
-          >
-            + Add Add-on
-          </button>
-        </fieldset>
-
-        <!-- Submit -->
-        <div class="form-actions">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="saving || catalogStore.loading"
-          >
-            {{ saving ? 'Saving...' : mode === 'create' ? 'Create Machine' : 'Update Machine' }}
-          </button>
-          <button type="button" class="btn btn-secondary" @click="backToList">Cancel</button>
-        </div>
-      </form>
-    </section>
-
-    <!-- ═══ Delete Confirmation Modal ═══ -->
-    <div v-if="confirmDelete" class="modal-overlay" @click.self="cancelDelete">
-      <div class="modal" role="dialog" aria-labelledby="delete-dialog-title" aria-modal="true">
-        <h3 id="delete-dialog-title">Confirm Delete</h3>
-        <p>Are you sure you want to delete this machine? It will be marked as inactive but existing quotes referencing it will be preserved.</p>
-        <div class="modal-actions">
-          <button class="btn btn-danger" :disabled="saving" @click="handleDelete">
-            {{ saving ? 'Deleting...' : 'Delete' }}
-          </button>
-          <button class="btn btn-secondary" @click="cancelDelete">Cancel</button>
-        </div>
-      </div>
-    </div>
+    <div v-if="catalogStore.error" class="cat-error">{{ catalogStore.error }}</div>
   </div>
 </template>
 
-
 <style scoped>
-.catalog-editor-view {
-  padding: var(--space-6);
-  max-width: var(--content-max-width);
-  margin: 0 auto;
+.cat-page {
+  padding: 16px 20px;
+  background: #eef0f2;
+  min-height: calc(100vh - 40px);
 }
 
-.page-header {
+.cat-top {
   display: flex;
+  gap: 10px;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  max-width: 920px;
 }
 
-.page-header h1 {
+.cat-top h2 {
+  font-size: 16px;
+  color: #c0392b;
   margin: 0;
-  font-size: var(--font-size-2xl);
 }
 
-/* ─── Alerts ─────────────────────────────────────────────────────────────── */
-.alert {
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
-  font-size: var(--font-size-sm);
+.cat-machine-sel {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 12px;
+  background: #fff;
+  max-width: 340px;
 }
 
-.alert-success {
-  background-color: var(--color-success-light);
-  color: var(--color-success);
-  border: 1px solid var(--color-success);
+.cat-btn {
+  padding: 6px 11px;
+  border: 1px solid #c0392b;
+  background: #fff;
+  color: #c0392b;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
 }
 
-.alert-error {
-  background-color: var(--color-error-light);
-  color: var(--color-error);
-  border: 1px solid var(--color-error);
+.cat-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* ─── Search ─────────────────────────────────────────────────────────────── */
-.search-bar {
-  margin-bottom: var(--space-4);
+.cat-del {
+  border-color: #aaa;
+  color: #777;
 }
 
-.search-input {
-  width: 100%;
-  max-width: 400px;
+.cat-revert {
+  border-color: #aaa;
+  color: #777;
 }
 
-/* ─── States ─────────────────────────────────────────────────────────────── */
-.loading-state,
-.empty-state {
-  padding: var(--space-8);
-  text-align: center;
-  color: var(--color-gray-500);
+.cat-note {
+  font-size: 11px;
+  color: #888;
+  max-width: 920px;
+  margin-bottom: 12px;
+  line-height: 1.5;
 }
 
-/* ─── Machine Table ──────────────────────────────────────────────────────── */
-.machine-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
+.cat-note code {
+  background: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
 }
 
-.machine-table th,
-.machine-table td {
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.machine-table th {
-  font-weight: 600;
-  background-color: var(--color-gray-50);
-  color: var(--color-gray-700);
-}
-
-.machine-table tbody tr:hover {
-  background-color: var(--color-gray-50);
-}
-
-.actions-cell {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* ─── Form ───────────────────────────────────────────────────────────────── */
-.machine-form-section h2 {
-  margin-bottom: var(--space-6);
-  font-size: var(--font-size-xl);
-}
-
-.form-fieldset {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
-  margin-bottom: var(--space-6);
-}
-
-.form-fieldset legend {
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  padding: 0 var(--space-2);
-  color: var(--color-gray-700);
-}
-
-.form-group {
-  margin-bottom: var(--space-4);
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-gray-700);
-}
-
-.form-row {
+.cat-form {
+  max-width: 920px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+  padding: 14px 16px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  gap: 10px 16px;
 }
 
-.input-field {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 16px;
+.cf-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cf-row.full {
+  grid-column: 1 / -1;
+}
+
+.cf-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+}
+
+.cf-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #c0392b;
+}
+
+.cat-form input.fp-in {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
   font-family: inherit;
-  line-height: 1.5;
-  transition: border-color var(--transition-fast);
-  background-color: var(--color-white);
 }
 
-.input-field:focus {
+.cat-form input.fp-in:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  border-color: #c0392b;
 }
 
-.input-error {
-  border-color: var(--color-error);
-}
-
-.input-error:focus {
-  box-shadow: 0 0 0 3px var(--color-error-light);
-}
-
-.field-error {
-  display: block;
-  margin-top: var(--space-1);
-  font-size: var(--font-size-xs);
-  color: var(--color-error);
-}
-
-.required {
-  color: var(--color-error);
-}
-
-.list-count {
-  font-weight: 400;
-  font-size: var(--font-size-xs);
-  color: var(--color-gray-500);
-}
-
-/* ─── Dynamic List Items ─────────────────────────────────────────────────── */
-.list-item-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.list-input {
-  flex: 1;
-}
-
-.consumable-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--color-gray-100);
-  border-radius: var(--radius-md);
-  background-color: var(--color-gray-50);
-}
-
-.consumable-fields {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr;
-  gap: var(--space-2);
-  flex: 1;
-}
-
-.consumable-fields .form-group {
-  margin-bottom: 0;
-}
-
-.add-item-btn {
-  margin-top: var(--space-2);
-}
-
-/* ─── Form Actions ───────────────────────────────────────────────────────── */
-.form-actions {
-  display: flex;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border-color);
-}
-
-/* ─── Buttons ────────────────────────────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+.cat-form textarea {
   font-family: inherit;
-  cursor: pointer;
-  transition: background-color var(--transition-fast), opacity var(--transition-fast);
-  min-height: 44px;
-  min-width: 44px;
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
 }
 
-.btn:disabled {
+.cat-form textarea:focus {
+  outline: none;
+  border-color: #c0392b;
+}
+
+.cf-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.cf-tbl th {
+  text-align: left;
+  font-size: 10px;
+  color: #888;
+  font-weight: 600;
+  padding: 1px 4px;
+}
+
+.cf-tbl td {
+  padding: 2px 4px;
+}
+
+.cf-tbl td:nth-child(2) {
+  width: 28%;
+}
+
+.cf-tbl td:nth-child(3) {
+  width: 22%;
+}
+
+.cf-tbl td:nth-child(4) {
+  width: 32px;
+}
+
+.cf-tbl input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.cf-tbl input:focus {
+  outline: none;
+  border-color: #c0392b;
+}
+
+.cf-rowdel {
+  border: 1px solid #ddd;
+  background: #fafafa;
+  color: #c0392b;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  width: 26px;
+  height: 26px;
+}
+
+.cf-addrow {
+  margin-top: 2px;
+  padding: 5px 10px;
+  background: #fff;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cat-actions {
+  max-width: 920px;
+  margin: 12px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cat-save {
+  padding: 11px 20px;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cat-save:hover {
+  background: #a93226;
+}
+
+.cat-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-white);
+.cat-msg {
+  font-size: 12px;
+  color: #27ae60;
+  font-weight: 700;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+.cat-error {
+  max-width: 920px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #fdecea;
+  color: #c0392b;
+  border-radius: 6px;
+  font-size: 12px;
 }
 
-.btn-secondary {
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-700);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-gray-200);
-}
-
-.btn-danger {
-  background-color: var(--color-error);
-  color: var(--color-white);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #b91c1c;
-}
-
-.btn-sm {
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-xs);
-  min-height: 32px;
-  min-width: 32px;
-}
-
-/* ─── Modal ──────────────────────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background-color: var(--color-white);
-  border-radius: var(--radius-xl);
-  padding: var(--space-6);
-  max-width: 480px;
-  width: 90%;
-  box-shadow: var(--shadow-lg);
-}
-
-.modal h3 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-lg);
-}
-
-.modal p {
-  color: var(--color-gray-600);
-  font-size: var(--font-size-sm);
-}
-
-.modal-actions {
-  display: flex;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
-}
-
-/* ─── Header Actions ──────────────────────────────────────────────────────── */
-.header-actions {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-/* ─── Import Section ─────────────────────────────────────────────────────── */
-.import-section {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  margin-bottom: var(--space-6);
-  background-color: var(--color-gray-50);
-}
-
-.import-section h2 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-lg);
-}
-
-.import-description {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
-  margin-bottom: var(--space-4);
-}
-
-.import-description code {
-  background-color: var(--color-gray-100);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm, 4px);
-  font-size: var(--font-size-xs);
-}
-
-.import-upload {
-  margin-bottom: var(--space-4);
-}
-
-.file-input {
-  font-size: 16px;
-  font-family: inherit;
-}
-
-.import-status {
-  padding: var(--space-3);
-}
-
-.import-result {
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  background-color: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-}
-
-.import-result h3 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-base, 1rem);
-}
-
-.result-summary {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 var(--space-3);
-  display: flex;
-  gap: var(--space-4);
-}
-
-.result-summary li {
-  font-size: var(--font-size-sm);
-}
-
-.import-errors {
-  margin-top: var(--space-3);
-  border-top: 1px solid var(--border-color);
-  padding-top: var(--space-3);
-}
-
-.import-errors h4 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-error);
-}
-
-.error-list {
-  list-style: disc;
-  padding-left: var(--space-5);
-  margin: 0;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.error-list li {
-  font-size: var(--font-size-xs);
-  color: var(--color-error);
-  margin-bottom: var(--space-1);
-}
-
-/* ─── Responsive ─────────────────────────────────────────────────────────── */
-@media screen and (max-width: 768px) {
-  .form-row {
+@media (max-width: 700px) {
+  .cat-form {
     grid-template-columns: 1fr;
-  }
-
-  .consumable-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .machine-table {
-    display: block;
-    overflow-x: auto;
   }
 }
 </style>

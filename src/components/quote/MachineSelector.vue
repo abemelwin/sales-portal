@@ -19,6 +19,11 @@ const brands = computed(() => {
   return Array.from(brandSet).sort()
 })
 
+// Count of machines per brand
+function brandCount(brand: string): number {
+  return catalogStore.machines.filter((m) => m.brand === brand).length
+}
+
 // Derive unique model names for selected brand
 const uniqueModels = computed(() => {
   if (!quoteState.selectedBrand) return []
@@ -204,222 +209,153 @@ if (catalogStore.machines.length === 0) {
 </script>
 
 <template>
-  <div class="machine-selector">
-    <h3 class="machine-selector__title">Machine Selection</h3>
-
+  <div>
     <!-- Error banner -->
-    <div
-      v-if="quoteState.catalogError"
-      class="machine-selector__error"
-      role="alert"
-    >
-      <p>{{ quoteState.catalogError }}</p>
-      <button class="machine-selector__retry-btn" @click="retryLoad">
-        Retry
-      </button>
+    <div v-if="quoteState.catalogError" class="ms-error" role="alert">
+      <span>{{ quoteState.catalogError }}</span>
+      <button class="ms-retry-btn" type="button" @click="retryLoad">Retry</button>
     </div>
 
-    <div class="machine-selector__fields">
-      <!-- Brand dropdown -->
-      <div class="machine-selector__field">
-        <label for="brand-select" class="machine-selector__label">Brand</label>
-        <select
-          id="brand-select"
-          v-model="quoteState.selectedBrand"
-          class="machine-selector__select"
-          :disabled="catalogStore.loading"
-        >
-          <option value="" disabled>Select a brand</option>
-          <option v-for="brand in brands" :key="brand" :value="brand">
-            {{ brand }}
-          </option>
-        </select>
-      </div>
+    <!-- Brand -->
+    <div class="fp-sec">
+      <label class="fp-lbl" for="brand-select">Brand</label>
+      <select
+        id="brand-select"
+        class="fp-sel"
+        v-model="quoteState.selectedBrand"
+        :disabled="catalogStore.loading"
+      >
+        <option value="" disabled>Select brand</option>
+        <option v-for="brand in brands" :key="brand" :value="brand">
+          {{ brand }} ({{ brandCount(brand) }})
+        </option>
+      </select>
+    </div>
 
-      <!-- Model dropdown -->
-      <div class="machine-selector__field">
-        <label for="model-select" class="machine-selector__label">Model</label>
-        <select
-          id="model-select"
-          v-model="quoteState.selectedModel"
-          class="machine-selector__select"
-          :disabled="!quoteState.selectedBrand || catalogStore.loading"
-        >
-          <option value="" disabled>Select a model</option>
-          <option
-            v-for="model in uniqueModels"
-            :key="model"
-            :value="model"
-          >
-            {{ model }}
-          </option>
-        </select>
-      </div>
+    <!-- Model -->
+    <div class="fp-sec">
+      <label class="fp-lbl" for="model-select">Machine Model</label>
+      <select
+        id="model-select"
+        class="fp-sel"
+        v-model="quoteState.selectedModel"
+        :disabled="!quoteState.selectedBrand || catalogStore.loading"
+      >
+        <option value="" disabled>Select model</option>
+        <option v-for="model in uniqueModels" :key="model" :value="model">
+          {{ model }}
+        </option>
+      </select>
+    </div>
 
-      <!-- Sub-Model / Variant dropdown (conditional) -->
-      <div v-if="showSubModelDropdown" class="machine-selector__field">
-        <label for="submodel-select" class="machine-selector__label">Sub-Model / Variant</label>
-        <select
-          id="submodel-select"
-          v-model="quoteState.selectedSubModel"
-          class="machine-selector__select"
-          :disabled="!quoteState.selectedModel || catalogStore.loading"
-        >
-          <option value="" disabled>Select a variant</option>
-          <option
-            v-for="subModel in subModels"
-            :key="subModel"
-            :value="subModel"
-          >
-            {{ subModel }}
-          </option>
-        </select>
-      </div>
+    <!-- Sub-Model / Variant dropdown (conditional) -->
+    <div v-if="showSubModelDropdown" class="fp-sec">
+      <label class="fp-lbl" for="submodel-select">Model / Variant</label>
+      <select
+        id="submodel-select"
+        class="fp-sel"
+        v-model="quoteState.selectedSubModel"
+        :disabled="!quoteState.selectedModel || catalogStore.loading"
+      >
+        <option value="" disabled>Select variant</option>
+        <option v-for="subModel in subModels" :key="subModel" :value="subModel">
+          {{ subModel }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Unit Condition -->
+    <div class="fp-sec">
+      <label class="fp-lbl" for="unit-condition">Unit Condition</label>
+      <select
+        id="unit-condition"
+        class="fp-sel"
+        v-model="quoteState.unitCondition"
+      >
+        <option value="Brand New">Brand New</option>
+        <option value="Re-certified">Re-certified</option>
+        <option value="Demo Unit">Demo Unit</option>
+      </select>
     </div>
 
     <!-- Loading indicator -->
-    <p v-if="loading" class="machine-selector__loading">
-      Loading machine data...
-    </p>
-
-    <!-- Populated data summary -->
-    <div v-if="quoteState.machineId && !loading" class="machine-selector__summary">
-      <p class="machine-selector__info">
-        <strong>Condition:</strong> {{ quoteState.unitCondition }}
-      </p>
-      <p class="machine-selector__info">
-        <strong>Features:</strong> {{ quoteState.features.length }} item(s)
-      </p>
-      <p class="machine-selector__info">
-        <strong>Consumables:</strong> {{ quoteState.consumables.length }} item(s)
-      </p>
-      <p class="machine-selector__info">
-        <strong>Inclusions:</strong> {{ quoteState.inclusionItems.length }} item(s)
-      </p>
-      <p class="machine-selector__info">
-        <strong>Exclusions:</strong> {{ quoteState.exclusionItems.length }} item(s)
-      </p>
-      <p class="machine-selector__info">
-        <strong>Add-ons:</strong> {{ quoteState.addonItems.length }} item(s)
-      </p>
-    </div>
+    <p v-if="loading" class="ms-loading">Loading...</p>
   </div>
 </template>
 
 <style scoped>
-.machine-selector {
-  padding: var(--space-4);
-  background: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+/* Inherit parent fp-* styles since scoped CSS doesn't leak from parent */
+.fp-sec {
+  margin-bottom: 8px;
 }
 
-.machine-selector__title {
-  margin: 0 0 var(--space-4);
-  font-size: var(--font-size-lg);
+.fp-lbl {
+  display: block;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--color-gray-800);
+  color: #666;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
 }
 
-.machine-selector__error {
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-4);
-  background: var(--color-error-light);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-md);
-  color: var(--color-error);
-}
-
-.machine-selector__error p {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-sm);
-}
-
-.machine-selector__retry-btn {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-white);
-  background: var(--color-error);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.machine-selector__retry-btn:hover {
-  background: #b91c1c;
-}
-
-.machine-selector__fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-
-@media screen and (max-width: 767px) {
-  .machine-selector__fields {
-    grid-template-columns: 1fr;
-  }
-}
-
-.machine-selector__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.machine-selector__label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-gray-700);
-}
-
-.machine-selector__select {
+.fp-sel {
   width: 100%;
-  padding: var(--space-2) var(--space-3);
-  font-size: 16px;
+  padding: 5px 7px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #222;
+  background: #fafafa;
   font-family: inherit;
-  color: var(--color-gray-900);
-  background: var(--color-white);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  appearance: auto;
-  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
 }
 
-.machine-selector__select:focus {
+.fp-sel:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  border-color: #c0392b;
+  background: #fff;
 }
 
-.machine-selector__select:disabled {
-  background: var(--color-gray-100);
-  color: var(--color-gray-400);
+.fp-sel:disabled {
+  background: #f0f0f0;
+  color: #aaa;
   cursor: not-allowed;
 }
 
-.machine-selector__loading {
-  margin: var(--space-3) 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-500);
+.ms-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #c0392b;
 }
 
-.machine-selector__summary {
-  margin-top: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-gray-50);
-  border-radius: var(--radius-md);
+.ms-retry-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #c0392b;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-.machine-selector__info {
-  margin: 0 0 var(--space-1);
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
+.ms-retry-btn:hover {
+  background: #a93226;
 }
 
-.machine-selector__info:last-child {
-  margin-bottom: 0;
+.ms-loading {
+  font-size: 11px;
+  color: #999;
+  margin: 4px 0 0;
 }
 </style>

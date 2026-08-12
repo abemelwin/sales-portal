@@ -7,11 +7,12 @@
    -------------------------------------------------------------------------- */
 :root {
   /* Brand colors */
-  --color-primary: #1a56db;
-  --color-primary-hover: #1648b8;
-  --color-primary-light: #e1effe;
-  --color-secondary: #1c64f2;
-  --color-secondary-hover: #1a56db;
+  --color-primary: #c0392b;
+  --color-primary-hover: #a93226;
+  --color-primary-dark: #922b21;
+  --color-primary-light: #fff8f8;
+  --color-secondary: #c0392b;
+  --color-secondary-hover: #a93226;
 
   /* Neutral palette */
   --color-white: #ffffff;
@@ -80,9 +81,9 @@
   --transition-slow: 300ms ease;
 
   /* Layout */
-  --nav-height: 3.5rem;
+  --nav-height: 40px;
   --sidebar-width: 16rem;
-  --content-max-width: 80rem;
+  --content-max-width: 100%;
 }
 
 /* --------------------------------------------------------------------------
@@ -140,23 +141,42 @@ input[type="date"],
 input[type="datetime-local"],
 textarea,
 select {
-  font-size: 16px;
   font-family: inherit;
+}
+
+/* Prevent iOS zoom on focus — only apply 16px font on mobile */
+@media screen and (max-width: 767px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 /* --------------------------------------------------------------------------
    Interactive Element Touch Targets (Requirement 14.1)
    Minimum touch target size of 44x44px
    -------------------------------------------------------------------------- */
-button,
-[role="button"],
-a,
-input[type="checkbox"],
-input[type="radio"],
-select,
-summary {
-  min-height: 44px;
-  min-width: 44px;
+/* Touch targets 44px — mobile only (desktop uses native sizes like the reference HTML) */
+@media screen and (max-width: 767px) {
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  summary {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 button,

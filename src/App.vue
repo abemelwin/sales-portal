@@ -204,13 +204,10 @@ function dismissError() {
 .app-main {
   flex: 1;
   width: 100%;
-  max-width: var(--content-max-width);
-  margin: 0 auto;
-  padding: var(--space-6);
 }
 
 .app-main--with-nav {
-  padding-top: var(--space-6);
+  /* No extra padding — views manage their own layout */
 }
 
 /* Error banner */
@@ -247,10 +244,5 @@ function dismissError() {
   background-color: var(--color-error);
 }
 
-/* Responsive */
-@media screen and (max-width: 767px) {
-  .app-main {
-    padding: var(--space-4);
-  }
-}
+
 </style>

@@ -33,8 +33,8 @@ async function handleSubmit() {
 <template>
   <div class="login-view">
     <div class="login-card">
-      <h1 class="login-title">Sales Portal</h1>
-      <p class="login-subtitle">Sign in to your account</p>
+      <h1 class="login-title">ES PRINT MEDIA INC.</h1>
+      <p class="login-subtitle">Quotation System &mdash; Sign In</p>
 
       <!-- Account locked message -->
       <div
@@ -123,7 +123,7 @@ async function handleSubmit() {
   justify-content: center;
   min-height: 100vh;
   padding: var(--space-4);
-  background-color: var(--color-gray-50);
+  background: linear-gradient(135deg, #c0392b, #7b1e13);
 }
 
 .login-card {
@@ -139,7 +139,7 @@ async function handleSubmit() {
   margin: 0 0 var(--space-1);
   font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: var(--color-gray-900);
+  color: #c0392b;
   text-align: center;
 }
 

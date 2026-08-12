@@ -262,8 +262,6 @@ onMounted(async () => {
 
 <style scoped>
 .closing-docs-view {
-  max-width: var(--content-max-width);
-  margin: 0 auto;
   padding: var(--space-6);
 }
 
