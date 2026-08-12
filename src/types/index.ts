@@ -82,6 +82,11 @@ export interface Machine {
   has_computer_set_option: boolean
   warranty_machine_duration: string | null
   warranty_printhead_duration: string | null
+  srp: number
+  lbp: number
+  cash_price: number
+  machine_warranty_months: number
+  printhead_warranty: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -281,8 +286,9 @@ export interface PricelistRow {
   brand: string
   model: string
   sub_model: string | null
-  unit_condition: UnitCondition
-  cost_price?: number
-  sell_price?: number
-  margin?: number
+  srp: number
+  lbp: number
+  cash_price: number
+  machine_warranty_months: number
+  printhead_warranty: string | null
 }

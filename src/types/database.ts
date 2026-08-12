@@ -56,6 +56,11 @@ export interface Database {
           has_computer_set_option: boolean
           warranty_machine_duration: string | null
           warranty_printhead_duration: string | null
+          srp: number
+          lbp: number
+          cash_price: number
+          machine_warranty_months: number
+          printhead_warranty: string | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -71,6 +76,11 @@ export interface Database {
           has_computer_set_option?: boolean
           warranty_machine_duration?: string | null
           warranty_printhead_duration?: string | null
+          srp?: number
+          lbp?: number
+          cash_price?: number
+          machine_warranty_months?: number
+          printhead_warranty?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -86,6 +96,11 @@ export interface Database {
           has_computer_set_option?: boolean
           warranty_machine_duration?: string | null
           warranty_printhead_duration?: string | null
+          srp?: number
+          lbp?: number
+          cash_price?: number
+          machine_warranty_months?: number
+          printhead_warranty?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
