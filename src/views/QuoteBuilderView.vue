@@ -288,7 +288,7 @@ watch(
         type="button"
         class="mobile-pdf-btn no-print"
         :disabled="isPrinting"
-        @click="printQuote"
+        @click="() => printQuote(quoteState)"
         aria-label="Save as PDF"
       >
         {{ isPrinting ? 'Printing...' : 'Save as PDF' }}
