@@ -100,47 +100,32 @@ const router = createRouter({
   routes
 })
 
-// Wait for Supabase to restore session from localStorage on initial page load
-let authResolved = false
-
-async function ensureAuth(authStore: any): Promise<void> {
-  if (authResolved) return
-  authResolved = true
-
-  // If already authenticated, no need to wait
-  if (authStore.isAuthenticated) return
-
-  // Give Supabase time to fire INITIAL_SESSION event
-  // This happens asynchronously after page load
-  await new Promise<void>((resolve) => {
-    // Check immediately
-    if (authStore.isAuthenticated) { resolve(); return }
-
-    let resolved = false
-    const timeout = setTimeout(() => {
-      if (!resolved) { resolved = true; resolve() }
-    }, 2000)
-
-    // Poll every 50ms for up to 2 seconds
-    const interval = setInterval(() => {
-      if (authStore.isAuthenticated) {
-        if (!resolved) {
-          resolved = true
-          clearTimeout(timeout)
-          clearInterval(interval)
-          resolve()
-        }
-      }
-    }, 50)
-  })
-}
-
 router.beforeEach(async (to) => {
   const { useAuthStore } = await import('@/stores/auth')
+  const { supabase } = await import('@/services/supabase')
   const authStore = useAuthStore()
 
-  // On first navigation, wait for auth session to restore
-  await ensureAuth(authStore)
+  // If store has no session yet, try to get it directly from Supabase
+  // This handles page reload where onAuthStateChange hasn't fired yet
+  if (!authStore.session) {
+    const { data } = await supabase.auth.getSession()
+    if (data.session) {
+      authStore.session = data.session
+      // Fetch profile if not loaded
+      if (!authStore.user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', data.session.user.id)
+          .eq('is_active', true)
+          .single()
+        if (profile) {
+          authStore.user = profile as any
+          authStore.role = (profile.role as any) || 'user'
+        }
+      }
+    }
+  }
 
   // Redirect authenticated users away from login page
   if (to.name === 'login' && authStore.isAuthenticated) {
