@@ -100,11 +100,41 @@ const router = createRouter({
   routes
 })
 
+// Helper: wait for Supabase auth to resolve on page load
+let authInitialized = false
+let authInitPromise: Promise<void> | null = null
+
+function waitForAuthInit(authStore: ReturnType<typeof import('@/stores/auth')['useAuthStore']>): Promise<void> {
+  if (authInitialized) return Promise.resolve()
+  if (authInitPromise) return authInitPromise
+
+  authInitPromise = new Promise<void>((resolve) => {
+    if (authStore.session) {
+      authInitialized = true
+      resolve()
+      return
+    }
+    const timeout = setTimeout(() => { authInitialized = true; resolve() }, 3000)
+    const check = setInterval(() => {
+      if (authStore.session || authStore.user) {
+        clearTimeout(timeout)
+        clearInterval(check)
+        authInitialized = true
+        resolve()
+      }
+    }, 50)
+  })
+  return authInitPromise
+}
+
 router.beforeEach(async (to) => {
-  // Lazy-import auth store to avoid circular dependency issues
-  // and to ensure Pinia is installed before store access
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
+
+  // Wait for auth initialization on protected routes
+  if (to.meta.requiresAuth) {
+    await waitForAuthInit(authStore)
+  }
 
   // Redirect authenticated users away from login page
   if (to.name === 'login' && authStore.isAuthenticated) {
@@ -116,8 +146,9 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // Redirect non-admin users away from admin-only routes
-  if (to.meta.requiresAdmin && authStore.role !== 'superadmin') {
+  // Admin routes: elevated roles get access
+  const adminRoles = ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor']
+  if (to.meta.requiresAdmin && !adminRoles.includes(authStore.role || '')) {
     return { name: 'dashboard' }
   }
 })
