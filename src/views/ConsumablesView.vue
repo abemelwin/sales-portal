@@ -15,13 +15,13 @@ interface PriceListItem {
 }
 
 const BUILTIN_PRICELISTS: PriceListItem[] = [
-  { id: 'acrylic_sintra', name: 'Acrylic & Sintra Price List', date: 'June 22, 2026', source: 'Built-in' },
-  { id: 'artistic_wallpaper', name: 'Artistic & Wallpaper Price List', date: 'July 25, 2025', source: 'Built-in' },
-  { id: '3m_graphic', name: '3M Graphic Film Price List', date: 'July 1, 2026', source: 'Built-in' },
-  { id: '3m_reflective', name: '3M Reflective Film Price List', date: 'July 1, 2026', source: 'Built-in' },
-  { id: 'solvent_media', name: 'Solvent Media Price List', date: 'July 3, 2026', source: 'Built-in' },
-  { id: 'textile_media', name: 'Textile Media Price List', date: 'July 23, 2026', source: 'Built-in' },
-  { id: '3d_patch', name: '3D Patch Price List', date: 'November 13, 2019', source: 'Built-in' },
+  { id: 'acrylic_sintra', name: 'Acrylic & Sintra Price List', date: 'June 22, 2026', source: 'Built-in', url: '/pricelists/acrylic_sintra.pdf' },
+  { id: 'artistic_wallpaper', name: 'Artistic & Wallpaper Price List', date: 'July 25, 2025', source: 'Built-in', url: '/pricelists/artistic_wallpaper.pdf' },
+  { id: '3m_graphic', name: '3M Graphic Film Price List', date: 'July 1, 2026', source: 'Built-in', url: '/pricelists/3m_graphic.pdf' },
+  { id: '3m_reflective', name: '3M Reflective Film Price List', date: 'July 1, 2026', source: 'Built-in', url: '/pricelists/3m_reflective.pdf' },
+  { id: 'solvent_media', name: 'Solvent Media Price List', date: 'July 3, 2026', source: 'Built-in', url: '/pricelists/solvent_media.pdf' },
+  { id: 'textile_media', name: 'Textile Media Price List', date: 'July 23, 2026', source: 'Built-in', url: '/pricelists/textile_media.pdf' },
+  { id: '3d_patch', name: '3D Patch Price List', date: 'November 13, 2019', source: 'Built-in', url: '/pricelists/3d_patch.pdf' },
 ]
 
 const uploadedLists = ref<PriceListItem[]>([])
