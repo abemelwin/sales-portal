@@ -100,41 +100,47 @@ const router = createRouter({
   routes
 })
 
-// Helper: wait for Supabase auth to resolve on page load
-let authInitialized = false
-let authInitPromise: Promise<void> | null = null
+// Wait for Supabase to restore session from localStorage on initial page load
+let authResolved = false
 
-function waitForAuthInit(authStore: ReturnType<typeof import('@/stores/auth')['useAuthStore']>): Promise<void> {
-  if (authInitialized) return Promise.resolve()
-  if (authInitPromise) return authInitPromise
+async function ensureAuth(authStore: any): Promise<void> {
+  if (authResolved) return
+  authResolved = true
 
-  authInitPromise = new Promise<void>((resolve) => {
-    if (authStore.session) {
-      authInitialized = true
-      resolve()
-      return
-    }
-    const timeout = setTimeout(() => { authInitialized = true; resolve() }, 3000)
-    const check = setInterval(() => {
-      if (authStore.session || authStore.user) {
-        clearTimeout(timeout)
-        clearInterval(check)
-        authInitialized = true
-        resolve()
+  // If already authenticated, no need to wait
+  if (authStore.isAuthenticated) return
+
+  // Give Supabase time to fire INITIAL_SESSION event
+  // This happens asynchronously after page load
+  await new Promise<void>((resolve) => {
+    // Check immediately
+    if (authStore.isAuthenticated) { resolve(); return }
+
+    let resolved = false
+    const timeout = setTimeout(() => {
+      if (!resolved) { resolved = true; resolve() }
+    }, 2000)
+
+    // Poll every 50ms for up to 2 seconds
+    const interval = setInterval(() => {
+      if (authStore.isAuthenticated) {
+        if (!resolved) {
+          resolved = true
+          clearTimeout(timeout)
+          clearInterval(interval)
+          resolve()
+        }
       }
     }, 50)
   })
-  return authInitPromise
 }
 
 router.beforeEach(async (to) => {
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
 
-  // Wait for auth initialization on protected routes
-  if (to.meta.requiresAuth) {
-    await waitForAuthInit(authStore)
-  }
+  // On first navigation, wait for auth session to restore
+  await ensureAuth(authStore)
 
   // Redirect authenticated users away from login page
   if (to.name === 'login' && authStore.isAuthenticated) {
