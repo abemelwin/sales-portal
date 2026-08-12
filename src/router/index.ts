@@ -86,7 +86,13 @@ const routes: RouteRecordRaw[] = [
     name: 'migrate',
     component: () => import('@/views/DataMigrationView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
-  }
+  },
+  {
+    path: '/change-password',
+    name: 'change-password',
+    component: () => import('@/views/ChangePasswordView.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
@@ -100,13 +106,18 @@ router.beforeEach(async (to) => {
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
 
+  // Redirect authenticated users away from login page
+  if (to.name === 'login' && authStore.isAuthenticated) {
+    return { name: 'dashboard' }
+  }
+
   // Redirect unauthenticated users to login with return URL
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
   // Redirect non-admin users away from admin-only routes
-  if (to.meta.requiresAdmin && authStore.role !== 'admin') {
+  if (to.meta.requiresAdmin && authStore.role !== 'superadmin') {
     return { name: 'dashboard' }
   }
 })

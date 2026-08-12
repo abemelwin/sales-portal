@@ -73,7 +73,7 @@ function handleRetry() {
       </div>
 
       <!-- Active user count card — admin only (Requirement 3.3) -->
-      <div v-if="role === 'admin'" class="data-card">
+      <div v-if="role === 'superadmin'" class="data-card">
         <span class="data-card-count">{{ dashboardStore.activeUserCount }}</span>
         <span class="data-card-label">Active Users</span>
       </div>
@@ -108,8 +108,6 @@ function handleRetry() {
 <style scoped>
 .dashboard-view {
   padding: var(--space-6);
-  max-width: var(--content-max-width);
-  margin: 0 auto;
 }
 
 .dashboard-title {

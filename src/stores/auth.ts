@@ -38,9 +38,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     user.value = data as User
-    // If role is unrecognized or missing, default to salesperson (Requirement 2.2)
-    const resolvedRole = data.role === 'admin' ? 'admin' : 'salesperson'
-    role.value = resolvedRole
+    // Store the role from the database as-is
+    role.value = (data.role as Role) || 'user'
 
     return true
   }

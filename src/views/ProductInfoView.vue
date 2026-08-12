@@ -3,29 +3,35 @@ import { computed, onMounted, ref } from 'vue'
 import { useProductInfoStore } from '@/stores/productInfo'
 import { useCatalogStore } from '@/stores/catalog'
 import { useAuth } from '@/composables/useAuth'
-import ProductInfoLinkForm from '@/components/ProductInfoLinkForm.vue'
 import type { ProductInfoLink } from '@/types'
 
 const productInfoStore = useProductInfoStore()
 const catalogStore = useCatalogStore()
 const { role } = useAuth()
 
-const isAdmin = computed(() => role.value === 'admin')
+const isAdmin = computed(() => ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor'].includes(role.value || ''))
 
-// ─── Admin Form State ──────────────────────────────────────────────────────────
+// View mode
+type ViewMode = 'list' | 'detail'
+const mode = ref<ViewMode>('list')
+const selectedMachineId = ref<string | null>(null)
 
-/** Machine ID for which the form is currently open */
-const formMachineId = ref<string | null>(null)
-/** Link being edited (null = adding a new link) */
-const editingLink = ref<ProductInfoLink | null>(null)
-/** Whether save is in progress */
-const saving = ref(false)
-/** Form-level error (from store/service failures) */
-const formError = ref<string | null>(null)
-/** Track link pending deletion confirmation */
-const deletingLinkId = ref<string | null>(null)
+// Brand filter
+const brandFilter = ref('')
 
-// Fetch links and machines on mount
+// Categories
+const categories = [
+  { key: 'picture', label: 'Product Picture' },
+  { key: 'sitereq', label: 'Site Requirements' },
+  { key: 'catalog', label: 'Product Catalog' },
+  { key: 'roi', label: 'ROI Computation' },
+  { key: 'videos', label: 'Product Videos' },
+  { key: 'others', label: 'Others' },
+] as const
+
+type CategoryKey = (typeof categories)[number]['key']
+
+// Load data
 onMounted(async () => {
   await Promise.all([
     productInfoStore.fetchLinks(),
@@ -33,530 +39,472 @@ onMounted(async () => {
   ])
 })
 
-/**
- * Groups product info links by brand → model (alphabetically sorted).
- * Also includes models that have no links, showing a "no documents" message.
- * Requirements: 9.1, 9.2, 9.3
- */
-interface ModelGroup {
-  model: string
-  subModel: string | null
-  machineId: string
-  links: ProductInfoLink[]
-}
-
-interface BrandGroup {
-  brand: string
-  models: ModelGroup[]
-}
-
-const groupedLinks = computed<BrandGroup[]>(() => {
-  const machines = catalogStore.machines
-  const links = productInfoStore.productLinks
-
-  // Build a map of machine_id -> links
-  const linksByMachine = new Map<string, ProductInfoLink[]>()
-  for (const link of links) {
-    const existing = linksByMachine.get(link.machine_id) ?? []
-    existing.push(link)
-    linksByMachine.set(link.machine_id, existing)
-  }
-
-  // Group machines by brand → model
-  const brandMap = new Map<string, ModelGroup[]>()
-
-  for (const machine of machines) {
-    const brand = machine.brand
-    const modelGroup: ModelGroup = {
-      model: machine.model,
-      subModel: machine.sub_model,
-      machineId: machine.id,
-      links: linksByMachine.get(machine.id) ?? [],
-    }
-
-    const existingBrand = brandMap.get(brand) ?? []
-    existingBrand.push(modelGroup)
-    brandMap.set(brand, existingBrand)
-  }
-
-  // Sort brands alphabetically, then models within each brand
-  const sortedBrands = Array.from(brandMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([brand, models]) => ({
-      brand,
-      models: models.sort((a, b) => a.model.localeCompare(b.model)),
-    }))
-
-  return sortedBrands
+// Unique brands for filter
+const brands = computed(() => {
+  const set = new Set(catalogStore.machines.map(m => m.brand))
+  return Array.from(set).sort()
 })
 
-// ─── Admin Actions ─────────────────────────────────────────────────────────────
-
-function openAddForm(machineId: string) {
-  formMachineId.value = machineId
-  editingLink.value = null
-  formError.value = null
-}
-
-function openEditForm(machineId: string, link: ProductInfoLink) {
-  formMachineId.value = machineId
-  editingLink.value = link
-  formError.value = null
-}
-
-function closeForm() {
-  formMachineId.value = null
-  editingLink.value = null
-  formError.value = null
-}
-
-async function handleSubmit(payload: { display_name: string; url: string; document_type: string }) {
-  saving.value = true
-  formError.value = null
-
-  try {
-    let result: { success: boolean; error?: string }
-
-    if (editingLink.value) {
-      // Editing existing link
-      result = await productInfoStore.editLink(editingLink.value.id, payload)
-    } else {
-      // Adding new link
-      result = await productInfoStore.addLink(
-        formMachineId.value!,
-        payload.display_name,
-        payload.url,
-        payload.document_type
-      )
-    }
-
-    if (result.success) {
-      closeForm()
-    } else {
-      // Show error, preserve form data (Requirement 9.7)
-      formError.value = result.error ?? 'An unexpected error occurred. Please try again.'
-    }
-  } catch (err) {
-    formError.value = 'An unexpected error occurred. Please try again.'
-  } finally {
-    saving.value = false
+// Filtered & sorted machines for list view
+const filteredMachines = computed(() => {
+  let machines = [...catalogStore.machines]
+  if (brandFilter.value) {
+    machines = machines.filter(m => m.brand === brandFilter.value)
   }
+  return machines.sort((a, b) => a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model))
+})
+
+// Check if a machine has any link in a category
+function hasCategory(machineId: string, category: string): boolean {
+  return productInfoStore.productLinks.some(
+    l => l.machine_id === machineId && l.document_type === category
+  )
 }
 
-async function handleDelete(linkId: string) {
-  deletingLinkId.value = linkId
-  try {
-    const result = await productInfoStore.deleteLink(linkId)
-    if (!result.success) {
-      formError.value = result.error ?? 'Failed to delete the link.'
-    }
-  } catch (err) {
-    formError.value = 'An unexpected error occurred while deleting the link.'
-  } finally {
-    deletingLinkId.value = null
-  }
+// Get links for selected machine + category
+function getLinksForCategory(category: string): ProductInfoLink[] {
+  if (!selectedMachineId.value) return []
+  return productInfoStore.productLinks.filter(
+    l => l.machine_id === selectedMachineId.value && l.document_type === category
+  )
 }
 
-function confirmDelete(linkId: string) {
-  if (window.confirm('Are you sure you want to delete this link?')) {
-    handleDelete(linkId)
-  }
+// Selected machine info
+const selectedMachine = computed(() => {
+  if (!selectedMachineId.value) return null
+  return catalogStore.machines.find(m => m.id === selectedMachineId.value) ?? null
+})
+
+// Open detail view
+function openDetail(machineId: string) {
+  selectedMachineId.value = machineId
+  mode.value = 'detail'
+}
+
+// Back to list
+function backToList() {
+  mode.value = 'list'
+  selectedMachineId.value = null
+}
+
+// Add link (prompt)
+async function addLink(category: CategoryKey) {
+  if (!selectedMachineId.value) return
+  const url = prompt('Paste the link / URL:')
+  if (!url) return
+  const label = prompt('Label for this link:', url)
+  if (label === null) return
+  await productInfoStore.addLink(
+    selectedMachineId.value,
+    label || url,
+    url,
+    category
+  )
+}
+
+// Upload file (for now, same as add link but with file prompt label)
+async function uploadFile(category: CategoryKey) {
+  if (!selectedMachineId.value) return
+  const url = prompt('Paste the file URL or shared drive link:')
+  if (!url) return
+  const label = prompt('File name / label:', '')
+  if (label === null) return
+  await productInfoStore.addLink(
+    selectedMachineId.value,
+    label || url,
+    url,
+    category
+  )
+}
+
+// Delete link
+async function deleteLink(linkId: string) {
+  if (!confirm('Remove this item?')) return
+  await productInfoStore.deleteLink(linkId)
 }
 </script>
 
 <template>
-  <div class="product-info-view">
-    <h1 class="view-title">Product Information</h1>
+  <div class="product-info-page">
+    <!-- ═══ LIST VIEW ═══ -->
+    <template v-if="mode === 'list'">
+      <div class="page-header">
+        <h1 class="page-title">Product Information</h1>
+        <select v-model="brandFilter" class="brand-filter" aria-label="Filter by brand">
+          <option value="">All Brands</option>
+          <option v-for="b in brands" :key="b" :value="b">{{ b }}</option>
+        </select>
+      </div>
 
-    <!-- Loading state -->
-    <div v-if="productInfoStore.loading || catalogStore.loading" class="loading-state" aria-live="polite">
-      Loading product information...
-    </div>
+      <p class="page-subtitle">
+        Click a <strong>model name</strong> to view or manage its files.
+        A ticked box means at least one file/link exists for that category.
+        Files are stored in <strong>this browser on this computer</strong> (not shared across computers).
+      </p>
 
-    <!-- Error state -->
-    <div
-      v-else-if="productInfoStore.error || catalogStore.error"
-      class="error-state"
-      role="alert"
-      aria-live="assertive"
-    >
-      <p class="error-message">{{ productInfoStore.error || catalogStore.error }}</p>
-    </div>
+      <!-- Loading -->
+      <div v-if="productInfoStore.loading || catalogStore.loading" class="loading-state" aria-live="polite">
+        Loading product information...
+      </div>
 
-    <!-- Empty state when no machines exist -->
-    <div v-else-if="groupedLinks.length === 0" class="empty-state">
-      <p>No machines found in the catalog.</p>
-    </div>
+      <!-- Error -->
+      <div v-else-if="productInfoStore.error || catalogStore.error" class="error-state" role="alert">
+        {{ productInfoStore.error || catalogStore.error }}
+      </div>
 
-    <!-- Grouped product info links -->
-    <div v-else class="brand-groups">
-      <section
-        v-for="brandGroup in groupedLinks"
-        :key="brandGroup.brand"
-        class="brand-section"
-        :aria-label="`${brandGroup.brand} product information`"
-      >
-        <h2 class="brand-heading">{{ brandGroup.brand }}</h2>
-
-        <div class="model-list">
-          <div
-            v-for="modelGroup in brandGroup.models"
-            :key="`${brandGroup.brand}-${modelGroup.model}-${modelGroup.subModel ?? ''}`"
-            class="model-card"
-          >
-            <div class="model-header">
-              <h3 class="model-heading">
-                {{ modelGroup.model }}
-                <span v-if="modelGroup.subModel" class="sub-model">
-                  ({{ modelGroup.subModel }})
+      <!-- Table -->
+      <div v-else class="table-wrapper">
+        <table class="info-table">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Model</th>
+              <th>Picture</th>
+              <th>Site Req.</th>
+              <th>Catalog</th>
+              <th>ROI</th>
+              <th>Videos</th>
+              <th>Others</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(machine, idx) in filteredMachines"
+              :key="machine.id"
+              :class="{ 'row-even': idx % 2 === 1 }"
+            >
+              <td>{{ machine.brand }}</td>
+              <td>
+                <span class="model-link" @click="openDetail(machine.id)" role="button" tabindex="0" @keydown.enter="openDetail(machine.id)">
+                  {{ machine.model }}<template v-if="machine.sub_model"> ({{ machine.sub_model }})</template>
                 </span>
-              </h3>
+              </td>
+              <td class="cell-center"><input type="checkbox" :checked="hasCategory(machine.id, 'picture')" disabled /></td>
+              <td class="cell-center"><input type="checkbox" :checked="hasCategory(machine.id, 'sitereq')" disabled /></td>
+              <td class="cell-center"><input type="checkbox" :checked="hasCategory(machine.id, 'catalog')" disabled /></td>
+              <td class="cell-center"><input type="checkbox" :checked="hasCategory(machine.id, 'roi')" disabled /></td>
+              <td class="cell-center"><input type="checkbox" :checked="hasCategory(machine.id, 'videos')" disabled /></td>
+              <td class="cell-center"><input type="checkbox" :checked="hasCategory(machine.id, 'others')" disabled /></td>
+            </tr>
+            <tr v-if="filteredMachines.length === 0">
+              <td colspan="8" class="empty-row">No machines found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
 
-              <!-- Admin: Add Link button (Requirement 9.5) -->
+    <!-- ═══ DETAIL VIEW ═══ -->
+    <template v-else-if="mode === 'detail' && selectedMachine">
+      <button class="btn-back" @click="backToList">&larr; Back to list</button>
+
+      <h1 class="detail-title">{{ selectedMachine.brand }} &mdash; {{ selectedMachine.model }}<template v-if="selectedMachine.sub_model"> ({{ selectedMachine.sub_model }})</template></h1>
+
+      <p class="page-subtitle">
+        Large videos are best added as a <strong>link</strong>.
+        The <strong>Product Picture</strong> is used as the machine image on the quote.
+      </p>
+
+      <div class="category-grid">
+        <div
+          v-for="cat in categories"
+          :key="cat.key"
+          class="category-card"
+        >
+          <h3 class="card-title">{{ cat.label.toUpperCase() }}</h3>
+
+          <ul v-if="getLinksForCategory(cat.key).length > 0" class="card-links">
+            <li v-for="link in getLinksForCategory(cat.key)" :key="link.id" class="card-link-item">
+              <a :href="link.url" target="_blank" rel="noopener noreferrer" class="card-link-anchor">
+                {{ link.display_name }}
+              </a>
               <button
-                v-if="isAdmin && formMachineId !== modelGroup.machineId"
-                class="btn btn-add"
-                @click="openAddForm(modelGroup.machineId)"
-                :aria-label="`Add link for ${modelGroup.model}`"
-              >
-                + Add Link
-              </button>
-            </div>
+                v-if="isAdmin"
+                class="btn-remove"
+                @click="deleteLink(link.id)"
+                :aria-label="`Remove ${link.display_name}`"
+                title="Remove"
+              >&times;</button>
+            </li>
+          </ul>
+          <p v-else class="no-files">No files yet.</p>
 
-            <!-- Links for this model -->
-            <ul v-if="modelGroup.links.length > 0" class="link-list">
-              <li v-for="link in modelGroup.links" :key="link.id" class="link-item">
-                <a
-                  :href="link.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="link-anchor"
-                >
-                  <span class="link-name">{{ link.display_name }}</span>
-                  <span class="link-type">{{ link.document_type }}</span>
-                </a>
-
-                <!-- Admin: Edit/Delete buttons (Requirement 9.5) -->
-                <div v-if="isAdmin" class="link-admin-actions">
-                  <button
-                    class="btn-icon btn-edit"
-                    @click="openEditForm(modelGroup.machineId, link)"
-                    :aria-label="`Edit link: ${link.display_name}`"
-                    title="Edit"
-                  >
-                    &#9998;
-                  </button>
-                  <button
-                    class="btn-icon btn-delete"
-                    @click="confirmDelete(link.id)"
-                    :disabled="deletingLinkId === link.id"
-                    :aria-label="`Delete link: ${link.display_name}`"
-                    title="Delete"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-              </li>
-            </ul>
-
-            <!-- No documents message (Requirement 9.3) -->
-            <p v-else class="no-documents-message">
-              No product information documents are available for this model.
-            </p>
-
-            <!-- Admin: Inline form for add/edit (Requirement 9.5, 9.6, 9.7) -->
-            <div v-if="isAdmin && formMachineId === modelGroup.machineId">
-              <!-- Service error message — preserves form data -->
-              <div v-if="formError" class="form-service-error" role="alert">
-                {{ formError }}
-              </div>
-
-              <ProductInfoLinkForm
-                :machine-id="modelGroup.machineId"
-                :existing-link="editingLink"
-                :saving="saving"
-                @submit="handleSubmit"
-                @cancel="closeForm"
-              />
-            </div>
+          <div v-if="isAdmin" class="card-actions">
+            <button class="btn-upload" @click="uploadFile(cat.key)">&uarr; Upload File</button>
+            <button class="btn-link" @click="addLink(cat.key)">&#128279; Add Link</button>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.product-info-view {
-  padding: var(--space-6);
-  max-width: var(--content-max-width);
-  margin: 0 auto;
+/* ─── Page Layout ───────────────────────────────────────────────────────────── */
+.product-info-page {
+  padding: 24px 32px;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-.view-title {
-  font-size: var(--font-size-2xl);
-  color: var(--color-gray-900);
-  margin-bottom: var(--space-6);
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-/* Loading state */
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.brand-filter {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.page-subtitle {
+  font-size: 0.92rem;
+  color: #555;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* ─── Loading & Error ───────────────────────────────────────────────────────── */
 .loading-state {
   text-align: center;
-  padding: var(--space-8);
-  color: var(--color-gray-500);
-  font-size: var(--font-size-sm);
+  padding: 40px;
+  color: #888;
 }
 
-/* Error state */
 .error-state {
+  text-align: center;
+  padding: 24px;
+  color: #c0392b;
+  background: #fdeaea;
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+}
+
+/* ─── Table ─────────────────────────────────────────────────────────────────── */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.info-table thead tr {
+  background: #c0392b;
+  color: #fff;
+}
+
+.info-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.info-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.info-table tbody tr:hover {
+  background: #fff3cd !important;
+}
+
+.row-even {
+  background: #fbeeec;
+}
+
+.cell-center {
+  text-align: center;
+}
+
+.model-link {
+  color: #c0392b;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.model-link:hover {
+  text-decoration: underline;
+}
+
+.empty-row {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 24px 12px;
+}
+
+/* ─── Detail View ───────────────────────────────────────────────────────────── */
+.btn-back {
+  background: none;
+  border: 1px solid #c0392b;
+  color: #c0392b;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-back:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+.detail-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 8px;
+}
+
+/* ─── Category Grid ─────────────────────────────────────────────────────────── */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.category-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
+}
+
+.card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #c0392b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #c0392b;
+}
+
+.card-links {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  flex: 1;
+}
+
+.card-link-item {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-8);
-  background-color: var(--color-error-light);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-lg);
-  text-align: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.error-message {
-  color: var(--color-error);
-  font-size: var(--font-size-base);
-  margin: 0;
-}
-
-/* Empty state */
-.empty-state {
-  text-align: center;
-  padding: var(--space-8);
-  color: var(--color-gray-500);
-  font-size: var(--font-size-base);
-}
-
-/* Brand sections */
-.brand-groups {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-
-.brand-section {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-white);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.brand-heading {
-  font-size: var(--font-size-xl);
-  color: var(--color-white);
-  background-color: var(--color-primary);
-  padding: var(--space-3) var(--space-4);
-  margin: 0;
-}
-
-/* Model list */
-.model-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.model-card {
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.model-card:last-child {
+.card-link-item:last-child {
   border-bottom: none;
 }
 
-.model-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-
-.model-heading {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-gray-800);
-  margin: 0;
-}
-
-.sub-model {
-  font-weight: 400;
-  color: var(--color-gray-500);
-}
-
-/* Link list */
-.link-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.link-item {
-  display: flex;
-  align-items: center;
-  border-radius: var(--radius-md);
-  transition: background-color var(--transition-fast);
-}
-
-.link-item:hover {
-  background-color: var(--color-gray-50);
-}
-
-.link-anchor {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 1;
-  padding: var(--space-2) var(--space-3);
+.card-link-anchor {
+  color: #2980b9;
   text-decoration: none;
-  color: var(--color-primary);
-  border-radius: var(--radius-md);
-  transition: color var(--transition-fast);
+  font-size: 0.88rem;
+  word-break: break-all;
 }
 
-.link-anchor:hover {
-  color: var(--color-primary-hover);
+.card-link-anchor:hover {
+  text-decoration: underline;
 }
 
-.link-anchor:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.link-name {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-}
-
-.link-type {
-  font-size: var(--font-size-xs);
-  color: var(--color-gray-500);
-  background-color: var(--color-gray-100);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-full);
-  white-space: nowrap;
-}
-
-/* Admin action buttons on each link */
-.link-admin-actions {
-  display: flex;
-  gap: var(--space-1);
-  padding-right: var(--space-2);
-}
-
-.btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+.btn-remove {
+  background: none;
   border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
+  color: #c0392b;
+  font-size: 1.2rem;
   cursor: pointer;
-  font-size: var(--font-size-sm);
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  padding: 0 4px;
+  line-height: 1;
 }
 
-.btn-icon:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.btn-remove:hover {
+  color: #e74c3c;
 }
 
-.btn-edit {
-  color: var(--color-gray-600);
+.no-files {
+  flex: 1;
+  color: #999;
+  font-style: italic;
+  font-size: 0.88rem;
+  margin: 0 0 12px;
 }
 
-.btn-edit:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: var(--color-white);
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.btn-delete {
-  color: var(--color-gray-600);
-}
-
-.btn-delete:hover:not(:disabled) {
-  background-color: var(--color-error);
-  color: var(--color-white);
-}
-
-/* Add link button */
-.btn-add {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  background-color: transparent;
-  color: var(--color-primary);
-  font-size: var(--font-size-xs);
+.btn-upload,
+.btn-link {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #c0392b;
+  border-radius: 4px;
+  background: #fff;
+  color: #c0392b;
+  font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
-  white-space: nowrap;
+  text-align: center;
+  transition: background 0.2s, color 0.2s;
 }
 
-.btn-add:hover {
-  background-color: var(--color-primary);
-  color: var(--color-white);
+.btn-upload:hover,
+.btn-link:hover {
+  background: #c0392b;
+  color: #fff;
 }
 
-/* Form service error */
-.form-service-error {
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background-color: var(--color-error-light);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-md);
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-}
-
-/* No documents message */
-.no-documents-message {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-500);
-  font-style: italic;
-  margin: 0;
-  padding: var(--space-2) 0;
-}
-
-/* Mobile responsiveness */
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
 @media screen and (max-width: 767px) {
-  .product-info-view {
-    padding: var(--space-4);
+  .product-info-page {
+    padding: 16px;
   }
 
-  .model-header {
+  .page-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-2);
+    gap: 10px;
   }
 
-  .link-item {
-    flex-direction: column;
-    align-items: flex-start;
+  .category-grid {
+    grid-template-columns: 1fr;
   }
 
-  .link-anchor {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-1);
-  }
-
-  .link-admin-actions {
-    padding-left: var(--space-3);
-    padding-bottom: var(--space-2);
+  .info-table th,
+  .info-table td {
+    padding: 7px 8px;
+    font-size: 0.82rem;
   }
 }
 </style>

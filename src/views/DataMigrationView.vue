@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
+import type { Role } from '@/types'
 
 // ─── Types for old localStorage data ─────────────────────────────────────────
 
@@ -130,9 +131,10 @@ function extractModel(quoteTitle: string, brand: string): string {
  * Old roles: superadmin, product_manager, sales_admin_manager, etc.
  * New roles: admin, salesperson
  */
-function mapRole(oldRole: string): 'admin' | 'salesperson' {
-  const adminRoles = ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor']
-  return adminRoles.includes(oldRole) ? 'admin' : 'salesperson'
+function mapRole(oldRole: string): Role {
+  // Map old roles directly � they match the new expanded role set
+  const validRoles = ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin', 'area_sales_manager', 'account_executive', 'sales_assistant', 'user']
+  return (validRoles.includes(oldRole) ? oldRole : 'user') as Role
 }
 
 // ─── Check if migration already completed ─────────────────────────────────────
@@ -648,8 +650,6 @@ onMounted(() => {
 
 <style scoped>
 .data-migration-view {
-  max-width: 800px;
-  margin: 0 auto;
   padding: 24px 16px;
 }
 

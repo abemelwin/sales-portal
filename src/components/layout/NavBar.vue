@@ -17,7 +17,23 @@ const displayName = computed(() => {
   return name
 })
 
-const isAdmin = computed(() => role.value === 'admin')
+const isAdmin = computed(() => role.value === 'superadmin' || role.value === 'product_manager' || role.value === 'sales_admin_manager' || role.value === 'sales_admin_supervisor')
+
+const roleLabel = computed(() => {
+  const labels: Record<string, string> = {
+    superadmin: 'Super Admin',
+    product_manager: 'Product Manager',
+    sales_admin_manager: 'Sales Admin Manager',
+    sales_admin_supervisor: 'Sales Admin Supervisor',
+    sales_admin: 'Sales Admin',
+    area_sales_manager: 'Area Sales Manager',
+    account_executive: 'Account Executive',
+    sales_assistant: 'Sales Assistant',
+    user: 'User',
+  }
+  if (!role.value) return ''
+  return labels[role.value] || role.value
+})
 
 /** Navigation links visible to all authenticated users */
 const navLinks = [
@@ -55,7 +71,7 @@ async function handleLogout() {
       <!-- Brand -->
       <div class="navbar-brand">
         <router-link to="/" class="navbar-logo" @click="closeMobileMenu">
-          ESPMI Sales Portal
+          ESPMI
         </router-link>
       </div>
 
@@ -99,11 +115,12 @@ async function handleLogout() {
         <!-- User info & logout -->
         <div class="navbar-user">
           <span class="navbar-user-name" :title="user?.display_name">
-            {{ displayName }}
+            {{ displayName }}<template v-if="roleLabel"> ({{ roleLabel }})</template>
           </span>
-          <button class="navbar-logout-btn" @click="handleLogout">
-            Logout
-          </button>
+          <span class="navbar-sep">&middot;</span>
+          <router-link to="/change-password" class="navbar-action-link" @click="closeMobileMenu">Change Password</router-link>
+          <span class="navbar-sep">&middot;</span>
+          <button class="navbar-logout-btn" @click="handleLogout">Logout</button>
         </div>
       </div>
     </div>
@@ -115,19 +132,20 @@ async function handleLogout() {
   position: sticky;
   top: 0;
   z-index: 100;
-  height: var(--nav-height);
-  background-color: var(--color-white);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  height: 40px;
+  background-color: #fff;
+  border-bottom: 2px solid #c0392b;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.10);
+  overflow: hidden;
 }
 
 .navbar-container {
   display: flex;
   align-items: center;
   height: 100%;
-  max-width: var(--content-max-width);
-  margin: 0 auto;
-  padding: 0 var(--space-4);
+  width: 100%;
+  padding: 0 12px;
+  gap: 14px;
 }
 
 .navbar-brand {
@@ -135,15 +153,17 @@ async function handleLogout() {
 }
 
 .navbar-logo {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  color: #c0392b;
   text-decoration: none;
   white-space: nowrap;
+  min-height: unset;
+  min-width: unset;
 }
 
 .navbar-logo:hover {
-  color: var(--color-primary-hover);
+  color: #a93226;
 }
 
 /* Hamburger toggle - hidden on desktop */
@@ -152,84 +172,95 @@ async function handleLogout() {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  padding: var(--space-2);
+  padding: 8px;
   background: none;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 5px;
   cursor: pointer;
+  min-height: unset;
+  min-width: unset;
 }
 
 .navbar-toggle:hover {
-  background-color: var(--color-gray-100);
+  background-color: #f3f4f6;
 }
 
 .hamburger-line {
   display: block;
   width: 20px;
   height: 2px;
-  background-color: var(--color-gray-700);
+  background-color: #374151;
   border-radius: 1px;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
-/* Nav menu - flex row on desktop */
+/* Nav menu - single row on desktop */
 .navbar-menu {
   display: flex;
   align-items: center;
   flex: 1;
-  margin-left: var(--space-6);
+  overflow: hidden;
 }
 
 .navbar-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 4px;
   list-style: none;
   margin: 0;
   padding: 0;
   flex: 1;
+  flex-wrap: nowrap;
 }
 
 .nav-item {
   display: flex;
+  flex-shrink: 0;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #999;
   text-decoration: none;
-  border-radius: var(--radius-md);
+  border-radius: 5px;
   white-space: nowrap;
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  letter-spacing: 0.3px;
+  transition: color 0.15s, background-color 0.15s;
+  min-height: unset;
+  min-width: unset;
+  height: auto;
+  line-height: 1;
 }
 
 .nav-link:hover {
-  color: var(--color-primary);
-  background-color: var(--color-primary-light);
+  color: #c0392b;
+  background-color: #fff2f0;
 }
 
-.nav-link.router-link-active {
-  color: var(--color-primary);
-  font-weight: 500;
-  background-color: var(--color-primary-light);
+.nav-link.router-link-active,
+.nav-link.router-link-exact-active {
+  color: #c0392b;
+  background-color: #fff2f0;
 }
 
 /* User section */
 .navbar-user {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 8px;
   margin-left: auto;
   flex-shrink: 0;
+  font-size: 11px;
+  color: #888;
 }
 
 .navbar-user-name {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
-  font-weight: 500;
+  font-size: 11px;
+  color: #666;
+  font-weight: 400;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -237,32 +268,55 @@ async function handleLogout() {
 }
 
 .navbar-logout-btn {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-error);
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c0392b;
   background-color: transparent;
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-md);
+  border: none;
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
-  white-space: nowrap;
+  text-decoration: none;
+  min-height: unset;
+  min-width: unset;
 }
 
 .navbar-logout-btn:hover {
-  color: var(--color-white);
-  background-color: var(--color-error);
+  text-decoration: underline;
 }
 
-/* ─── Mobile Responsive (< 768px) ─────────────────────────────────────────── */
+.navbar-sep {
+  color: #ccc;
+  font-size: 11px;
+}
+
+.navbar-action-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: #c0392b;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  min-height: unset;
+  min-width: unset;
+}
+
+.navbar-action-link:hover {
+  text-decoration: underline;
+}
+
+/* --- Mobile Responsive (< 768px) ------------------------------------------- */
 @media screen and (max-width: 767px) {
   .navbar {
     height: auto;
-    min-height: var(--nav-height);
+    min-height: 40px;
+    overflow: visible;
   }
 
   .navbar-container {
     flex-wrap: wrap;
+    padding: 0 12px;
   }
 
   .navbar-toggle {
@@ -273,11 +327,11 @@ async function handleLogout() {
   .navbar-menu {
     display: none;
     width: 100%;
-    margin-left: 0;
     flex-direction: column;
     align-items: stretch;
-    padding: var(--space-3) 0;
-    border-top: 1px solid var(--border-color);
+    padding: 8px 0;
+    border-top: 1px solid #e5e7eb;
+    overflow: visible;
   }
 
   .navbar-menu--open {
@@ -288,18 +342,20 @@ async function handleLogout() {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
+    flex-wrap: wrap;
   }
 
   .nav-link {
-    padding: var(--space-3) var(--space-4);
-    font-size: var(--font-size-base);
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
   }
 
   .navbar-user {
     margin-left: 0;
-    padding: var(--space-3) var(--space-4);
-    border-top: 1px solid var(--border-color);
-    margin-top: var(--space-2);
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 8px;
   }
 }
 </style>

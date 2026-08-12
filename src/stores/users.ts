@@ -170,9 +170,9 @@ export const useUserStore = defineStore('users', () => {
         return { success: false, error: error.value }
       }
 
-      if (targetUser.role === 'admin') {
+      if (targetUser.role === 'superadmin') {
         const activeAdmins = users.value.filter(
-          (u) => u.role === 'admin' && u.is_active && u.user_id !== userId
+          (u) => u.role === 'superadmin' && u.is_active && u.user_id !== userId
         )
         if (activeAdmins.length === 0) {
           error.value = 'Cannot deactivate the last active admin user.'
@@ -269,7 +269,7 @@ export const useUserStore = defineStore('users', () => {
    * Count of active admin users. Used to enforce the minimum admin invariant.
    */
   function getActiveAdminCount(): number {
-    return users.value.filter((u) => u.role === 'admin' && u.is_active).length
+    return users.value.filter((u) => u.role === 'superadmin' && u.is_active).length
   }
 
   /**
@@ -277,7 +277,7 @@ export const useUserStore = defineStore('users', () => {
    */
   function isLastActiveAdmin(userId: string): boolean {
     const targetUser = users.value.find((u) => u.user_id === userId)
-    if (!targetUser || targetUser.role !== 'admin' || !targetUser.is_active) {
+    if (!targetUser || targetUser.role !== 'superadmin' || !targetUser.is_active) {
       return false
     }
     return getActiveAdminCount() <= 1
