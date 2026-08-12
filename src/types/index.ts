@@ -10,7 +10,7 @@ export type { AppError } from './errors'
 
 // ─── User Models ────────────────────────────────────────────────────────────────
 
-export type Role = 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
+export type Role = 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
 
 export interface User {
   id: string

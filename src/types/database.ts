@@ -19,7 +19,7 @@ export interface Database {
           id: string
           user_id: string
           display_name: string
-          role: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
+          role: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
           is_active: boolean
           created_at: string
           updated_at: string
@@ -28,7 +28,7 @@ export interface Database {
           id?: string
           user_id: string
           display_name: string
-          role?: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
+          role?: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -37,7 +37,7 @@ export interface Database {
           id?: string
           user_id?: string
           display_name?: string
-          role?: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
+          role?: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
           is_active?: boolean
           created_at?: string
           updated_at?: string

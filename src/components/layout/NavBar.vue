@@ -25,7 +25,7 @@ const roleLabel = computed(() => {
     product_manager: 'Product Manager',
     sales_admin_manager: 'Sales Admin Manager',
     sales_admin_supervisor: 'Sales Admin Supervisor',
-    sales_admin: 'Sales Admin',
+    sales_admin_assistant: 'Sales Admin Assistant',
     area_sales_manager: 'Area Sales Manager',
     account_executive: 'Account Executive',
     sales_assistant: 'Sales Assistant',

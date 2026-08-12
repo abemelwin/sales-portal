@@ -13,7 +13,7 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'product_manager', label: 'Product Manager' },
   { value: 'sales_admin_manager', label: 'Sales Admin Manager' },
   { value: 'sales_admin_supervisor', label: 'Sales Admin Supervisor' },
-  { value: 'sales_admin', label: 'Sales Admin' },
+  { value: 'sales_admin_assistant', label: 'Sales Admin Assistant' },
   { value: 'area_sales_manager', label: 'Area Sales Manager' },
   { value: 'account_executive', label: 'Account Executive' },
   { value: 'sales_assistant', label: 'Sales Assistant' },
