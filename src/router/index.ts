@@ -52,6 +52,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/closing-docs',
+    name: 'closing-docs-index',
+    component: () => import('@/views/ClosingDocsIndexView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/product-info',
     name: 'product-info',
     component: () => import('@/views/ProductInfoView.vue'),

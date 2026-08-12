@@ -2,6 +2,11 @@
 import { ref, computed, watch, inject } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
+import {
+  mapInclusionsToToggleable,
+  mapExclusionsToToggleable,
+  mapAddonsToToggleable,
+} from '@/utils/quote-calculations'
 
 const catalogStore = useCatalogStore()
 const quoteState = inject(QUOTE_BUILDER_KEY)!
@@ -14,35 +19,76 @@ const brands = computed(() => {
   return Array.from(brandSet).sort()
 })
 
-// Derive model list filtered by selected brand
-const models = computed(() => {
+// Derive unique model names for selected brand
+const uniqueModels = computed(() => {
   if (!quoteState.selectedBrand) return []
-  return catalogStore.machines
-    .filter((m) => m.brand === quoteState.selectedBrand)
-    .map((m) => ({ model: m.model, sub_model: m.sub_model }))
-    .sort((a, b) => a.model.localeCompare(b.model))
+  const modelSet = new Set(
+    catalogStore.machines
+      .filter((m) => m.brand === quoteState.selectedBrand)
+      .map((m) => m.model)
+  )
+  return Array.from(modelSet).sort()
 })
 
-// Get model display label (model + sub_model if present)
-function getModelLabel(item: { model: string; sub_model: string | null }): string {
-  return item.sub_model ? `${item.model} — ${item.sub_model}` : item.model
-}
+// Derive sub-model values for selected brand + model
+const subModels = computed(() => {
+  if (!quoteState.selectedBrand || !quoteState.selectedModel) return []
+  const entries = catalogStore.machines.filter(
+    (m) => m.brand === quoteState.selectedBrand && m.model === quoteState.selectedModel
+  )
+  // Collect non-null sub_model values
+  const subModelValues = entries
+    .map((m) => m.sub_model)
+    .filter((sm): sm is string => sm !== null && sm !== '')
+  // If there's only one machine entry with no sub_model, no dropdown needed
+  if (subModelValues.length === 0) return []
+  // Return unique sub_model values
+  return Array.from(new Set(subModelValues)).sort()
+})
 
-// When brand changes, reset model and populated data
+// Show sub-model dropdown when multiple variants exist
+const showSubModelDropdown = computed(() => subModels.value.length > 1)
+
+// When brand changes, reset model, sub-model, and populated data
 watch(
   () => quoteState.selectedBrand,
   () => {
     quoteState.selectedModel = ''
+    quoteState.selectedSubModel = ''
     clearMachineData()
   }
 )
 
-// When model changes, fetch and populate machine data from catalog
+// When model changes, reset sub-model and handle population
 watch(
   () => quoteState.selectedModel,
   async (newModel) => {
+    quoteState.selectedSubModel = ''
+
     if (!newModel || !quoteState.selectedBrand) {
       clearMachineData()
+      return
+    }
+
+    // If there are sub-models, wait for sub-model selection
+    // If no sub-models (single variant), populate immediately
+    if (!showSubModelDropdown.value) {
+      await populateMachineData()
+    } else {
+      clearMachineData()
+    }
+  }
+)
+
+// When sub-model changes, populate machine data
+watch(
+  () => quoteState.selectedSubModel,
+  async (newSubModel) => {
+    if (!newSubModel || !quoteState.selectedModel || !quoteState.selectedBrand) {
+      // Only clear if sub-model dropdown is shown (otherwise model watch handles it)
+      if (showSubModelDropdown.value) {
+        clearMachineData()
+      }
       return
     }
 
@@ -67,12 +113,17 @@ async function populateMachineData() {
       return
     }
 
-    // Find the matching machine
-    const machine = catalogStore.machines.find(
-      (m) =>
-        m.brand === quoteState.selectedBrand &&
-        getModelLabel({ model: m.model, sub_model: m.sub_model }) === quoteState.selectedModel
-    )
+    // Find the matching machine based on brand + model + sub_model
+    const machine = catalogStore.machines.find((m) => {
+      if (m.brand !== quoteState.selectedBrand) return false
+      if (m.model !== quoteState.selectedModel) return false
+      // If sub-model dropdown is shown, match on sub_model
+      if (showSubModelDropdown.value) {
+        return m.sub_model === quoteState.selectedSubModel
+      }
+      // Otherwise, single variant — match regardless of sub_model
+      return true
+    })
 
     if (!machine) {
       quoteState.catalogError =
@@ -91,6 +142,21 @@ async function populateMachineData() {
     quoteState.exclusions = [...machine.exclusions]
     quoteState.addons = [...machine.addons]
 
+    // Populate new state fields (Req 14.1 — image_key)
+    quoteState.imageKey = machine.image_key ?? null
+
+    // Populate computer set option (Req 8)
+    quoteState.hasComputerSetOption = machine.has_computer_set_option ?? false
+
+    // Populate warranty durations (Req 12)
+    quoteState.warrantyMachineDuration = machine.warranty_machine_duration ?? ''
+    quoteState.warrantyPrintheadDuration = machine.warranty_printhead_duration ?? ''
+
+    // Map catalog inclusions/exclusions/addons to ToggleableItem[] arrays
+    quoteState.inclusionItems = mapInclusionsToToggleable(machine.inclusions)
+    quoteState.exclusionItems = mapExclusionsToToggleable(machine.exclusions)
+    quoteState.addonItems = mapAddonsToToggleable(machine.addons)
+
     // Initialize consumable prices from defaults
     quoteState.consumablePrices = machine.consumables.map((c) => ({
       consumableId: c.id,
@@ -108,11 +174,18 @@ async function populateMachineData() {
 function clearMachineData() {
   quoteState.machineId = null
   quoteState.unitCondition = null
+  quoteState.imageKey = null
+  quoteState.hasComputerSetOption = false
+  quoteState.warrantyMachineDuration = ''
+  quoteState.warrantyPrintheadDuration = ''
   quoteState.features = []
   quoteState.consumables = []
   quoteState.inclusions = []
   quoteState.exclusions = []
   quoteState.addons = []
+  quoteState.inclusionItems = []
+  quoteState.exclusionItems = []
+  quoteState.addonItems = []
   quoteState.consumablePrices = []
 }
 
@@ -174,11 +247,31 @@ if (catalogStore.machines.length === 0) {
         >
           <option value="" disabled>Select a model</option>
           <option
-            v-for="item in models"
-            :key="getModelLabel(item)"
-            :value="getModelLabel(item)"
+            v-for="model in uniqueModels"
+            :key="model"
+            :value="model"
           >
-            {{ getModelLabel(item) }}
+            {{ model }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Sub-Model / Variant dropdown (conditional) -->
+      <div v-if="showSubModelDropdown" class="machine-selector__field">
+        <label for="submodel-select" class="machine-selector__label">Sub-Model / Variant</label>
+        <select
+          id="submodel-select"
+          v-model="quoteState.selectedSubModel"
+          class="machine-selector__select"
+          :disabled="!quoteState.selectedModel || catalogStore.loading"
+        >
+          <option value="" disabled>Select a variant</option>
+          <option
+            v-for="subModel in subModels"
+            :key="subModel"
+            :value="subModel"
+          >
+            {{ subModel }}
           </option>
         </select>
       </div>
@@ -201,13 +294,13 @@ if (catalogStore.machines.length === 0) {
         <strong>Consumables:</strong> {{ quoteState.consumables.length }} item(s)
       </p>
       <p class="machine-selector__info">
-        <strong>Inclusions:</strong> {{ quoteState.inclusions.length }} item(s)
+        <strong>Inclusions:</strong> {{ quoteState.inclusionItems.length }} item(s)
       </p>
       <p class="machine-selector__info">
-        <strong>Exclusions:</strong> {{ quoteState.exclusions.length }} item(s)
+        <strong>Exclusions:</strong> {{ quoteState.exclusionItems.length }} item(s)
       </p>
       <p class="machine-selector__info">
-        <strong>Add-ons:</strong> {{ quoteState.addons.length }} item(s)
+        <strong>Add-ons:</strong> {{ quoteState.addonItems.length }} item(s)
       </p>
     </div>
   </div>

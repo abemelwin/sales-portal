@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { inject, computed, watch, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import MachineSelector from './MachineSelector.vue'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
-import { computeAmortization } from '@/utils/quote-calculations'
+import { computeAmortization, addCustomItem, removeCustomItem } from '@/utils/quote-calculations'
+import { validateQuote } from '@/composables/useQuoteValidation'
 import type { DealType, Letterhead } from '@/types'
 
 const quoteState = inject(QUOTE_BUILDER_KEY)!
+const router = useRouter()
+const route = useRoute()
 
 const letterheadOptions: Letterhead[] = [
   'ES Print Media Inc.',
@@ -184,6 +188,23 @@ function removeFreebie(index: number) {
   quoteState.freebies.splice(index, 1)
 }
 
+// --- Inclusion management ---
+
+const showInclusionInput = ref(false)
+const newInclusionText = ref('')
+
+function addInclusion() {
+  const trimmed = newInclusionText.value.trim()
+  if (!trimmed) return
+  quoteState.inclusionItems = addCustomItem(quoteState.inclusionItems, trimmed)
+  newInclusionText.value = ''
+  showInclusionInput.value = false
+}
+
+function removeInclusion(id: string) {
+  quoteState.inclusionItems = removeCustomItem(quoteState.inclusionItems, id)
+}
+
 // --- Consumable prices sync ---
 
 /**
@@ -204,9 +225,65 @@ watch(
   { immediate: true }
 )
 
+// --- Exclusion management (task 9.3) ---
+
+const showExclusionInput = ref(false)
+const newExclusionText = ref('')
+
+function confirmAddExclusion() {
+  const trimmed = newExclusionText.value.trim()
+  if (!trimmed) return
+  quoteState.exclusionItems = addCustomItem(quoteState.exclusionItems, trimmed)
+  newExclusionText.value = ''
+  showExclusionInput.value = false
+}
+
+function removeExclusionItem(id: string) {
+  quoteState.exclusionItems = removeCustomItem(quoteState.exclusionItems, id)
+}
+
 // --- Re-certified label ---
 
 const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified')
+
+// --- Closing Documents validation & navigation ---
+
+/** Whether the validation error box is currently visible */
+const showValidationBox = ref(false)
+
+/**
+ * Live validation errors — recomputed whenever relevant fields change.
+ * Drives real-time updates to the error box as the user corrects issues.
+ */
+const liveValidationErrors = computed(() =>
+  validateQuote(quoteState).errors
+)
+
+/**
+ * Handle "OPEN CLOSING DOCUMENTS" button click.
+ * Validates required fields, navigates on success, shows errors on failure.
+ */
+function openClosingDocuments() {
+  const result = validateQuote(quoteState)
+  if (result.isValid) {
+    showValidationBox.value = false
+    const id = route.params.id as string | undefined
+    if (id) {
+      router.push({ name: 'quote-closing', params: { id } })
+    } else {
+      // Quote hasn't been saved yet — prompt the user to save first
+      quoteState.validationErrors = ['Please save the quote before opening Closing Documents.']
+      showValidationBox.value = true
+    }
+  } else {
+    quoteState.validationErrors = result.errors
+    showValidationBox.value = true
+  }
+}
+
+function dismissValidationBox() {
+  showValidationBox.value = false
+}
 </script>
 
 <template>
@@ -256,9 +333,49 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
               type="text"
               v-model="quoteState.contact"
               class="form-field__input"
-              placeholder="Phone / Email"
+              placeholder="Phone number"
             />
           </div>
+          <div class="form-field">
+            <label for="client-email" class="form-field__label">Email</label>
+            <input
+              id="client-email"
+              type="text"
+              v-model="quoteState.email"
+              class="form-field__input"
+              placeholder="Email address"
+            />
+          </div>
+          <div class="form-field">
+            <label for="quote-date" class="form-field__label">Date</label>
+            <input
+              id="quote-date"
+              type="date"
+              v-model="quoteState.quoteDate"
+              class="form-field__input"
+            />
+          </div>
+        </div>
+
+        <!-- Salutation & Opening Line -->
+        <div class="form-field form-field--full" style="margin-top: var(--space-3);">
+          <label for="salutation" class="form-field__label">Salutation</label>
+          <input
+            id="salutation"
+            type="text"
+            v-model="quoteState.salutation"
+            class="form-field__input"
+            placeholder="Dear Ma'am / Sir,"
+          />
+        </div>
+        <div class="form-field form-field--full" style="margin-top: var(--space-3);">
+          <label for="opening-line" class="form-field__label">Opening Line</label>
+          <textarea
+            id="opening-line"
+            v-model="quoteState.openingLine"
+            class="form-field__textarea"
+            placeholder="Thank you for your interest in our products and services..."
+          ></textarea>
         </div>
       </section>
 
@@ -377,6 +494,111 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
         </div>
       </section>
 
+      <!-- Package Options (Delivery & Computer Set toggles) -->
+      <section class="form-panel__section">
+        <h3 class="form-panel__section-title">Package Options</h3>
+        <div class="form-options form-options--vertical">
+          <div>
+            <label class="form-options__checkbox">
+              <input
+                type="checkbox"
+                v-model="quoteState.includeDelivery"
+                class="form-options__checkbox-input"
+              />
+              <span class="form-options__checkbox-label">Include Delivery in Package Inclusions</span>
+            </label>
+            <p class="form-options__helper">Unchecked = delivery remains under Exclusions (default)</p>
+          </div>
+
+          <div v-if="quoteState.hasComputerSetOption">
+            <label class="form-options__checkbox">
+              <input
+                type="checkbox"
+                v-model="quoteState.includeComputerSet"
+                class="form-options__checkbox-input"
+              />
+              <span class="form-options__checkbox-label">Include Computer Set in Package</span>
+            </label>
+          </div>
+
+          <div v-if="quoteState.includeComputerSet" class="form-field">
+            <label for="computer-set-spec" class="form-field__label">Computer Set Specifications</label>
+            <input
+              id="computer-set-spec"
+              type="text"
+              v-model="quoteState.computerSetSpec"
+              class="form-field__input"
+              placeholder="e.g., Intel Core i5, 8GB RAM"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Package Inclusions (toggleable list) -->
+      <section v-if="quoteState.inclusionItems.length > 0" class="form-panel__section">
+        <h3 class="form-panel__section-title">Package Inclusions</h3>
+        <div class="toggleable-list">
+          <div
+            v-for="item in quoteState.inclusionItems"
+            :key="item.id"
+            class="toggleable-list__item"
+          >
+            <label class="toggleable-list__checkbox">
+              <input
+                type="checkbox"
+                v-model="item.enabled"
+                class="toggleable-list__checkbox-input"
+              />
+              <span class="toggleable-list__checkbox-label">{{ item.description }}</span>
+            </label>
+            <button
+              v-if="item.isCustom"
+              type="button"
+              class="toggleable-list__remove-btn"
+              @click="removeInclusion(item.id)"
+              :aria-label="`Remove inclusion: ${item.description}`"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <!-- Add custom inclusion -->
+        <div class="toggleable-list__add-section">
+          <button
+            v-if="!showInclusionInput"
+            type="button"
+            class="toggleable-list__add-btn"
+            @click="showInclusionInput = true"
+          >
+            + Add Inclusion
+          </button>
+          <div v-if="showInclusionInput" class="toggleable-list__add-form">
+            <input
+              type="text"
+              v-model="newInclusionText"
+              class="toggleable-list__add-input"
+              placeholder="Custom inclusion description"
+              @keyup.enter="addInclusion"
+            />
+            <button
+              type="button"
+              class="toggleable-list__confirm-btn"
+              @click="addInclusion"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              class="toggleable-list__cancel-btn"
+              @click="showInclusionInput = false; newInclusionText = ''"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- Consumable Prices (visible when consumables are loaded from catalog) -->
       <section v-if="quoteState.consumables.length > 0" class="form-panel__section">
         <h3 class="form-panel__section-title">Consumable Prices</h3>
@@ -412,6 +634,91 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- Package Exclusions (task 9.3) -->
+      <section v-if="quoteState.exclusionItems.length > 0" class="form-panel__section">
+        <h3 class="form-panel__section-title">Package Exclusions</h3>
+        <div class="toggleable-list">
+          <div
+            v-for="item in quoteState.exclusionItems"
+            :key="item.id"
+            class="toggleable-list__item"
+          >
+            <label class="toggleable-list__checkbox">
+              <input
+                type="checkbox"
+                v-model="item.enabled"
+                class="toggleable-list__checkbox-input"
+              />
+              <span class="toggleable-list__checkbox-label">{{ item.description }}</span>
+            </label>
+            <button
+              v-if="item.isCustom"
+              type="button"
+              class="toggleable-list__remove-btn"
+              @click="removeExclusionItem(item.id)"
+              :aria-label="`Remove exclusion: ${item.description}`"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <!-- Add custom exclusion -->
+        <div class="toggleable-list__add-section">
+          <button
+            v-if="!showExclusionInput"
+            type="button"
+            class="toggleable-list__add-btn"
+            @click="showExclusionInput = true"
+          >
+            + Add Exclusion
+          </button>
+          <div v-if="showExclusionInput" class="toggleable-list__add-form">
+            <input
+              type="text"
+              v-model="newExclusionText"
+              class="toggleable-list__add-input"
+              placeholder="Custom exclusion description"
+              @keyup.enter="confirmAddExclusion"
+            />
+            <button
+              type="button"
+              class="toggleable-list__confirm-btn"
+              @click="confirmAddExclusion"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              class="toggleable-list__cancel-btn"
+              @click="showExclusionInput = false; newExclusionText = ''"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Optional Add-Ons (task 9.4) -->
+      <section v-if="quoteState.addonItems.length > 0" class="form-panel__section">
+        <h3 class="form-panel__section-title">Optional Add-Ons</h3>
+        <p class="form-panel__hint">Check items to include them on the quote paper</p>
+        <div class="toggleable-list">
+          <label
+            v-for="item in quoteState.addonItems"
+            :key="item.id"
+            class="toggleable-list__item"
+          >
+            <input
+              type="checkbox"
+              v-model="item.enabled"
+              class="toggleable-list__checkbox"
+            />
+            <span class="toggleable-list__label">{{ item.description }}</span>
+          </label>
         </div>
       </section>
 
@@ -702,6 +1009,77 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
           </div>
         </div>
       </section>
+
+      <!-- Warranty -->
+      <section class="form-panel__section">
+        <h3 class="form-panel__section-title">Warranty</h3>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="warranty-company" class="form-field__label">Company Name</label>
+            <select
+              id="warranty-company"
+              v-model="quoteState.warrantyCompany"
+              class="form-field__input"
+            >
+              <option value="">Select company...</option>
+              <option value="ES Print Media Inc.">ES Print Media Inc.</option>
+              <option value="ACS Premium Solutions Inc.">ACS Premium Solutions Inc.</option>
+              <option value="ES Concept Group Inc.">ES Concept Group Inc.</option>
+              <option value="ES Print Industries Inc.">ES Print Industries Inc.</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="warranty-supplier" class="form-field__label">Supplier Name</label>
+            <input
+              id="warranty-supplier"
+              type="text"
+              v-model="quoteState.warrantySupplier"
+              class="form-field__input"
+              placeholder="ESPMI"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Validation Error Box (Req 13.4, 13.5) -->
+      <div
+        v-if="showValidationBox"
+        class="validation-error-box"
+        role="alert"
+        aria-live="polite"
+      >
+        <div class="validation-error-box__header">
+          <span class="validation-error-box__title">Please fix the following before continuing:</span>
+          <button
+            type="button"
+            class="validation-error-box__dismiss"
+            @click="dismissValidationBox"
+            aria-label="Dismiss validation errors"
+          >
+            &times;
+          </button>
+        </div>
+        <ul class="validation-error-box__list">
+          <li
+            v-for="error in liveValidationErrors.length ? liveValidationErrors : quoteState.validationErrors"
+            :key="error"
+            class="validation-error-box__item"
+          >
+            {{ error }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Open Closing Documents Button (Req 13.1) -->
+      <div class="form-panel__actions">
+        <button
+          type="button"
+          class="closing-docs-btn"
+          @click="openClosingDocuments"
+        >
+          OPEN CLOSING DOCUMENTS
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -1142,6 +1520,26 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+.form-field__textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--color-gray-900);
+  background: var(--color-white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-field__textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
 .form-field__char-count {
   font-size: var(--font-size-xs);
   color: var(--color-gray-400);
@@ -1195,6 +1593,18 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
   font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-gray-800);
+}
+
+.form-options--vertical {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.form-options__helper {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  margin-left: 26px;
+  margin-top: 2px;
 }
 
 /* --- Promo Section --- */
@@ -1416,6 +1826,44 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+/* --- Toggleable List --- */
+.toggleable-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toggleable-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-gray-50);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.toggleable-list__item:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.toggleable-list__checkbox {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.toggleable-list__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-800);
+}
+
 /* --- Screen reader only utility --- */
 .sr-only {
   position: absolute;
@@ -1427,5 +1875,226 @@ const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified'
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* --- Toggleable List (inclusions/exclusions/addons) --- */
+.toggleable-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toggleable-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-gray-50);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.toggleable-list__checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.toggleable-list__checkbox-input {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.toggleable-list__checkbox-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toggleable-list__remove-btn {
+  min-height: auto;
+  min-width: auto;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-error);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.toggleable-list__remove-btn:hover {
+  background: var(--color-error-light);
+}
+
+.toggleable-list__add-section {
+  margin-top: var(--space-3);
+}
+
+.toggleable-list__add-btn {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.toggleable-list__add-btn:hover {
+  background: #c7dbfe;
+}
+
+.toggleable-list__add-form {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.toggleable-list__add-input {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--color-gray-900);
+  background: var(--color-white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.toggleable-list__add-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.toggleable-list__confirm-btn {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-white);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.toggleable-list__confirm-btn:hover {
+  opacity: 0.9;
+}
+
+.toggleable-list__cancel-btn {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-gray-600);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.toggleable-list__cancel-btn:hover {
+  background: var(--color-gray-100);
+}
+
+/* --- Validation Error Box (Req 13.4, 13.5) --- */
+.validation-error-box {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-error-light, #fef2f2);
+  border: 1px solid var(--color-error, #ef4444);
+  border-radius: var(--radius-lg);
+  color: var(--color-error, #ef4444);
+}
+
+.validation-error-box__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.validation-error-box__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.validation-error-box__dismiss {
+  min-height: auto;
+  min-width: auto;
+  padding: 0 var(--space-1);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-error, #ef4444);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.validation-error-box__dismiss:hover {
+  opacity: 0.7;
+}
+
+.validation-error-box__list {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.validation-error-box__item {
+  font-size: var(--font-size-sm);
+}
+
+/* --- Form Actions (Closing Docs button) --- */
+.form-panel__actions {
+  padding-bottom: var(--space-4);
+}
+
+.closing-docs-btn {
+  display: block;
+  width: 100%;
+  padding: var(--space-4);
+  min-height: 52px;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-white);
+  background: var(--color-gray-800, #1f2937);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+}
+
+.closing-docs-btn:hover {
+  background: var(--color-gray-900, #111827);
+}
+
+.closing-docs-btn:active {
+  opacity: 0.9;
 }
 </style>

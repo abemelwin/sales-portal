@@ -7,6 +7,7 @@ import type {
   MachineInclusion,
   MachineExclusion,
   MachineAddon,
+  ToggleableItem,
 } from '@/types'
 
 /**
@@ -75,6 +76,34 @@ export interface QuoteBuilderState {
 
   // Error state
   catalogError: string | null
+
+  // Client info additions (Req 1–4)
+  email: string
+  quoteDate: string
+  salutation: string
+  openingLine: string
+
+  // Machine section (Req 5–6, 14)
+  selectedSubModel: string
+  imageKey: string | null
+
+  // Toggleable package items (Req 7–11)
+  inclusionItems: ToggleableItem[]
+  exclusionItems: ToggleableItem[]
+  addonItems: ToggleableItem[]
+  includeDelivery: boolean
+  includeComputerSet: boolean
+  computerSetSpec: string
+  hasComputerSetOption: boolean
+
+  // Warranty (Req 12)
+  warrantyCompany: string
+  warrantySupplier: string
+  warrantyMachineDuration: string
+  warrantyPrintheadDuration: string
+
+  // Validation (Req 13, 16)
+  validationErrors: string[]
 }
 
 export const QUOTE_BUILDER_KEY: InjectionKey<QuoteBuilderState> = Symbol('quoteBuilder')
@@ -135,5 +164,33 @@ export function useQuoteBuilder(): QuoteBuilderState {
 
     // Error state
     catalogError: null,
+
+    // Client info additions
+    email: '',
+    quoteDate: new Date().toISOString().slice(0, 10),
+    salutation: 'Dear Ma\'am / Sir,',
+    openingLine: 'Thank you for your interest in our products and services. Below is our quote as per your inquiry:',
+
+    // Machine section
+    selectedSubModel: '',
+    imageKey: null,
+
+    // Toggleable package items
+    inclusionItems: [],
+    exclusionItems: [],
+    addonItems: [],
+    includeDelivery: false,
+    includeComputerSet: false,
+    computerSetSpec: '',
+    hasComputerSetOption: false,
+
+    // Warranty
+    warrantyCompany: '',
+    warrantySupplier: 'ESPMI',
+    warrantyMachineDuration: '',
+    warrantyPrintheadDuration: '',
+
+    // Validation
+    validationErrors: [],
   })
 }

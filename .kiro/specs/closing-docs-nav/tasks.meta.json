@@ -1,0 +1,164 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Rename nav labels and reorder standard links in `NavBar.vue`": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550337
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426570254
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426678893
+      }
+    ],
+    "1.2 Update admin links in `NavBar.vue`": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550404
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426570718
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426679682
+      }
+    ],
+    "2.1 Add route record in `src/router/index.ts`": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550475
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426571953
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426680317
+      }
+    ],
+    "3. Checkpoint - Verify NavBar and route changes": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550517
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427161238
+      }
+    ],
+    "4.1 Create `src/views/ClosingDocsIndexView.vue` with core structure": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550571
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426705128
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426771488
+      }
+    ],
+    "4.2 Implement the template with loading, error, empty, and list states": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550630
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426778522
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426918796
+      }
+    ],
+    "4.3 Add scoped styles for ClosingDocsIndexView": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550690
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426926094
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427043012
+      }
+    ],
+    "5. Checkpoint - Verify full feature works end-to-end": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550746
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427162008
+      }
+    ],
+    "7. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426550784
+      },
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427162816
+      }
+    ],
+    "1. Update NavBar labels, order, and links": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426679719
+      }
+    ],
+    "2. Register `/closing-docs` route": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786426680363
+      }
+    ],
+    "4. Implement ClosingDocsIndexView component": [
+      {
+        "executionId": "9d88964e-e4d3-4daf-a9c1-6a99cf879893",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427043066
+      }
+    ]
+  }
+}

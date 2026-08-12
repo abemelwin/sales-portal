@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { inject, computed, ref, onMounted, onUnmounted } from 'vue'
+import { inject, computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
+import { formatQuoteDate, getDisplayedInclusions, getDisplayedExclusions } from '@/utils/quote-calculations'
+import { supabase } from '@/services/supabase'
 import letterheadEspmi from '@/assets/letterhead-espmi.svg'
 import letterheadAcs from '@/assets/letterhead-acs.svg'
 
@@ -50,12 +52,62 @@ const machineTitle = computed(() => {
   return `${quoteState.selectedBrand} ${quoteState.selectedModel}`
 })
 
-const showRecertifiedLabel = computed(() => {
-  return quoteState.unitCondition === 'Re-certified'
+/**
+ * Maps unit condition to display label and CSS modifier class.
+ * Returns null when no condition is set.
+ */
+const conditionBadge = computed<{ label: string; modifier: string } | null>(() => {
+  switch (quoteState.unitCondition) {
+    case 'Brand New':
+      return { label: 'BRAND NEW', modifier: 'brand-new' }
+    case 'Re-certified':
+      return { label: 'RE-CERTIFIED', modifier: 're-certified' }
+    case 'Demo Unit':
+      return { label: 'DEMO UNIT', modifier: 'demo-unit' }
+    default:
+      return null
+  }
+})
+
+// --- Machine image ---
+const imageLoadError = ref(false)
+
+const machineImageUrl = computed<string | null>(() => {
+  if (!quoteState.imageKey) return null
+  const { data } = supabase.storage
+    .from('machine-images')
+    .getPublicUrl(quoteState.imageKey)
+  return data.publicUrl
+})
+
+const showMachineImage = computed(() => {
+  return !!machineImageUrl.value && !imageLoadError.value
+})
+
+function onImageError() {
+  imageLoadError.value = true
+}
+
+// Reset error state when the image key changes (new machine selected)
+watch(
+  () => quoteState.imageKey,
+  () => { imageLoadError.value = false }
+)
+
+const formattedDate = computed(() => {
+  return quoteState.quoteDate ? formatQuoteDate(quoteState.quoteDate) : ''
 })
 
 const hasClient = computed(() => {
-  return !!(quoteState.clientName || quoteState.company || quoteState.address || quoteState.contact)
+  return !!(quoteState.clientName || quoteState.company || quoteState.address || quoteState.contact || quoteState.email)
+})
+
+const showSalutation = computed(() => {
+  return quoteState.salutation.trim().length > 0
+})
+
+const showOpeningLine = computed(() => {
+  return quoteState.openingLine.trim().length > 0
 })
 
 const showTradeIns = computed(() => {
@@ -70,7 +122,7 @@ const tradeInSum = computed(() => {
 })
 
 const inclusionsList = computed(() => {
-  const items = quoteState.inclusions.map((inc) => inc.description)
+  const items = getDisplayedInclusions(quoteState).map((item) => item.description)
   if (quoteState.vatInclusive) {
     items.push('VAT Inclusive')
   }
@@ -78,11 +130,16 @@ const inclusionsList = computed(() => {
 })
 
 const exclusionsList = computed(() => {
-  return quoteState.exclusions.map((exc) => exc.description)
+  return getDisplayedExclusions(quoteState).map((item) => item.description)
 })
 
-const addonsList = computed(() => {
-  return quoteState.addons.map((addon) => addon.description)
+/**
+ * All add-on items for preview rendering.
+ * Each item includes its enabled state so the template can render ☑ / ☐ markers.
+ * Requirements 11.2, 11.3, 11.4
+ */
+const addonDisplayItems = computed(() => {
+  return quoteState.addonItems
 })
 
 const consumableDisplayList = computed(() => {
@@ -109,6 +166,47 @@ const showPromo = computed(() => {
 
 const dealTypeLabel = computed(() => {
   return quoteState.dealType || ''
+})
+
+// Warranty section (Req 12.3, 12.4)
+const showWarranty = computed(() => {
+  return quoteState.warrantyCompany.trim().length > 0
+})
+
+const warrantyLines = computed(() => {
+  const lines: { text: string; bold: boolean }[] = []
+
+  if (quoteState.warrantyMachineDuration.trim()) {
+    lines.push({
+      text: `${quoteState.warrantyMachineDuration} limited warranty on main unit excluding software-related concerns. Terms and conditions apply.`,
+      bold: false,
+    })
+  }
+
+  if (quoteState.warrantyPrintheadDuration.trim()) {
+    lines.push({
+      text: `${quoteState.warrantyPrintheadDuration} limited warranty on print heads / laser tube.`,
+      bold: false,
+    })
+    lines.push({
+      text: 'Use of parts and inks other than those supplied by the manufacturer will void the warranty.',
+      bold: true,
+    })
+  }
+
+  lines.push({ text: 'No warranty for package inclusions.', bold: false })
+
+  lines.push({
+    text: `The unit is exclusive to ${quoteState.warrantyCompany} and its authorized dealers. It is an essential consideration of this Agreement that all matters pertaining to the supply shall be held in the strictest confidence.`,
+    bold: false,
+  })
+
+  lines.push({
+    text: `Any repairs or modifications made to this unit without the consent of ${quoteState.warrantySupplier || 'ESPMI'} will void the warranty.`,
+    bold: true,
+  })
+
+  return lines
 })
 
 /**
@@ -146,16 +244,54 @@ function formatCurrency(value: number | null | undefined): string {
           <div class="quote-paper__title-section">
             <h2 class="quote-paper__title">QUOTATION</h2>
             <p v-if="dealTypeLabel" class="quote-paper__deal-type">{{ dealTypeLabel }}</p>
+            <p v-if="formattedDate" class="quote-paper__quote-date">Date: {{ formattedDate }}</p>
           </div>
 
-          <!-- Machine name + RE-CERTIFIED label -->
+          <!-- Machine name, condition badge, and hero layout (image + features) -->
           <section class="quote-paper__machine">
-            <p class="quote-paper__machine-name">
-              {{ machineTitle }}
-              <span v-if="showRecertifiedLabel" class="quote-paper__recertified">
-                RE-CERTIFIED
-              </span>
-            </p>
+            <p class="quote-paper__machine-name">{{ machineTitle }}</p>
+
+            <!-- Unit condition badge (Req 17) -->
+            <div
+              v-if="conditionBadge"
+              class="quote-paper__condition-badge"
+              :class="`quote-paper__condition-badge--${conditionBadge.modifier}`"
+            >
+              {{ conditionBadge.label }}
+            </div>
+
+            <!-- Hero layout: image left + features right (Req 14) -->
+            <div
+              class="quote-paper__hero"
+              :class="{ 'quote-paper__hero--with-image': showMachineImage }"
+            >
+              <!-- Machine image column -->
+              <div v-if="showMachineImage || (machineImageUrl && imageLoadError)" class="quote-paper__hero-image-col">
+                <img
+                  v-if="!imageLoadError"
+                  :src="machineImageUrl!"
+                  :alt="machineTitle"
+                  class="quote-paper__machine-image"
+                  @error="onImageError"
+                />
+                <div v-else class="quote-paper__image-placeholder">
+                  <span>Image unavailable</span>
+                </div>
+              </div>
+
+              <!-- Features column -->
+              <div
+                v-if="quoteState.features.length > 0"
+                class="quote-paper__hero-features-col"
+              >
+                <h3 class="quote-paper__section-header">Features</h3>
+                <ul class="quote-paper__list">
+                  <li v-for="feature in quoteState.features" :key="feature.id">
+                    {{ feature.description }}
+                  </li>
+                </ul>
+              </div>
+            </div>
           </section>
 
           <!-- Client information -->
@@ -172,17 +308,20 @@ function formatCurrency(value: number | null | undefined): string {
             <p v-if="quoteState.contact" class="quote-paper__client-detail">
               {{ quoteState.contact }}
             </p>
+            <p v-if="quoteState.email" class="quote-paper__client-detail">
+              {{ quoteState.email }}
+            </p>
           </section>
 
-          <!-- Features list -->
-          <section v-if="quoteState.features.length > 0" class="quote-paper__section">
-            <h3 class="quote-paper__section-header">Features</h3>
-            <ul class="quote-paper__list">
-              <li v-for="feature in quoteState.features" :key="feature.id">
-                {{ feature.description }}
-              </li>
-            </ul>
-          </section>
+          <!-- Salutation -->
+          <p v-if="showSalutation" class="quote-paper__salutation">
+            {{ quoteState.salutation }}
+          </p>
+
+          <!-- Opening line -->
+          <p v-if="showOpeningLine" class="quote-paper__opening-line">
+            {{ quoteState.openingLine }}
+          </p>
 
           <!-- Package Inclusions / Exclusions (two-column layout) -->
           <div
@@ -208,10 +347,13 @@ function formatCurrency(value: number | null | undefined): string {
           </div>
 
           <!-- Optional Add-ons -->
-          <section v-if="addonsList.length > 0" class="quote-paper__section">
+          <section v-if="addonDisplayItems.length > 0" class="quote-paper__section">
             <h3 class="quote-paper__section-header">Optional Add-ons</h3>
-            <ul class="quote-paper__list">
-              <li v-for="(addon, idx) in addonsList" :key="idx">{{ addon }}</li>
+            <ul class="quote-paper__list quote-paper__list--addons">
+              <li v-for="(addon, idx) in addonDisplayItems" :key="addon.id ?? idx" class="quote-paper__addon-item">
+                <span class="quote-paper__addon-marker">{{ addon.enabled ? '☑' : '☐' }}</span>
+                {{ addon.description }}
+              </li>
             </ul>
           </section>
 
@@ -334,19 +476,47 @@ function formatCurrency(value: number | null | undefined): string {
             </div>
           </section>
 
-          <!-- Signatories -->
+          <!-- Warranty Section (Req 12.3, 12.4) -->
+          <section v-if="showWarranty" class="quote-paper__section quote-paper__warranty">
+            <h3 class="quote-paper__section-header">Warranty</h3>
+            <ul class="quote-paper__warranty-list">
+              <li
+                v-for="(line, idx) in warrantyLines"
+                :key="idx"
+                :class="{ 'quote-paper__warranty-bold': line.bold }"
+              >
+                {{ line.text }}
+              </li>
+            </ul>
+          </section>
+
+          <!-- Closing paragraph + Signatories (kept together, Req 15.1–15.5) -->
           <section class="quote-paper__signatories no-break">
-            <div class="quote-paper__sig-truly">Truly yours,</div>
+            <!-- Closing paragraph (Req 15.1) -->
+            <p class="quote-paper__closing-text">
+              Trusting that the above quotation will receive your favorable consideration and assuring you of our best service at all times. Thank you very much.
+            </p>
+
+            <!-- "Very truly yours," / "Conforme:" labels (Req 15.2, 15.3) -->
+            <div class="quote-paper__sig-labels-row">
+              <div class="quote-paper__sig-label-left">Very truly yours,</div>
+              <div class="quote-paper__sig-label-right">Conforme:</div>
+            </div>
+
             <div class="quote-paper__sig-grid">
               <div class="quote-paper__sig-cell">
                 <div class="quote-paper__sig-name">{{ quoteState.aeName || '' }}</div>
                 <div class="quote-paper__sig-line"></div>
                 <div class="quote-paper__sig-role">Account Executive</div>
+                <!-- Req 15.4 -->
+                <div class="quote-paper__sig-sub">Signature over Printed Name</div>
               </div>
               <div class="quote-paper__sig-cell">
                 <div class="quote-paper__sig-name">{{ quoteState.clientConforme || '' }}</div>
                 <div class="quote-paper__sig-line"></div>
-                <div class="quote-paper__sig-role">Client Conforme</div>
+                <div class="quote-paper__sig-role">Client</div>
+                <!-- Req 15.4 -->
+                <div class="quote-paper__sig-sub">Signature over Printed Name</div>
               </div>
             </div>
             <div v-if="quoteState.notedByName || quoteState.notedByRole" class="quote-paper__sig-noted">
@@ -446,6 +616,12 @@ function formatCurrency(value: number | null | undefined): string {
   letter-spacing: 0.04em;
 }
 
+.quote-paper__quote-date {
+  margin: 1mm 0 0;
+  font-size: 8.5pt;
+  color: var(--color-gray-600);
+}
+
 /* ─── Machine info ─── */
 .quote-paper__machine {
   text-align: center;
@@ -461,6 +637,84 @@ function formatCurrency(value: number | null | undefined): string {
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+/* Unit condition badge (Req 17) */
+.quote-paper__condition-badge {
+  display: inline-block;
+  margin-top: 2mm;
+  padding: 2px 8px;
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.quote-paper__condition-badge--brand-new {
+  color: #fff;
+  background: #16a34a;
+  border: 1px solid #15803d;
+}
+
+.quote-paper__condition-badge--re-certified {
+  color: #fff;
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+}
+
+.quote-paper__condition-badge--demo-unit {
+  color: #fff;
+  background: #d97706;
+  border: 1px solid #b45309;
+}
+
+/* Hero layout: image + features (Req 14) */
+.quote-paper__hero {
+  margin-top: 3mm;
+  display: flex;
+  flex-direction: column;
+}
+
+.quote-paper__hero--with-image {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 4mm;
+}
+
+.quote-paper__hero-image-col {
+  flex: 0 0 70mm;
+  width: 70mm;
+}
+
+.quote-paper__machine-image {
+  width: 100%;
+  height: auto;
+  max-height: 55mm;
+  object-fit: contain;
+  border-radius: 2px;
+  display: block;
+}
+
+.quote-paper__image-placeholder {
+  width: 70mm;
+  height: 45mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-gray-100);
+  border: 1px dashed var(--color-gray-300);
+  border-radius: 2px;
+  font-size: 7.5pt;
+  color: var(--color-gray-400);
+  font-style: italic;
+}
+
+.quote-paper__hero-features-col {
+  flex: 1;
+  min-width: 0;
 }
 
 .quote-paper__recertified {
@@ -503,6 +757,20 @@ function formatCurrency(value: number | null | undefined): string {
   line-height: 1.45;
 }
 
+/* ─── Salutation & Opening line ─── */
+.quote-paper__salutation {
+  margin: 3mm 0 1.5mm;
+  font-size: 9pt;
+  color: var(--color-gray-800);
+}
+
+.quote-paper__opening-line {
+  margin: 0 0 3mm;
+  font-size: 8.5pt;
+  color: var(--color-gray-700);
+  line-height: 1.55;
+}
+
 /* ─── Section headers ─── */
 .quote-paper__section {
   margin-bottom: 3mm;
@@ -517,6 +785,27 @@ function formatCurrency(value: number | null | undefined): string {
   padding-bottom: 1mm;
   margin: 0 0 2mm;
   letter-spacing: 0.04em;
+}
+
+/* ─── Add-ons list with checkbox markers ─── */
+.quote-paper__list--addons {
+  list-style: none;
+  padding-left: 0;
+}
+
+.quote-paper__addon-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 8pt;
+  color: var(--color-gray-700);
+  line-height: 1.6;
+}
+
+.quote-paper__addon-marker {
+  flex-shrink: 0;
+  font-size: 9pt;
+  line-height: 1;
 }
 
 /* ─── Lists ─── */
@@ -681,13 +970,6 @@ function formatCurrency(value: number | null | undefined): string {
   border-top: 2px solid var(--color-gray-200);
 }
 
-.quote-paper__sig-truly {
-  font-size: 8.5pt;
-  color: var(--color-gray-700);
-  margin-bottom: 6mm;
-  font-style: italic;
-}
-
 .quote-paper__sig-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -749,6 +1031,58 @@ function formatCurrency(value: number | null | undefined): string {
   color: var(--color-gray-600);
   font-style: italic;
   margin-top: 1mm;
+}
+
+/* ─── Warranty section ─── */
+.quote-paper__warranty {
+  margin-bottom: 3mm;
+}
+
+.quote-paper__warranty-list {
+  list-style: disc;
+  padding-left: 14px;
+  margin: 0;
+}
+
+.quote-paper__warranty-list li {
+  font-size: 8pt;
+  color: var(--color-gray-700);
+  line-height: 1.65;
+}
+
+.quote-paper__warranty-bold {
+  color: var(--color-danger, #c0392b) !important;
+  font-weight: 700;
+}
+
+/* ─── Closing paragraph ─── */
+.quote-paper__closing-text {
+  font-size: 8.5pt;
+  color: var(--color-gray-700);
+  line-height: 1.6;
+  margin: 0 0 5mm;
+}
+
+/* ─── "Very truly yours," / "Conforme:" row ─── */
+.quote-paper__sig-labels-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6mm;
+}
+
+.quote-paper__sig-label-left,
+.quote-paper__sig-label-right {
+  font-size: 8.5pt;
+  color: var(--color-gray-700);
+  font-style: italic;
+}
+
+/* ─── Signature sub-label ("Signature over Printed Name") ─── */
+.quote-paper__sig-sub {
+  font-size: 7pt;
+  color: var(--color-gray-500);
+  margin-top: 1mm;
+  font-style: italic;
 }
 
 /* ─── Footer ─── */

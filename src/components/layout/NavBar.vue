@@ -21,19 +21,18 @@ const isAdmin = computed(() => role.value === 'admin')
 
 /** Navigation links visible to all authenticated users */
 const navLinks = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/quotes/new', label: 'Quote Builder' },
-  { to: '/pricelist', label: 'Pricelist' },
-  { to: '/consumables', label: 'Consumables' },
+  { to: '/quotes/new', label: 'Quote Generator' },
+  { to: '/pricelist', label: 'Machine Pricelist' },
+  { to: '/consumables', label: 'Consumables Pricelist' },
+  { to: '/closing-docs', label: 'Closing Docs' },
   { to: '/product-info', label: 'Product Info' },
 ]
 
-/** Admin-only navigation links (Requirement 2.4, 2.5) */
+/** Admin-only navigation links (Requirement 4.1, 11.2, 11.3) */
 const adminLinks = [
-  { to: '/catalog', label: 'Catalog' },
   { to: '/users', label: 'Users' },
   { to: '/roles', label: 'Roles' },
-  { to: '/migrate', label: 'Data Migration' },
+  { to: '/catalog', label: 'Catalog Editor' },
 ]
 
 function toggleMobileMenu() {
