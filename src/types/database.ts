@@ -52,6 +52,10 @@ export interface Database {
           sub_model: string | null
           unit_condition: 'Brand New' | 'Re-certified' | 'Demo Unit'
           letterhead: 'ES Print Media Inc.' | 'ACS / Alternative'
+          image_key: string | null
+          has_computer_set_option: boolean
+          warranty_machine_duration: string | null
+          warranty_printhead_duration: string | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -63,6 +67,10 @@ export interface Database {
           sub_model?: string | null
           unit_condition: 'Brand New' | 'Re-certified' | 'Demo Unit'
           letterhead?: 'ES Print Media Inc.' | 'ACS / Alternative'
+          image_key?: string | null
+          has_computer_set_option?: boolean
+          warranty_machine_duration?: string | null
+          warranty_printhead_duration?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -74,6 +82,10 @@ export interface Database {
           sub_model?: string | null
           unit_condition?: 'Brand New' | 'Re-certified' | 'Demo Unit'
           letterhead?: 'ES Print Media Inc.' | 'ACS / Alternative'
+          image_key?: string | null
+          has_computer_set_option?: boolean
+          warranty_machine_duration?: string | null
+          warranty_printhead_duration?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string

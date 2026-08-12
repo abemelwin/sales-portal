@@ -1,4 +1,6 @@
 import { ref } from 'vue'
+import { validateQuote } from './useQuoteValidation'
+import type { QuoteBuilderState } from './useQuoteBuilder'
 
 /**
  * Composable for PDF export via browser print dialog.
@@ -48,11 +50,32 @@ export function useExportPDF() {
    * On mobile, the `printing-mode` class ensures the viewport scaling transform
    * is removed so the paper renders at full 210mm x 297mm dimensions.
    *
+   * When a `state` object is provided, the quote is validated before printing.
+   * If validation fails, `state.validationErrors` is populated and the print is
+   * aborted. If validation passes, `state.validationErrors` is cleared before
+   * proceeding.
+   *
    * Requirement 6.1: Trigger browser print dialog pre-configured for A4.
    * Requirement 6.3: Render at correct print dimensions regardless of viewport width.
+   * Requirement 16.1: Validate required fields before PDF generation.
+   * Requirement 16.2: Populate validationErrors and abort if invalid.
+   * Requirement 16.3: Proceed with generation when all required fields are valid.
+   * Requirement 16.5: Clear validation errors once all issues are resolved.
    */
-  async function printQuote(): Promise<void> {
+  async function printQuote(state?: QuoteBuilderState): Promise<void> {
     if (isPrinting.value) return
+
+    // Run validation when state is provided (Req 16.1)
+    if (state) {
+      const result = validateQuote(state)
+      if (!result.isValid) {
+        // Abort and surface errors to the UI (Req 16.2)
+        state.validationErrors = result.errors
+        return
+      }
+      // All required fields valid — clear any stale errors (Req 16.5)
+      state.validationErrors = []
+    }
 
     isPrinting.value = true
     printError.value = null

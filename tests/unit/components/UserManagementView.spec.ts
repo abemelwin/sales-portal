@@ -92,11 +92,12 @@ describe('UserManagementView', () => {
     await wrapper.vm.$nextTick()
 
     const headers = wrapper.findAll('.user-table th')
-    expect(headers.length).toBe(4)
+    expect(headers.length).toBe(5)
     expect(headers[0].text()).toBe('Display Name')
     expect(headers[1].text()).toBe('Username')
     expect(headers[2].text()).toBe('Role')
     expect(headers[3].text()).toBe('Status')
+    expect(headers[4].text()).toBe('Actions')
   })
 
   it('displays users in the table rows', async () => {

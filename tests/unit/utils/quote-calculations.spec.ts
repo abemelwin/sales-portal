@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeAmortization } from '@/utils/quote-calculations'
+import { computeAmortization, formatQuoteDate } from '@/utils/quote-calculations'
 
 describe('computeAmortization', () => {
   it('computes monthly amortization rounded to 2 decimal places', () => {
@@ -88,5 +88,56 @@ describe('computeAmortization', () => {
     // (10000 - 0 - 0) / 7 = 1428.5714... -> 1428.57
     const result = computeAmortization(10000, 0, 0, 7)
     expect(result.value).toBe(1428.57)
+  })
+})
+
+
+describe('formatQuoteDate', () => {
+  it('formats a valid ISO date to "Month Day, Year"', () => {
+    expect(formatQuoteDate('2026-08-11')).toBe('August 11, 2026')
+  })
+
+  it('formats January 1st correctly', () => {
+    expect(formatQuoteDate('2025-01-01')).toBe('January 1, 2025')
+  })
+
+  it('formats December 31st correctly', () => {
+    expect(formatQuoteDate('2024-12-31')).toBe('December 31, 2024')
+  })
+
+  it('returns empty string for null input', () => {
+    expect(formatQuoteDate(null)).toBe('')
+  })
+
+  it('returns empty string for undefined input', () => {
+    expect(formatQuoteDate(undefined)).toBe('')
+  })
+
+  it('returns empty string for empty string input', () => {
+    expect(formatQuoteDate('')).toBe('')
+  })
+
+  it('returns empty string for invalid format (no dashes)', () => {
+    expect(formatQuoteDate('20260811')).toBe('')
+  })
+
+  it('returns empty string for invalid month (13)', () => {
+    expect(formatQuoteDate('2026-13-01')).toBe('')
+  })
+
+  it('returns empty string for invalid month (0)', () => {
+    expect(formatQuoteDate('2026-00-15')).toBe('')
+  })
+
+  it('returns empty string for invalid day (0)', () => {
+    expect(formatQuoteDate('2026-06-00')).toBe('')
+  })
+
+  it('returns empty string for invalid day (32)', () => {
+    expect(formatQuoteDate('2026-06-32')).toBe('')
+  })
+
+  it('returns empty string for non-numeric parts', () => {
+    expect(formatQuoteDate('abcd-ef-gh')).toBe('')
   })
 })

@@ -78,6 +78,10 @@ export interface Machine {
   sub_model: string | null
   unit_condition: UnitCondition
   letterhead: Letterhead
+  image_key: string | null
+  has_computer_set_option: boolean
+  warranty_machine_duration: string | null
+  warranty_printhead_duration: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -110,6 +114,17 @@ export interface MachineFilter {
   model?: string
   unit_condition?: UnitCondition
   is_active?: boolean
+}
+
+// ─── Toggleable Item Model ───────────────────────────────────────────────────────
+
+/** An item (inclusion, exclusion, or add-on) that can be toggled on/off per quote */
+export interface ToggleableItem {
+  id: string
+  description: string
+  enabled: boolean
+  isCustom: boolean
+  sortOrder: number
 }
 
 // ─── Product Info Models ────────────────────────────────────────────────────────
@@ -159,11 +174,24 @@ export interface Quote {
   company: string | null
   address: string | null
   contact: string | null
+  email: string | null
+  quote_date: string | null
+  salutation: string | null
+  opening_line: string | null
+  unit_condition_override: string | null
   deal_type: DealType | null
   contract_price: number | null
   vat_inclusive: boolean
   under_promo: boolean
   promo_validity: string | null
+  include_delivery: boolean
+  include_computer_set: boolean
+  computer_set_spec: string | null
+  inclusion_toggles: unknown[] | null
+  exclusion_toggles: unknown[] | null
+  addon_toggles: unknown[] | null
+  warranty_company: string | null
+  warranty_supplier: string | null
   availability: string | null
   collection_payment: string | null
   collection_downpayment: string | null
@@ -187,11 +215,24 @@ export interface QuotePayload {
   company?: string | null
   address?: string | null
   contact?: string | null
+  email?: string | null
+  quote_date?: string | null
+  salutation?: string | null
+  opening_line?: string | null
+  unit_condition_override?: string | null
   deal_type?: DealType | null
   contract_price?: number | null
   vat_inclusive?: boolean
   under_promo?: boolean
   promo_validity?: string | null
+  include_delivery?: boolean
+  include_computer_set?: boolean
+  computer_set_spec?: string | null
+  inclusion_toggles?: unknown[] | null
+  exclusion_toggles?: unknown[] | null
+  addon_toggles?: unknown[] | null
+  warranty_company?: string | null
+  warranty_supplier?: string | null
   availability?: string | null
   collection_payment?: string | null
   collection_downpayment?: string | null

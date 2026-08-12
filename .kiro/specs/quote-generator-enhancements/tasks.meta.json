@@ -1,0 +1,555 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add `ToggleableItem` interface to `src/types/index.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427322939
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427341786
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786433868343
+      }
+    ],
+    "1.2 Extend `QuoteBuilderState` interface and defaults in `src/composables/useQuoteBuilder.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427322980
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786433875620
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434183908
+      }
+    ],
+    "2.1 Create `src/composables/useQuoteValidation.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323002
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786433876512
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434184766
+      }
+    ],
+    "3.1 Add `formatQuoteDate` function to `src/utils/quote-calculations.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323048
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427342795
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786433868377
+      }
+    ],
+    "4.1 Add catalog-to-toggleable mapping helpers in `src/utils/quote-calculations.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323072
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786433877367
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434185896
+      }
+    ],
+    "5.1 Add delivery and computer set computed helpers in `src/utils/quote-calculations.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323104
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434228984
+      },
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434497142
+      }
+    ],
+    "6. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323150
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436363350
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436672258
+      }
+    ],
+    "7.1 Refactor `src/components/quote/MachineSelector.vue` to split model/sub-model selection": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323182
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436688766
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436982182
+      }
+    ],
+    "7.2 Add unit condition override dropdown in MachineSelector": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323205
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436689564
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436983080
+      }
+    ],
+    "8.1 Add email, date, salutation, and opening line fields to `src/components/quote/QuoteFormPanel.vue`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323235
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436988964
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438759084
+      }
+    ],
+    "9.1 Add delivery and computer set toggles to QuoteFormPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323264
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436989954
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438759687
+      }
+    ],
+    "9.2 Add toggleable inclusions list to QuoteFormPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323287
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436990875
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438760724
+      }
+    ],
+    "9.3 Add toggleable exclusions list to QuoteFormPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323318
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436991707
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438761410
+      }
+    ],
+    "9.4 Add toggleable add-ons list to QuoteFormPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323361
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436992537
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438762223
+      }
+    ],
+    "10.1 Add warranty section to QuoteFormPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323385
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438767123
+      },
+      {
+        "executionId": "4d6eace9-7012-4a39-90e0-47bd4701efa3",
+        "chatSessionId": "sess_a4812ee6-cbe4-4271-898a-f49bc40220ac",
+        "timestamp": 1786494852695
+      }
+    ],
+    "10.2 Add \"OPEN CLOSING DOCUMENTS\" button with validation to QuoteFormPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323415
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438768343
+      },
+      {
+        "executionId": "4d6eace9-7012-4a39-90e0-47bd4701efa3",
+        "chatSessionId": "sess_a4812ee6-cbe4-4271-898a-f49bc40220ac",
+        "timestamp": 1786494853491
+      }
+    ],
+    "11. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323437
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495292734
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495350182
+      }
+    ],
+    "12.1 Add date, email, salutation, and opening line to `src/components/quote/QuotePreviewPanel.vue`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323465
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438769502
+      },
+      {
+        "executionId": "4d6eace9-7012-4a39-90e0-47bd4701efa3",
+        "chatSessionId": "sess_a4812ee6-cbe4-4271-898a-f49bc40220ac",
+        "timestamp": 1786494855866
+      }
+    ],
+    "12.3 Add unit condition badge and machine image to QuotePreviewPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323495
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495371403
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496041823
+      }
+    ],
+    "12.4 Add filtered inclusions, exclusions, and add-ons display to QuotePreviewPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323530
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495372412
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496042735
+      }
+    ],
+    "12.5 Add warranty clauses and closing text to QuotePreviewPanel": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323553
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495373340
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496043526
+      }
+    ],
+    "13.1 Extend `toQuotePayload` in `src/utils/quote-state-mapper.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323582
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495373915
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496044458
+      }
+    ],
+    "13.2 Extend `restoreFromQuote` in `src/utils/quote-state-mapper.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323611
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786495374886
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496045108
+      }
+    ],
+    "13.3 Update `QuotePayload` and `Quote` types in `src/types/index.ts` or `src/types/database.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323636
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436690490
+      },
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436981022
+      }
+    ],
+    "14.1 Integrate validation into PDF export flow in `src/composables/useExportPDF.ts`": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323665
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496353295
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496718057
+      }
+    ],
+    "15.1 Create Supabase migration file for new columns on `quotes` table": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323689
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496354575
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496719073
+      }
+    ],
+    "17. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786427323719
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496724056
+      },
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496776939
+      }
+    ],
+    "3. Create date formatting utility": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786433868412
+      }
+    ],
+    "1. Extend core types and state interface": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434183966
+      }
+    ],
+    "2. Create validation composable": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434184802
+      }
+    ],
+    "4. Implement toggleable items logic and helpers": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434185930
+      }
+    ],
+    "5. Implement delivery and computer set toggle logic": [
+      {
+        "executionId": "872aa580-f1d8-40ec-9533-61550a38a388",
+        "chatSessionId": "sess_4d949d25-a5d0-4954-beac-5f4d9df52af5",
+        "timestamp": 1786434497179
+      }
+    ],
+    "7. Enhance MachineSelector with sub-model dropdown": [
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786436983120
+      }
+    ],
+    "8. Enhance QuoteFormPanel with new client info fields": [
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438759136
+      }
+    ],
+    "9. Enhance QuoteFormPanel with package option toggles": [
+      {
+        "executionId": "8311254d-fc85-4155-bb4d-e7ac6f2ed7f8",
+        "chatSessionId": "sess_64407b32-2a33-4457-a988-3e8f20c575a3",
+        "timestamp": 1786438762254
+      }
+    ],
+    "10. Add warranty section and closing docs button to QuoteFormPanel": [
+      {
+        "executionId": "4d6eace9-7012-4a39-90e0-47bd4701efa3",
+        "chatSessionId": "sess_a4812ee6-cbe4-4271-898a-f49bc40220ac",
+        "timestamp": 1786494853540
+      }
+    ],
+    "12. Enhance QuotePreviewPanel with new display sections": [
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496043609
+      }
+    ],
+    "13. Extend state persistence mapper": [
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496045177
+      }
+    ],
+    "14. Add pre-PDF validation hook": [
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496718095
+      }
+    ],
+    "15. Create database migration": [
+      {
+        "executionId": "93d221a6-5c94-4267-82cf-c96636da35ec",
+        "chatSessionId": "sess_545d5bea-5cc6-40a3-bac8-3ded4524165f",
+        "timestamp": 1786496719100
+      }
+    ]
+  }
+}
