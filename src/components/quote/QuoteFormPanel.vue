@@ -773,7 +773,7 @@ function dismissValidationBox() {
         </select>
       </div>
       <div class="fp-sec">
-        <label class="fp-lbl" for="warranty-supplier">Supplier Name</label>
+        <label class="fp-lbl" for="warranty-supplier">Supplier Name (void-warranty line)</label>
         <input id="warranty-supplier" class="fp-in" type="text" v-model="quoteState.warrantySupplier" placeholder="ESPMI" />
       </div>
 
@@ -794,11 +794,11 @@ function dismissValidationBox() {
       <div class="fp-row">
         <div class="fp-sec">
           <label class="fp-lbl" for="noted-by-name">Noted By (Name)</label>
-          <input id="noted-by-name" class="fp-in" type="text" v-model="quoteState.notedByName" placeholder="Name" maxlength="100" />
+          <input id="noted-by-name" class="fp-in" type="text" v-model="quoteState.notedByName" placeholder="Ness Deomano" maxlength="100" />
         </div>
         <div class="fp-sec">
           <label class="fp-lbl" for="noted-by-role">Noted By (Role)</label>
-          <input id="noted-by-role" class="fp-in" type="text" v-model="quoteState.notedByRole" placeholder="Role" maxlength="100" />
+          <input id="noted-by-role" class="fp-in" type="text" v-model="quoteState.notedByRole" placeholder="Area Sales Manager" maxlength="100" />
         </div>
       </div>
 
@@ -825,6 +825,10 @@ function dismissValidationBox() {
           >{{ error }}</li>
         </ul>
       </div>
+
+      <hr class="fp-hr" />
+      <h2 class="fp-section-title">Closing Documents</h2>
+      <p class="fp-note" style="margin-bottom:8px">Prepare the delivery & document details, then open the printable closing documents (T&C, Delivery Instructions, Warranty, CAC, PDC, Pullout).</p>
 
       <!-- Open Closing Documents Button -->
       <button type="button" class="closing-docs-btn" @click="openClosingDocuments">
