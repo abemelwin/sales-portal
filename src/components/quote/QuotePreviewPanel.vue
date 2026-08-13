@@ -125,7 +125,20 @@ const exclusionsList = computed(() => {
   return getDisplayedExclusions(quoteState).map((item) => item.description)
 })
 
-const addonDisplayItems = computed(() => quoteState.addonItems)
+const addonDisplayItems = computed(() => {
+  if (!quoteState.vatInclusive) return quoteState.addonItems
+  // When VAT inclusive, multiply any peso amounts in addon descriptions by 1.12
+  return quoteState.addonItems.map((item) => ({
+    ...item,
+    description: item.description.replace(
+      /([P?])s?([d,]+(?:.d{1,2})?)/g,
+      (_match, sym, num) => {
+        const val = parseFloat(num.replace(/,/g, '')) * 1.12
+        return sym + val.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      }
+    ),
+  }))
+})
 
 const consumableDisplayList = computed(() => {
   return quoteState.consumables.map((c) => {
