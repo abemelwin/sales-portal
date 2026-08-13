@@ -116,19 +116,6 @@ function removeTermOption(index: number) {
   quoteState.termOptions.splice(index, 1)
 }
 
-function clampMonths(index: number) {
-  const opt = quoteState.termOptions[index]
-  if (!opt) return
-  if (opt.months < 1) opt.months = 1
-  if (opt.months > 60) opt.months = 60
-}
-
-function clampDownPayment(index: number) {
-  const opt = quoteState.termOptions[index]
-  if (!opt) return
-  if (opt.downPayment < 0) opt.downPayment = 0
-}
-
 // --- Trade-In management ---
 
 const canAddTradeIn = computed(() => quoteState.tradeIns.length < 3)
@@ -415,28 +402,45 @@ function dismissValidationBox() {
         </div>
       </div>
 
-      <!-- Term Options -->
+      <!-- Downpayment -->
+      <div class="fp-sec">
+        <label class="fp-lbl" for="downpayment">Downpayment (PHP)</label>
+        <input
+          id="downpayment"
+          class="fp-in"
+          type="number"
+          v-model.number="quoteState.downPayment"
+          placeholder="0"
+          min="0"
+          step="0.01"
+        />
+      </div>
+
+      <!-- Terms (Months) -->
+      <div class="fp-sec">
+        <label class="fp-lbl" for="inst-months">Terms (No. of Months)</label>
+        <input
+          id="inst-months"
+          class="fp-in"
+          type="number"
+          v-model.number="quoteState.months"
+          placeholder="12"
+          min="1"
+          max="60"
+        />
+      </div>
+
+      <!-- Additional Term Options -->
       <div class="fp-sec" style="margin-top: 8px">
-        <div class="fp-term-header">
-          <label class="fp-lbl">Term Options ({{ quoteState.termOptions.length }}/5)</label>
-          <button
-            type="button"
-            class="fp-add-btn fp-add-btn--inline"
-            :disabled="!canAddTermOption"
-            @click="addTermOption"
-          >
-            + Add
-          </button>
-        </div>
+        <label class="fp-lbl">Additional Term Options (optional)</label>
         <div
           v-for="(option, index) in quoteState.termOptions"
           :key="index"
           class="to-row"
         >
           <div class="to-hd">
-            <span>Option {{ index + 1 }}</span>
+            <span class="to-title">Additional Option</span>
             <button
-              v-if="canRemoveTermOption"
               type="button"
               class="to-del"
               @click="removeTermOption(index)"
@@ -445,24 +449,42 @@ function dismissValidationBox() {
               &times;
             </button>
           </div>
+          <div class="fp-sec">
+            <label :for="`deal-type-${index}`" class="fp-lbl">Deal Type</label>
+            <select :id="`deal-type-${index}`" class="fp-in" v-model="option.dealType">
+              <option value="Installment">Installment</option>
+              <option value="Cash">Cash</option>
+            </select>
+          </div>
+          <div class="fp-sec">
+            <label :for="`to-price-${index}`" class="fp-lbl">Contract Price</label>
+            <input
+              :id="`to-price-${index}`"
+              class="fp-in"
+              type="number"
+              v-model.number="option.contractPrice"
+              placeholder="Defaults to main price"
+              min="0"
+              step="0.01"
+            />
+          </div>
           <div class="fp-row">
             <div class="fp-sec">
-              <label :for="`dp-${index}`" class="fp-lbl">Down Payment</label>
+              <label :for="`to-dp-${index}`" class="fp-lbl">Downpayment</label>
               <input
-                :id="`dp-${index}`"
+                :id="`to-dp-${index}`"
                 class="fp-in"
                 type="number"
                 v-model.number="option.downPayment"
                 min="0"
                 step="0.01"
-                placeholder="0.00"
-                @blur="clampDownPayment(index)"
+                placeholder="0"
               />
             </div>
             <div class="fp-sec">
-              <label :for="`months-${index}`" class="fp-lbl">Months</label>
+              <label :for="`to-months-${index}`" class="fp-lbl">Months</label>
               <input
-                :id="`months-${index}`"
+                :id="`to-months-${index}`"
                 class="fp-in"
                 type="number"
                 v-model.number="option.months"
@@ -470,22 +492,47 @@ function dismissValidationBox() {
                 max="60"
                 step="1"
                 placeholder="12"
-                @blur="clampMonths(index)"
               />
             </div>
           </div>
-          <div v-if="option.monthlyAmortization !== null" class="fp-computed">
-            Monthly: {{ formatCurrency(option.monthlyAmortization) }}
-          </div>
         </div>
+        <button
+          type="button"
+          class="fp-add-btn"
+          @click="addTermOption"
+        >
+          + Add Term Option
+        </button>
       </div>
 
-      <!-- VAT & Promo -->
-      <div class="fp-ck">
+      <!-- VAT Inclusive -->
+      <div class="fp-ck" style="margin-top: 8px">
         <input type="checkbox" id="chk-vat-inc" v-model="quoteState.vatInclusive" />
-        <label for="chk-vat-inc">VAT Inclusive</label>
+        <label for="chk-vat-inc">VAT Inclusive (moves VAT to Package)</label>
       </div>
-      <div class="fp-ck">
+
+      <!-- Collection Arrangements -->
+      <div class="fp-sec" style="margin-top: 8px">
+        <label class="fp-lbl" for="collection-payment">Collection — Payment (cash)</label>
+        <input id="collection-payment" class="fp-in" type="text" v-model="quoteState.collectionPayment" placeholder="Upon confirmation and before delivery" maxlength="200" />
+      </div>
+      <div class="fp-sec">
+        <label class="fp-lbl" for="collection-downpayment">Collection — Downpayment (terms)</label>
+        <input id="collection-downpayment" class="fp-in" type="text" v-model="quoteState.collectionDownpayment" placeholder="Upon confirmation and before delivery" maxlength="200" />
+      </div>
+      <div class="fp-sec">
+        <label class="fp-lbl" for="collection-amortization">Collection — Amortization (terms)</label>
+        <input id="collection-amortization" class="fp-in" type="text" v-model="quoteState.collectionAmortization" placeholder="After installation of machine" maxlength="200" />
+      </div>
+
+      <!-- Availability -->
+      <div class="fp-sec">
+        <label class="fp-lbl" for="availability">Availability</label>
+        <input id="availability" class="fp-in" type="text" v-model="quoteState.availability" placeholder="ON STOCK" maxlength="200" />
+      </div>
+
+      <!-- UNDER PROMO -->
+      <div class="fp-ck" style="margin-top: 6px">
         <input type="checkbox" id="chk-promo" v-model="quoteState.underPromo" />
         <label for="chk-promo">UNDER PROMO</label>
       </div>
@@ -528,25 +575,6 @@ function dismissValidationBox() {
             placeholder="e.g., Valid until Dec 31, 2025"
           />
         </div>
-      </div>
-
-      <!-- Collection Arrangements -->
-      <hr class="fp-hr" />
-      <div class="fp-sec">
-        <label class="fp-lbl" for="availability">Availability</label>
-        <input id="availability" class="fp-in" type="text" v-model="quoteState.availability" placeholder="Unit availability details" maxlength="200" />
-      </div>
-      <div class="fp-sec">
-        <label class="fp-lbl" for="collection-payment">Collection — Payment (cash)</label>
-        <input id="collection-payment" class="fp-in" type="text" v-model="quoteState.collectionPayment" placeholder="Upon confirmation and before delivery" maxlength="200" />
-      </div>
-      <div class="fp-sec">
-        <label class="fp-lbl" for="collection-downpayment">Collection — Downpayment (terms)</label>
-        <input id="collection-downpayment" class="fp-in" type="text" v-model="quoteState.collectionDownpayment" placeholder="Upon confirmation and before delivery" maxlength="200" />
-      </div>
-      <div class="fp-sec">
-        <label class="fp-lbl" for="collection-amortization">Collection — Amortization (terms)</label>
-        <input id="collection-amortization" class="fp-in" type="text" v-model="quoteState.collectionAmortization" placeholder="After installation of machine" maxlength="200" />
       </div>
 
       <hr class="fp-hr" />
