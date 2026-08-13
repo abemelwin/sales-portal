@@ -870,8 +870,12 @@ function formatCurrency(value: number | null | undefined): string {
 
 .q-sig-line {
   width: 90%;
-  border-top: 1px solid #555;
-  margin-bottom: 1.5mm;
+  height: 0;
+  border-bottom: 1px solid #333 !important;
+  margin-top: 8mm;
+  margin-bottom: 1mm;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }
 
 .q-sig-role {
@@ -891,8 +895,12 @@ function formatCurrency(value: number | null | undefined): string {
 
 .q-noted-line {
   width: 50%;
-  border-top: 1px solid #333;
-  margin-top: 6mm;
+  height: 0;
+  border-bottom: 1px solid #333 !important;
+  margin-top: 8mm;
+  margin-bottom: 1mm;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }
 
 
@@ -982,6 +990,13 @@ function formatCurrency(value: number | null | undefined): string {
     print-color-adjust: exact !important;
     border-bottom: 2px solid #c0392b !important;
     color: #c0392b !important;
+  }
+
+  .q-sig-line,
+  .q-noted-line {
+    border-bottom: 1px solid #333 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .q-col-hdr {
