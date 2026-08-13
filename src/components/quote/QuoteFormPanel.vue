@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { inject, computed, watch, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import MachineSelector from './MachineSelector.vue'
 import ClosingDocsPrompt from './ClosingDocsPrompt.vue'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
@@ -9,8 +8,6 @@ import { validateQuote } from '@/composables/useQuoteValidation'
 import type { DealType, Letterhead } from '@/types'
 
 const quoteState = inject(QUOTE_BUILDER_KEY)!
-const router = useRouter()
-const route = useRoute()
 
 const letterheadOptions: Letterhead[] = [
   'ES Print Media Inc.',
