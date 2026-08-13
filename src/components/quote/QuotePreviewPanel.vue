@@ -939,8 +939,7 @@ function formatCurrency(value: number | null | undefined): string {
   font-size: 9pt;
   font-weight: 700;
   color: #111;
-  border-bottom: 1px solid #555;
-  padding-bottom: 1mm;
+  padding-top: 1mm;
   display: inline-block;
   min-width: 60mm;
 }
