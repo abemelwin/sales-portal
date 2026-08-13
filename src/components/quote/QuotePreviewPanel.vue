@@ -890,8 +890,8 @@ function formatCurrency(value: number | null | undefined): string {
 
 .q-sig-line {
   width: 90%;
-  height: 0;
-  border-bottom: 1px solid #333 !important;
+  height: 1px;
+  background: #333;
   margin-top: 8mm;
   margin-bottom: 1mm;
   -webkit-print-color-adjust: exact !important;
@@ -915,8 +915,8 @@ function formatCurrency(value: number | null | undefined): string {
 
 .q-noted-line {
   width: 50%;
-  height: 0;
-  border-bottom: 1px solid #333 !important;
+  height: 1px;
+  background: #333;
   margin-top: 8mm;
   margin-bottom: 1mm;
   -webkit-print-color-adjust: exact !important;
@@ -1004,13 +1004,6 @@ function formatCurrency(value: number | null | undefined): string {
   background: #f9f9f9;
   margin: 2mm 0;
   color: #333;
-
-  .q-sig-line,
-  .q-noted-line {
-    border-bottom: 1px solid #333 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
 
   .q-col-hdr {
     -webkit-print-color-adjust: exact !important;
