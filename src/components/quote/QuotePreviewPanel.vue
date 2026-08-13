@@ -115,14 +115,18 @@ const tradeInSum = computed(() => {
 
 const inclusionsList = computed(() => {
   const items = getDisplayedInclusions(quoteState).map((item) => item.description)
-  if (quoteState.vatInclusive) {
-    items.push('VAT Inclusive')
-  }
+
+
+
   return items
 })
 
 const exclusionsList = computed(() => {
-  return getDisplayedExclusions(quoteState).map((item) => item.description)
+  let items = getDisplayedExclusions(quoteState).map((item) => item.description)
+  if (quoteState.vatInclusive) {
+    items = items.filter((desc) => !desc.toLowerCase().includes('value added tax'))
+  }
+  return items
 })
 
 const addonDisplayItems = computed(() => {
@@ -144,7 +148,8 @@ const consumableDisplayList = computed(() => {
     const customEntry = quoteState.consumablePrices.find(
       (cp) => cp.consumableId === c.id
     )
-    const price = customEntry ? customEntry.customPrice : c.default_price
+    let price = customEntry ? customEntry.customPrice : c.default_price
+    if (quoteState.vatInclusive) price = price * 1.12
     return {
       name: c.item_name,
       package: c.package_description || '',
