@@ -17,6 +17,17 @@ const { printQuote, isPrinting } = useExportPDF()
 const quoteState = useQuoteBuilder()
 provide(QUOTE_BUILDER_KEY, quoteState)
 
+// Auto-open Closing Docs modal when navigated with ?openDocs=true
+watch(() => route.query.openDocs, (val) => {
+  if (val === 'true') {
+    setTimeout(() => {
+      const btn = document.querySelector('.closing-docs-btn') as HTMLButtonElement
+      if (btn) btn.click()
+    }, 500)
+  }
+}, { immediate: true })
+
+
 // ─── Mobile Tab Navigation (Requirement 14.2) ───────────────────────────────────
 
 type MobileTab = 'form' | 'preview'
