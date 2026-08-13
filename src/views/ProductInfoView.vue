@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { supabase } from '@/services/supabase'
 import { useProductInfoStore } from '@/stores/productInfo'
 import { useCatalogStore } from '@/stores/catalog'
 import { useAuth } from '@/composables/useAuth'
@@ -112,12 +113,33 @@ async function uploadFile(category: CategoryKey) {
   input.onchange = async (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0]
     if (!file) return
-    const label = file.name
-    const url = URL.createObjectURL(file)
+    
+    // Upload to Supabase Storage
+    const timestamp = Date.now()
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const path = `${selectedMachineId.value}/${category}/${timestamp}_${safeName}`
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('product-files')
+      .upload(path, file)
+    
+    if (uploadError) {
+      alert('Upload failed: ' + uploadError.message)
+      return
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('product-files')
+      .getPublicUrl(uploadData.path)
+    
+    const publicUrl = urlData.publicUrl
+    
+    // Save link to database
     await productInfoStore.addLink(
       selectedMachineId.value!,
-      label,
-      url,
+      file.name,
+      publicUrl,
       category
     )
   }
