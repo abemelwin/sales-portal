@@ -724,11 +724,22 @@ function formatCurrency(value: number | null | undefined): string {
   font-weight: 700;
   text-transform: uppercase;
   color: #c0392b;
-  border-bottom: 1px solid #c0392b;
   padding-bottom: 1mm;
   margin-bottom: 1.5mm;
   letter-spacing: .4px;
   margin-top: 2mm;
+  position: relative;
+}
+
+.q-shdr::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: #c0392b;
+  margin-top: 1mm;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }
 
 /* ─── Pricing / trade-in table ─── */
@@ -993,13 +1004,6 @@ function formatCurrency(value: number | null | undefined): string {
   background: #f9f9f9;
   margin: 2mm 0;
   color: #333;
-
-  .q-shdr {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    border-bottom: 1px solid #c0392b !important;
-    color: #c0392b !important;
-  }
 
   .q-sig-line,
   .q-noted-line {
