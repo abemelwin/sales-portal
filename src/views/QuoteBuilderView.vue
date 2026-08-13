@@ -43,7 +43,7 @@ onUnmounted(() => {
 
 /** Switch mobile tab — form data is preserved because it's reactive state */
 function switchTab(tab: MobileTab) {
-  activeTab.value = tab
+  activeTab.value = tab   
 }
 
 /** Whether to show the form panel */
@@ -274,7 +274,7 @@ watch(
 
       <!-- Left panel: Form -->
       <div v-show="showForm" class="quote-builder-view__form">
-        <QuoteFormPanel />
+        <QuoteFormPanel @save-pdf="() => printQuote(quoteState)" />
       </div>
 
       <!-- Right panel: Preview -->

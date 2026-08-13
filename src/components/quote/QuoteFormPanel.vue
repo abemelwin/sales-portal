@@ -831,6 +831,13 @@ function dismissValidationBox() {
         OPEN CLOSING DOCUMENTS
       </button>
 
+      <!-- Save as PDF Button -->
+      <button type="button" class="save-pdf-btn" @click="$emit('save-pdf')">
+        💾 SAVE AS PDF
+      </button>
+      <p class="fp-note" style="text-align:center;margin-top:4px">Tip: in the print dialog, set Destination to "Save as PDF"</p>
+
+
     </div>
 
     <!-- Closing Docs Prompt Modal -->
@@ -1308,5 +1315,22 @@ function dismissValidationBox() {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+.save-pdf-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 8px;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.save-pdf-btn:hover {
+  background: #a93226;
 }
 </style>
