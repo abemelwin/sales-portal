@@ -37,6 +37,8 @@ export interface QuoteBuilderState {
 
   // Pricing
   contractPrice: number | null
+  downPayment: number
+  months: number
   dealType: DealType | null
   vatInclusive: boolean
   underPromo: boolean
@@ -45,6 +47,8 @@ export interface QuoteBuilderState {
 
   // Term options
   termOptions: {
+    dealType: string
+    contractPrice: number | null
     downPayment: number
     months: number
     monthlyAmortization: number | null
@@ -135,6 +139,8 @@ export function useQuoteBuilder(): QuoteBuilderState {
 
     // Pricing
     contractPrice: null,
+    downPayment: 0,
+    months: 12,
     dealType: null,
     vatInclusive: false,
     underPromo: false,
@@ -142,7 +148,7 @@ export function useQuoteBuilder(): QuoteBuilderState {
     freebies: [],
 
     // Term options (start with 1)
-    termOptions: [{ downPayment: 0, months: 1, monthlyAmortization: null }],
+    termOptions: [],
 
     // Trade-ins
     tradeIns: [],

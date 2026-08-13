@@ -171,12 +171,14 @@ export function restoreFromQuote(state: QuoteBuilderState, quote: Quote): void {
     state.termOptions = quote.term_options
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((opt) => ({
+        dealType: 'Installment' as string,
+        contractPrice: null as number | null,
         downPayment: opt.down_payment,
         months: opt.months,
         monthlyAmortization: opt.monthly_amortization ?? null,
       }))
   } else {
-    state.termOptions = [{ downPayment: 0, months: 1, monthlyAmortization: null }]
+    state.termOptions = [{ dealType: "Installment", contractPrice: null, downPayment: 0, months: 1, monthlyAmortization: null }]
   }
 
   // Trade-ins

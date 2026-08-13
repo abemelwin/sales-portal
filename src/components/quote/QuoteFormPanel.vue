@@ -108,11 +108,7 @@ const canRemoveTermOption = computed(() => quoteState.termOptions.length > 1)
 
 function addTermOption() {
   if (!canAddTermOption.value) return
-  quoteState.termOptions.push({
-    downPayment: 0,
-    months: 1,
-    monthlyAmortization: null,
-  })
+  quoteState.termOptions.push({ dealType: "Installment", contractPrice: null, downPayment: 0, months: 12, monthlyAmortization: null })
 }
 
 function removeTermOption(index: number) {
