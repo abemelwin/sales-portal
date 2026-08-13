@@ -29,7 +29,7 @@ const displayName = computed(() => {
   return name
 })
 
-const isAdmin = computed(() => permStore.can('manage_users') || permStore.can('edit_machine_catalog') || permStore.can('manage_roles_access'))
+const isAdmin = computed(() => adminLinks.value.length > 0)
 
 const roleLabel = computed(() => {
   const labels: Record<string, string> = {
@@ -55,12 +55,14 @@ const navLinks = [
   { to: '/product-info', label: 'Product Info' },
 ]
 
-/** Admin-only navigation links (Requirement 4.1, 11.2, 11.3) */
-const adminLinks = [
-  { to: '/users', label: 'Users' },
-  { to: '/roles', label: 'Roles' },
-  { to: '/catalog', label: 'Catalog Editor' },
-]
+/** Admin navigation links with permission requirements */
+const adminLinks = computed(() => {
+  const links: { to: string; label: string }[] = []
+  if (permStore.can('manage_users')) links.push({ to: '/users', label: 'Users' })
+  if (permStore.can('manage_roles_access')) links.push({ to: '/roles', label: 'Roles' })
+  if (permStore.can('edit_machine_catalog')) links.push({ to: '/catalog', label: 'Catalog Editor' })
+  return links
+})
 
 function toggleMobileMenu() {
   mobileMenuOpen.value = !mobileMenuOpen.value
