@@ -492,16 +492,7 @@ function dismissValidationBox() {
 
       <!-- Promo section -->
       <div v-if="quoteState.underPromo" style="margin-top: 6px">
-        <div class="fp-sec">
-          <label class="fp-lbl" for="promo-validity">Promo Validity</label>
-          <input
-            id="promo-validity"
-            class="fp-in"
-            type="text"
-            v-model="quoteState.promoValidity"
-            placeholder="e.g., Valid until Dec 31, 2025"
-          />
-        </div>
+        <label class="fp-lbl">Freebies</label>
         <div v-if="quoteState.freebies.length > 0" style="margin-bottom: 4px">
           <div
             v-for="(freebie, index) in quoteState.freebies"
@@ -517,7 +508,7 @@ function dismissValidationBox() {
             >&times;</button>
           </div>
         </div>
-        <div class="fp-row" style="margin-top: 4px">
+        <div class="fp-row" style="margin-top: 4px; margin-bottom: 8px">
           <input
             type="text"
             class="fp-in"
@@ -525,7 +516,17 @@ function dismissValidationBox() {
             placeholder="Add a freebie item"
             @keyup.enter="addFreebie"
           />
-          <button type="button" class="fp-add-btn" @click="addFreebie">Add</button>
+          <button type="button" class="fp-add-btn" @click="addFreebie">+ Add Freebie</button>
+        </div>
+        <div class="fp-sec">
+          <label class="fp-lbl" for="promo-validity">Promo Validity</label>
+          <input
+            id="promo-validity"
+            class="fp-in"
+            type="text"
+            v-model="quoteState.promoValidity"
+            placeholder="e.g., Valid until Dec 31, 2025"
+          />
         </div>
       </div>
 
