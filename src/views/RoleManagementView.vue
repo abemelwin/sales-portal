@@ -1,60 +1,114 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
+import { supabase } from '@/services/supabase'
 
 interface RolePermission {
   role: string
-  manageProductFiles: boolean
-  editMachineCatalog: boolean
-  uploadMachineCatalog: boolean
-  uploadConsumablesPricelist: boolean
-  manageUsers: boolean
-  manageRolesAccess: boolean
+  manage_product_files: boolean
+  edit_machine_catalog: boolean
+  upload_machine_catalog: boolean
+  upload_consumables_pricelist: boolean
+  manage_users: boolean
+  manage_roles_access: boolean
   isLocked?: boolean
-  highlight?: boolean
 }
 
-const STORAGE_KEY = 'espmi_roles_access'
+const roles = reactive<RolePermission[]>([])
+const saving = ref(false)
+const saved = ref(false)
+const loading = ref(true)
+const error = ref('')
 
-const defaultRoles: RolePermission[] = [
-  { role: 'Super Admin', manageProductFiles: true, editMachineCatalog: true, uploadMachineCatalog: true, uploadConsumablesPricelist: true, manageUsers: true, manageRolesAccess: true, isLocked: true },
-  { role: 'Product Manager', manageProductFiles: true, editMachineCatalog: true, uploadMachineCatalog: false, uploadConsumablesPricelist: false, manageUsers: false, manageRolesAccess: false },
-  { role: 'Sales Admin Manager', manageProductFiles: false, editMachineCatalog: true, uploadMachineCatalog: true, uploadConsumablesPricelist: true, manageUsers: false, manageRolesAccess: false, highlight: true },
-  { role: 'Sales Admin Supervisor', manageProductFiles: false, editMachineCatalog: true, uploadMachineCatalog: true, uploadConsumablesPricelist: true, manageUsers: false, manageRolesAccess: false },
-  { role: 'Sales Admin Assistant', manageProductFiles: false, editMachineCatalog: false, uploadMachineCatalog: false, uploadConsumablesPricelist: false, manageUsers: false, manageRolesAccess: false },
-  { role: 'Area Sales Manager', manageProductFiles: false, editMachineCatalog: false, uploadMachineCatalog: false, uploadConsumablesPricelist: false, manageUsers: false, manageRolesAccess: false },
-  { role: 'Account Executive', manageProductFiles: false, editMachineCatalog: false, uploadMachineCatalog: false, uploadConsumablesPricelist: false, manageUsers: false, manageRolesAccess: false },
-  { role: 'Sales Assistant', manageProductFiles: false, editMachineCatalog: false, uploadMachineCatalog: false, uploadConsumablesPricelist: false, manageUsers: false, manageRolesAccess: false },
-  { role: 'User', manageProductFiles: false, editMachineCatalog: false, uploadMachineCatalog: false, uploadConsumablesPricelist: false, manageUsers: false, manageRolesAccess: false },
+const ROLE_ORDER = [
+  'superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor',
+  'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant', 'user'
 ]
 
-const roles = reactive<RolePermission[]>(JSON.parse(JSON.stringify(defaultRoles)))
-const saved = ref(false)
+const ROLE_LABELS: Record<string, string> = {
+  superadmin: 'Super Admin',
+  product_manager: 'Product Manager',
+  sales_admin_manager: 'Sales Admin Manager',
+  sales_admin_supervisor: 'Sales Admin Supervisor',
+  sales_admin_assistant: 'Sales Admin Assistant',
+  area_sales_manager: 'Area Sales Manager',
+  account_executive: 'Account Executive',
+  sales_assistant: 'Sales Assistant',
+  user: 'User',
+}
 
-onMounted(() => {
+onMounted(async () => {
+  loading.value = true
+  error.value = ''
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const parsed: RolePermission[] = JSON.parse(stored)
-      // Merge stored values back, preserving isLocked and highlight flags from defaults
-      parsed.forEach((storedRole) => {
-        const idx = roles.findIndex(r => r.role === storedRole.role)
-        if (idx !== -1 && !roles[idx]!.isLocked) {
-          roles[idx]!.manageProductFiles = storedRole.manageProductFiles
-          roles[idx]!.editMachineCatalog = storedRole.editMachineCatalog
-          roles[idx]!.uploadMachineCatalog = storedRole.uploadMachineCatalog
-          roles[idx]!.uploadConsumablesPricelist = storedRole.uploadConsumablesPricelist
-          roles[idx]!.manageUsers = storedRole.manageUsers
-          roles[idx]!.manageRolesAccess = storedRole.manageRolesAccess
-        }
-      })
+    const { data: rawData, error: fetchErr } = await supabase
+      .from('role_permissions' as any)
+      .select('*')
+      .order('role')
+    const data = rawData as any[]
+
+    if (fetchErr) {
+      error.value = fetchErr.message
+      return
     }
-  } catch { /* ignore parse errors */ }
+
+    // Sort by defined order
+    const sorted = ROLE_ORDER.map(r => {
+      const found = (data || []).find((d: any) => d.role === r) as any
+      return found || {
+        role: r,
+        manage_product_files: false,
+        edit_machine_catalog: false,
+        upload_machine_catalog: false,
+        upload_consumables_pricelist: false,
+        manage_users: false,
+        manage_roles_access: false,
+      }
+    }).map(r => ({
+      ...r,
+      isLocked: r.role === 'superadmin',
+    }))
+
+    roles.splice(0, roles.length, ...sorted)
+  } catch (e: any) {
+    error.value = e.message || 'Failed to load permissions'
+  } finally {
+    loading.value = false
+  }
 })
 
-function saveAccess() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(roles))
-  saved.value = true
-  setTimeout(() => { saved.value = false }, 2000)
+async function saveAccess() {
+  saving.value = true
+  saved.value = false
+  error.value = ''
+
+  try {
+    for (const r of roles) {
+      if (r.isLocked) continue
+      const { error: updateErr } = await supabase
+        .from('role_permissions' as any)
+        .update({
+          manage_product_files: r.manage_product_files,
+          edit_machine_catalog: r.edit_machine_catalog,
+          upload_machine_catalog: r.upload_machine_catalog,
+          upload_consumables_pricelist: r.upload_consumables_pricelist,
+          manage_users: r.manage_users,
+          manage_roles_access: r.manage_roles_access,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('role', r.role)
+
+      if (updateErr) {
+        error.value = `Failed to save ${ROLE_LABELS[r.role]}: ${updateErr.message}`
+        return
+      }
+    }
+    saved.value = true
+    setTimeout(() => { saved.value = false }, 3000)
+  } catch (e: any) {
+    error.value = e.message || 'Save failed'
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -69,13 +123,17 @@ function saveAccess() {
           Changes save in this browser and apply immediately.
         </p>
       </div>
-      <button class="save-btn" @click="saveAccess">
+      <button class="save-btn" :disabled="saving" @click="saveAccess">
         <span v-if="saved">✓ Saved!</span>
+        <span v-else-if="saving">Saving...</span>
         <span v-else>💾 Save Access</span>
       </button>
     </div>
 
-    <div class="table-wrap">
+    <div v-if="error" class="roles-error">{{ error }}</div>
+    <div v-if="loading" class="roles-loading">Loading permissions...</div>
+
+    <div v-else class="table-wrap">
       <table class="roles-table" aria-label="Roles and permissions">
         <thead>
           <tr>
@@ -92,28 +150,28 @@ function saveAccess() {
           <tr
             v-for="(r, idx) in roles"
             :key="r.role"
-            :class="{ 'row-band': idx % 2 === 0, 'row-highlight': r.highlight }"
+            :class="{ 'row-band': idx % 2 === 0 }"
           >
             <td class="col-role">
-              <span :class="{ 'role-super': r.isLocked }">{{ r.role }}</span>
+              <span :class="{ 'role-super': r.isLocked }">{{ ROLE_LABELS[r.role] || r.role }}</span>
             </td>
             <td class="col-check">
-              <input type="checkbox" v-model="r.manageProductFiles" :disabled="r.isLocked" />
+              <input type="checkbox" v-model="r.manage_product_files" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
-              <input type="checkbox" v-model="r.editMachineCatalog" :disabled="r.isLocked" />
+              <input type="checkbox" v-model="r.edit_machine_catalog" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
-              <input type="checkbox" v-model="r.uploadMachineCatalog" :disabled="r.isLocked" />
+              <input type="checkbox" v-model="r.upload_machine_catalog" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
-              <input type="checkbox" v-model="r.uploadConsumablesPricelist" :disabled="r.isLocked" />
+              <input type="checkbox" v-model="r.upload_consumables_pricelist" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
-              <input type="checkbox" v-model="r.manageUsers" :disabled="r.isLocked" />
+              <input type="checkbox" v-model="r.manage_users" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
-              <input type="checkbox" v-model="r.manageRolesAccess" :disabled="r.isLocked" />
+              <input type="checkbox" v-model="r.manage_roles_access" :disabled="r.isLocked" />
             </td>
           </tr>
         </tbody>
@@ -166,8 +224,28 @@ h1 {
   min-height: 44px;
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   background: #a93226;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.roles-error {
+  color: #c62828;
+  font-size: 12px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: #ffebee;
+  border-radius: 4px;
+}
+
+.roles-loading {
+  text-align: center;
+  padding: 40px;
+  color: #999;
 }
 
 .table-wrap {
@@ -192,8 +270,6 @@ h1 {
   padding: 9px 10px;
   text-align: left;
   font-weight: 700;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 .col-role {
@@ -213,10 +289,6 @@ h1 {
 
 .row-band td {
   background: #fbeeec;
-}
-
-.row-highlight td {
-  background: #fffbe6 !important;
 }
 
 .role-super {
