@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { provide, watch, ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useQuoteBuilder, QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { useQuoteStore } from '@/stores/quotes'
 import { computeAmortization } from '@/utils/quote-calculations'
-import { toQuotePayload, restoreFromQuote } from '@/utils/quote-state-mapper'
+import { restoreFromQuote } from '@/utils/quote-state-mapper'
 import { useExportPDF } from '@/composables/useExportPDF'
 import QuoteFormPanel from '@/components/quote/QuoteFormPanel.vue'
 import QuotePreviewPanel from '@/components/quote/QuotePreviewPanel.vue'
 
 const route = useRoute()
-const router = useRouter()
 const quoteStore = useQuoteStore()
 const { printQuote, isPrinting } = useExportPDF()
 
@@ -61,16 +60,13 @@ const showMobilePdfButton = computed(() => isMobile.value && activeTab.value ===
 const quoteId = ref<string | null>(null)
 
 /** Whether a save operation is in progress */
-const saving = ref(false)
 
 /** Whether a load operation is in progress */
 const loadingQuote = ref(false)
 
 /** Error message to display to the user */
-const saveError = ref<string | null>(null)
 
 /** Success message to display temporarily */
-const saveSuccess = ref(false)
 
 /** Whether this is an existing quote being edited */
 const isEditing = computed(() => quoteId.value !== null)
@@ -83,7 +79,6 @@ const isEditing = computed(() => quoteId.value !== null)
  */
 async function loadQuoteById(id: string): Promise<void> {
   loadingQuote.value = true
-  saveError.value = null
 
   const result = await quoteStore.loadQuote(id)
 
@@ -91,7 +86,6 @@ async function loadQuoteById(id: string): Promise<void> {
     quoteId.value = result.quote.id
     restoreFromQuote(quoteState, result.quote)
   } else {
-    saveError.value = result.error || 'Failed to load quote. Please try again.'
   }
 
   loadingQuote.value = false
@@ -107,57 +101,10 @@ onMounted(async () => {
   }
 })
 
-// ─── Quote Saving (Requirement 5.15, 5.16) ──────────────────────────────────────
-
-/**
- * Saves or updates the current quote.
- * - New quotes are created via saveQuote
- * - Existing quotes are updated via updateQuote
- * On failure, retains all form data and shows error (Requirement 5.16).
- */
-async function handleSave(): Promise<void> {
-  saving.value = true
-  saveError.value = null
-  saveSuccess.value = false
-
-  const payload = toQuotePayload(quoteState)
-
-  let result: { success: boolean; quote?: any; error?: string }
-
-  if (isEditing.value && quoteId.value) {
-    // Update existing quote
-    result = await quoteStore.updateQuote(quoteId.value, payload)
-  } else {
-    // Create new quote
-    result = await quoteStore.saveQuote(payload)
-  }
-
-  if (result.success) {
-    saveSuccess.value = true
-    // If this was a new quote, update the route and local ID
-    if (!isEditing.value && result.quote?.id) {
-      quoteId.value = result.quote.id
-      // Navigate to the edit URL without full reload
-      router.replace({ name: 'quote-edit', params: { id: result.quote.id } })
-    }
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      saveSuccess.value = false
-    }, 3000)
-  } else {
-    // Retain form data, show error (Requirement 5.16)
-    saveError.value = result.error || 'Failed to save the quote. Please try again.'
-  }
-
-  saving.value = false
-}
 
 /**
  * Dismiss the error message.
  */
-function dismissError(): void {
-  saveError.value = null
-}
 
 // ─── Amortization Auto-Computation ──────────────────────────────────────────────
 
@@ -214,23 +161,6 @@ watch(
       </div>
     </div>
 
-    <!-- Error notification (Requirement 5.16: retain form data, show error) -->
-    <div v-if="saveError" class="quote-builder-view__notification quote-builder-view__notification--error" role="alert">
-      <span class="quote-builder-view__notification-text">{{ saveError }}</span>
-      <button
-        type="button"
-        class="quote-builder-view__notification-dismiss"
-        @click="dismissError"
-        aria-label="Dismiss error"
-      >
-        &times;
-      </button>
-    </div>
-
-    <!-- Success notification -->
-    <div v-if="saveSuccess" class="quote-builder-view__notification quote-builder-view__notification--success" role="status">
-      <span class="quote-builder-view__notification-text">Quote saved successfully.</span>
-    </div>
 
     <!-- Loading state when loading an existing quote -->
     <div v-if="loadingQuote" class="quote-builder-view__loading">
