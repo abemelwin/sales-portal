@@ -48,7 +48,7 @@ const machineTitle = computed(() => {
   if (!quoteState.selectedBrand || !quoteState.selectedModel) {
     return 'No machine selected'
   }
-  return `${quoteState.selectedBrand} ${quoteState.selectedModel}`
+  return quoteState.selectedModel
 })
 
 /**
