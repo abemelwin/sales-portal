@@ -54,7 +54,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/closing-docs',
     name: 'closing-docs-index',
-    component: () => import('@/views/ClosingDocsIndexView.vue'),
+    redirect: '/quotes/new?openDocs=true',
     meta: { requiresAuth: true }
   },
   {
