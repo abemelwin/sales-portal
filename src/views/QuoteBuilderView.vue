@@ -19,7 +19,7 @@ provide(QUOTE_BUILDER_KEY, quoteState)
 
 // Auto-open Closing Docs modal when navigated with ?openDocs=true
 onMounted(() => {
-  if (route.query.openDocs === 'true') {
+  if (route.path === '/closing-docs') {
     setTimeout(() => {
       const btn = document.querySelector('.closing-docs-btn') as HTMLButtonElement
       if (btn) btn.click()
