@@ -40,7 +40,6 @@ const navLinks = [
   { to: '/quotes/new', label: 'Quote Generator' },
   { to: '/pricelist', label: 'Machine Pricelist' },
   { to: '/consumables', label: 'Consumables Pricelist' },
-  { to: '/closing-docs', label: 'Closing Docs' },
   { to: '/product-info', label: 'Product Info' },
 ]
 
