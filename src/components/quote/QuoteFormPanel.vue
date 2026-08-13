@@ -3,7 +3,6 @@ import { inject, computed, watch, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import MachineSelector from './MachineSelector.vue'
 import ClosingDocsPrompt from './ClosingDocsPrompt.vue'
-import type { ClosingDocsFormData } from './ClosingDocsPrompt.vue'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { computeAmortization, addCustomItem, removeCustomItem } from '@/utils/quote-calculations'
 import { validateQuote } from '@/composables/useQuoteValidation'
@@ -250,7 +249,7 @@ function openClosingDocuments() {
   }
 }
 
-function handleDocsConfirm(_data: ClosingDocsFormData) {
+function handleDocsConfirm(_data: any) {
   showDocsPrompt.value = false
   const id = route.params.id as string | undefined
   if (id) {
