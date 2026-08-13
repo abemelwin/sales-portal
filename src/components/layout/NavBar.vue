@@ -2,9 +2,13 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { usePermissionsStore } from '@/stores/permissions'
 
 const router = useRouter()
 const { user, role, logout: authLogout } = useAuth()
+const permStore = usePermissionsStore()
+
+// Permission-based nav visibility
 
 const mobileMenuOpen = ref(false)
 
@@ -17,7 +21,7 @@ const displayName = computed(() => {
   return name
 })
 
-const isAdmin = computed(() => role.value === 'superadmin' || role.value === 'product_manager' || role.value === 'sales_admin_manager' || role.value === 'sales_admin_supervisor')
+const isAdmin = computed(() => permStore.can('manage_users') || permStore.can('edit_machine_catalog') || permStore.can('manage_roles_access'))
 
 const roleLabel = computed(() => {
   const labels: Record<string, string> = {
