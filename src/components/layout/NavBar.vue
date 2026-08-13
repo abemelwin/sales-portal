@@ -10,7 +10,7 @@ const permStore = usePermissionsStore()
 
 // Fetch permissions when role changes (handles page reload timing)
 watch(role, (newRole) => {
-  if (newRole && !permStore.loaded) {
+  if (newRole) {
     permStore.fetchPermissions(newRole)
   }
 }, { immediate: true })
