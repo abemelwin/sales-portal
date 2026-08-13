@@ -988,7 +988,7 @@ function formatCurrency(value: number | null | undefined): string {
   .q-shdr {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    border-bottom: 2px solid #c0392b !important;
+    border-bottom: 1px solid #c0392b !important;
     color: #c0392b !important;
   }
 
