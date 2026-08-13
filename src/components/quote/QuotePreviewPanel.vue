@@ -3,10 +3,12 @@ import { inject, computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { formatQuoteDate, getDisplayedInclusions, getDisplayedExclusions } from '@/utils/quote-calculations'
 import { supabase } from '@/services/supabase'
+import { useProductInfoStore } from '@/stores/productInfo'
 import letterheadEspmi from '@/assets/letterhead-espmi-1.jpg'
 import letterheadAcs from '@/assets/letterhead-acs-1.jpg'
 
 const quoteState = inject(QUOTE_BUILDER_KEY)!
+const productInfoStore = useProductInfoStore()
 
 // --- Responsive scaling ---
 const paperRef = ref<HTMLElement | null>(null)
@@ -71,11 +73,21 @@ const conditionBadge = computed<{ label: string; modifier: string } | null>(() =
 const imageLoadError = ref(false)
 
 const machineImageUrl = computed<string | null>(() => {
-  if (!quoteState.imageKey) return null
-  const { data } = supabase.storage
-    .from('machine-images')
-    .getPublicUrl(quoteState.imageKey)
-  return data.publicUrl
+  // First check imageKey (from machine catalog)
+  if (quoteState.imageKey) {
+    const { data } = supabase.storage
+      .from('machine-images')
+      .getPublicUrl(quoteState.imageKey)
+    return data.publicUrl
+  }
+  // Fallback: check product_info_links for a "picture" type link
+  if (quoteState.machineId) {
+    const pictureLink = productInfoStore.productLinks.find(
+      (l) => l.machine_id === quoteState.machineId && l.document_type === 'picture'
+    )
+    if (pictureLink) return pictureLink.url
+  }
+  return null
 })
 
 const showMachineImage = computed(() => {
