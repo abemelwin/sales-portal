@@ -508,14 +508,14 @@ function formatCurrency(value: number | null | undefined): string {
 
             <div class="q-sig-grid">
               <div class="q-sig-cell">
-                <div class="q-sig-name">{{ quoteState.aeName || '' }}</div>
                 <div class="q-sig-line"></div>
+                <div class="q-sig-name">{{ quoteState.aeName || '' }}</div>
                 <div class="q-sig-role">Account Executive</div>
                 <div class="q-sig-sub">Signature over Printed Name</div>
               </div>
               <div class="q-sig-cell">
-                <div class="q-sig-name">{{ quoteState.clientConforme || '' }}</div>
                 <div class="q-sig-line"></div>
+                <div class="q-sig-name">{{ quoteState.clientConforme || '' }}</div>
                 <div class="q-sig-role">Client</div>
                 <div class="q-sig-sub">Signature over Printed Name</div>
               </div>
@@ -523,6 +523,7 @@ function formatCurrency(value: number | null | undefined): string {
 
             <div v-if="quoteState.notedByName || quoteState.notedByRole" class="q-noted">
               <div class="q-noted-label">Noted By:</div>
+              <div class="q-noted-line"></div>
               <div class="q-noted-name">{{ quoteState.notedByName || '' }}</div>
               <div v-if="quoteState.notedByRole" class="q-noted-role">{{ quoteState.notedByRole }}</div>
             </div>
@@ -887,6 +888,13 @@ function formatCurrency(value: number | null | undefined): string {
   margin-top: 1mm;
   font-style: italic;
 }
+
+.q-noted-line {
+  width: 50%;
+  border-top: 1px solid #333;
+  margin-top: 6mm;
+}
+
 
 .q-noted {
   margin-top: 6mm;
