@@ -10,6 +10,15 @@ import letterheadAcs from '@/assets/letterhead-acs-1.jpg'
 const quoteState = inject(QUOTE_BUILDER_KEY)!
 const productInfoStore = useProductInfoStore()
 
+// Auto-fetch product info links when component mounts or machine changes
+onMounted(() => {
+  productInfoStore.fetchLinks()
+})
+watch(() => quoteState.machineId, () => {
+  productInfoStore.fetchLinks()
+})
+
+
 // --- Responsive scaling ---
 const paperRef = ref<HTMLElement | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
