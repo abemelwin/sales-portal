@@ -582,6 +582,43 @@ function dismissValidationBox() {
       <!-- Package Inclusions -->
       <div v-if="quoteState.inclusionItems.length > 0">
         <hr class="fp-hr" />
+        <h2 class="fp-section-title">Consumables — Prices</h2>
+        <p class="fp-note">Edit prices per client arrangement</p>
+        <div class="cons-header-row">
+          <span class="cons-col-item">ITEM</span>
+          <span class="cons-col-pkg">PKG</span>
+          <span class="cons-col-price">PRICE</span>
+        </div>
+        <div
+          v-for="(consumable, index) in quoteState.consumables"
+          :key="consumable.id"
+          class="cons-row"
+        >
+          <span class="cons-name">{{ consumable.item_name }}</span>
+          <span class="cons-pkg">{{ consumable.package_description }}</span>
+          <div class="cons-price">
+            <label :for="`cons-price-${index}`" class="sr-only">Price for {{ consumable.item_name }}</label>
+            <input
+              :id="`cons-price-${index}`"
+              type="number"
+              :value="quoteState.consumablePrices[index]?.customPrice"
+              @input="(e: Event) => {
+                const val = parseFloat((e.target as HTMLInputElement).value)
+                if (quoteState.consumablePrices[index]) {
+                  quoteState.consumablePrices[index].customPrice = isNaN(val) ? 0 : val
+                }
+              }"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Exclusions -->
+      <div v-if="quoteState.exclusionItems.length > 0">
+        <hr class="fp-hr" />
         <h2 class="fp-section-title">Package Inclusions</h2>
         <p class="fp-note">Uncheck any item not included in this quote</p>
         <div
@@ -622,43 +659,6 @@ function dismissValidationBox() {
 
       <!-- Consumable Prices -->
       <div v-if="quoteState.consumables.length > 0">
-        <hr class="fp-hr" />
-        <h2 class="fp-section-title">Consumables — Prices</h2>
-        <p class="fp-note">Edit prices per client arrangement</p>
-        <div class="cons-header-row">
-          <span class="cons-col-item">ITEM</span>
-          <span class="cons-col-pkg">PKG</span>
-          <span class="cons-col-price">PRICE</span>
-        </div>
-        <div
-          v-for="(consumable, index) in quoteState.consumables"
-          :key="consumable.id"
-          class="cons-row"
-        >
-          <span class="cons-name">{{ consumable.item_name }}</span>
-          <span class="cons-pkg">{{ consumable.package_description }}</span>
-          <div class="cons-price">
-            <label :for="`cons-price-${index}`" class="sr-only">Price for {{ consumable.item_name }}</label>
-            <input
-              :id="`cons-price-${index}`"
-              type="number"
-              :value="quoteState.consumablePrices[index]?.customPrice"
-              @input="(e: Event) => {
-                const val = parseFloat((e.target as HTMLInputElement).value)
-                if (quoteState.consumablePrices[index]) {
-                  quoteState.consumablePrices[index].customPrice = isNaN(val) ? 0 : val
-                }
-              }"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Exclusions -->
-      <div v-if="quoteState.exclusionItems.length > 0">
         <hr class="fp-hr" />
         <h2 class="fp-section-title">Exclusions</h2>
         <p class="fp-note">Uncheck any exclusion that does not apply</p>
