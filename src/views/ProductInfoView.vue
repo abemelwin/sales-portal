@@ -105,16 +105,23 @@ async function addLink(category: CategoryKey) {
 // Upload file (for now, same as add link but with file prompt label)
 async function uploadFile(category: CategoryKey) {
   if (!selectedMachineId.value) return
-  const url = prompt('Paste the file URL or shared drive link:')
-  if (!url) return
-  const label = prompt('File name / label:', '')
-  if (label === null) return
-  await productInfoStore.addLink(
-    selectedMachineId.value,
-    label || url,
-    url,
-    category
-  )
+  
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx'
+  input.onchange = async (e: Event) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+    const label = file.name
+    const url = URL.createObjectURL(file)
+    await productInfoStore.addLink(
+      selectedMachineId.value!,
+      label,
+      url,
+      category
+    )
+  }
+  input.click()
 }
 
 // Delete link
