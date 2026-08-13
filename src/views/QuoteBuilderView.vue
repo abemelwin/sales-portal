@@ -18,14 +18,14 @@ const quoteState = useQuoteBuilder()
 provide(QUOTE_BUILDER_KEY, quoteState)
 
 // Auto-open Closing Docs modal when navigated with ?openDocs=true
-watch(() => route.query.openDocs, (val) => {
-  if (val === 'true') {
+onMounted(() => {
+  if (route.query.openDocs === 'true') {
     setTimeout(() => {
       const btn = document.querySelector('.closing-docs-btn') as HTMLButtonElement
       if (btn) btn.click()
-    }, 500)
+    }, 800)
   }
-}, { immediate: true })
+})
 
 
 // ─── Mobile Tab Navigation (Requirement 14.2) ───────────────────────────────────
