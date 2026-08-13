@@ -105,14 +105,15 @@ router.beforeEach(async (to) => {
   const { supabase } = await import('@/services/supabase')
   const authStore = useAuthStore()
 
-  // If store has no session yet, try to get it directly from Supabase
+  // If the store doesn't have a session yet, check Supabase directly
   // This handles page reload where onAuthStateChange hasn't fired yet
-  if (!authStore.session) {
+  if (!authStore.session && to.meta.requiresAuth !== false) {
     const { data } = await supabase.auth.getSession()
     if (data.session) {
+      // Session exists - hydrate the store
       authStore.session = data.session
-      // Fetch profile if not loaded
       if (!authStore.user) {
+        // Fetch user profile
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('*')
@@ -121,19 +122,22 @@ router.beforeEach(async (to) => {
           .single()
         if (profile) {
           authStore.user = profile as any
-          authStore.role = (profile.role as any) || 'user'
+          authStore.role = (profile as any).role || 'user'
         }
       }
     }
   }
 
+  // Now make routing decisions
+  const isAuthenticated = !!authStore.session && !!authStore.user
+
   // Redirect authenticated users away from login page
-  if (to.name === 'login' && authStore.isAuthenticated) {
+  if (to.name === 'login' && isAuthenticated) {
     return { name: 'dashboard' }
   }
 
-  // Redirect unauthenticated users to login with return URL
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  // Redirect unauthenticated users to login
+  if (to.meta.requiresAuth && !isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
