@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const route = useRoute()
+
 const authStore = useAuthStore()
 
 const email = ref('')
@@ -21,7 +21,7 @@ async function handleSubmit() {
 
     if (result.success) {
       // Redirect to saved return URL or dashboard
-      const redirectPath = (route.query.redirect as string) || '/'
+      const redirectPath = (router.currentRoute.value.query.redirect as string) || '/'
       router.push(redirectPath)
     }
   } finally {

@@ -11,6 +11,10 @@ import { useRealtimeStore } from '@/stores/realtime'
 import { supabase } from '@/services/supabase'
 import NavBar from '@/components/layout/NavBar.vue'
 import ConnectivityBanner from '@/components/layout/ConnectivityBanner.vue'
+import { useIdleLogout } from '@/composables/useIdleLogout'
+
+
+useIdleLogout()
 
 const router = useRouter()
 const route = useRoute()
@@ -207,7 +211,7 @@ function dismissError() {
 }
 
 .app-main--with-nav {
-  /* No extra padding — views manage their own layout */
+  /* No extra padding ï¿½ views manage their own layout */
 }
 
 /* Error banner */
