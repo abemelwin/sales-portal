@@ -306,7 +306,7 @@ function dismissValidationBox() {
       <div class="fp-row">
         <div class="fp-sec">
           <label class="fp-lbl" for="client-contact">Contact No.</label>
-          <input id="client-contact" class="fp-in" type="text" v-model="quoteState.contact" placeholder="09XX XXX XXXX" />
+          <input id="client-contact" class="fp-in" type="tel" inputmode="tel" v-model="quoteState.contact" placeholder="09XX XXX XXXX" @input="quoteState.contact = quoteState.contact.replace(/[^0-9+ ()-]/g, '')" />
         </div>
         <div class="fp-sec">
           <label class="fp-lbl" for="client-email">Email</label>
