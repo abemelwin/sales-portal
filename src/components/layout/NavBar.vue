@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { usePermissionsStore } from '@/stores/permissions'
@@ -7,6 +7,14 @@ import { usePermissionsStore } from '@/stores/permissions'
 const router = useRouter()
 const { user, role, logout: authLogout } = useAuth()
 const permStore = usePermissionsStore()
+
+// Fetch permissions when role changes (handles page reload timing)
+watch(role, (newRole) => {
+  if (newRole && !permStore.loaded) {
+    permStore.fetchPermissions(newRole)
+  }
+}, { immediate: true })
+
 
 // Permission-based nav visibility
 
