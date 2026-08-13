@@ -148,6 +148,18 @@ function formatCurrency(value: number | null): string {
 
 // --- Freebie management ---
 
+// Money formatting helpers
+function formatMoney(val: number | null): string {
+  if (val === null || val === 0) return ''
+  return val.toLocaleString('en-PH')
+}
+
+function parseMoney(str: string): number {
+  const cleaned = str.replace(/[^0-9.]/g, '')
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? 0 : num
+}
+
 const freebieInput = ref('')
 
 function addFreebie() {
@@ -340,11 +352,12 @@ function dismissValidationBox() {
         <input
           id="contract-price"
           class="fp-in"
-          type="number"
-          v-model.number="quoteState.contractPrice"
+          type="text"
+          inputmode="decimal"
+          :value="formatMoney(quoteState.contractPrice)"
+          @input="quoteState.contractPrice = parseMoney(($event.target as HTMLInputElement).value)"
+          @blur="($event.target as HTMLInputElement).value = formatMoney(quoteState.contractPrice)"
           placeholder="0"
-          min="0"
-          step="0.01"
         />
       </div>
 
@@ -408,11 +421,12 @@ function dismissValidationBox() {
         <input
           id="downpayment"
           class="fp-in"
-          type="number"
-          v-model.number="quoteState.downPayment"
+          type="text"
+          inputmode="decimal"
+          :value="formatMoney(quoteState.downPayment)"
+          @input="quoteState.downPayment = parseMoney(($event.target as HTMLInputElement).value)"
+          @blur="($event.target as HTMLInputElement).value = formatMoney(quoteState.downPayment)"
           placeholder="0"
-          min="0"
-          step="0.01"
         />
       </div>
 
