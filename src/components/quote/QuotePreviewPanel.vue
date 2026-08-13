@@ -968,5 +968,35 @@ function formatCurrency(value: number | null | undefined): string {
   background: #f9f9f9;
   margin: 2mm 0;
   color: #333;
+
+  .q-shdr {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    border-bottom: 2px solid #c0392b !important;
+    color: #c0392b !important;
+  }
+
+  .q-col-hdr {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: #c0392b !important;
+    color: #fff !important;
+  }
+
+  .q-ptbl thead tr {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: #c0392b !important;
+  }
+
+  .q-ptbl th {
+    color: #fff !important;
+  }
+
+  .q-availability {
+    border-left: 3px solid #c0392b !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 </style>
