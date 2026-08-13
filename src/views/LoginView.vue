@@ -10,6 +10,7 @@ const authStore = useAuthStore()
 const LAST_EMAIL_KEY = 'espmi_last_email'
 const email = ref(localStorage.getItem(LAST_EMAIL_KEY) || '')
 const password = ref('')
+const showPassword = ref(false)
 const isSubmitting = ref(false)
 
 async function handleSubmit() {
@@ -87,7 +88,7 @@ async function handleSubmit() {
           <input
             id="password"
             v-model="password"
-            type="password"
+            :type="showPassword ? 'text' : 'password'"
             class="form-input"
             placeholder="Enter your password"
             autocomplete="current-password"
@@ -96,6 +97,7 @@ async function handleSubmit() {
             aria-required="true"
             aria-describedby="password-hint"
           />
+          <button type="button" class="show-pass-btn" @click="showPassword = !showPassword" tabindex="-1">{{ showPassword ? 'Hide' : 'Show' }}</button>
           <span id="password-hint" class="sr-only">Enter your account password</span>
         </div>
 
@@ -217,6 +219,53 @@ async function handleSubmit() {
 
 .form-input::placeholder {
   color: var(--color-gray-400);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper .form-input {
+  padding-right: 60px;
+}
+
+.show-pass-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-gray-500);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.show-pass-btn:hover {
+  color: var(--color-primary);
+}
+
+.form-group:has(#password) {
+  position: relative;
+}
+
+.show-pass-btn {
+  position: absolute;
+  right: 10px;
+  top: 38px;
+  background: none;
+  border: none;
+  color: var(--color-gray-500);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.show-pass-btn:hover {
+  color: var(--color-primary);
 }
 
 .btn-login {
