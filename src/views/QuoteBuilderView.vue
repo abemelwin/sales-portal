@@ -212,17 +212,6 @@ watch(
           {{ isEditing ? 'Edit Quote' : 'New Quote' }}
         </h2>
       </div>
-      <div class="quote-builder-view__toolbar-right">
-        <button
-          type="button"
-          class="quote-builder-view__save-btn"
-          :disabled="saving"
-          @click="handleSave"
-        >
-          <span v-if="saving" class="quote-builder-view__save-spinner"></span>
-          {{ saving ? 'Saving...' : (isEditing ? 'Update Quote' : 'Save Quote') }}
-        </button>
-      </div>
     </div>
 
     <!-- Error notification (Requirement 5.16: retain form data, show error) -->
