@@ -162,10 +162,6 @@ const showPricing = computed(() => {
   return quoteState.contractPrice !== null && quoteState.contractPrice > 0
 })
 
-const showPromo = computed(() => {
-  return quoteState.underPromo && (quoteState.freebies.length > 0 || quoteState.promoValidity)
-})
-
 // Pricing table rows: one per term option
 const pricingRows = computed(() => {
   return quoteState.termOptions.map((term) => {
@@ -331,10 +327,19 @@ function formatCurrency(value: number | null | undefined): string {
                   <td>{{ row.monthly !== null ? formatCurrency(row.monthly) : '—' }}</td>
                 </tr>
                 <tr class="note-row">
-                  <td colspan="6">In Philippine Pesos. Prices may change without prior notice.</td>
+                  <td colspan="6">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                      <span v-if="quoteState.vatInclusive" style="font-weight:700;color:#c0392b;letter-spacing:.5px">VAT INCLUSIVE</span>
+                      <span v-else></span>
+                      <span style="font-style:italic;font-size:7pt;color:#888">in Philippine Pesos. Prices may change without prior notice.</span>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
+            <p v-if="quoteState.underPromo && quoteState.promoValidity" style="text-align:right;font-size:8.5pt;font-weight:700;color:#c0392b;margin:0 0 2mm">
+              Promo Validity: {{ quoteState.promoValidity }}
+            </p>
           </template>
 
           <!-- Trade-ins -->
@@ -364,19 +369,29 @@ function formatCurrency(value: number | null | undefined): string {
           <template v-if="showCollection">
             <div class="q-shdr">Collection Arrangements</div>
             <div class="q-avail">
-              <p v-if="quoteState.availability" style="margin:0 0 1mm">
-                <strong>Availability:</strong> {{ quoteState.availability }}
+              <p v-if="quoteState.collectionPayment" style="margin:0 0 1mm;font-size:8pt">
+                <span style="display:inline-block;width:80px">Payment:</span>
+                {{ formatCurrency(quoteState.contractPrice) }} — {{ quoteState.collectionPayment }}
               </p>
-              <p v-if="quoteState.collectionPayment" style="margin:0 0 1mm">
-                <strong>Payment:</strong> {{ quoteState.collectionPayment }}
+              <p v-if="quoteState.collectionDownpayment" style="margin:0 0 1mm;font-size:8pt">
+                <span style="display:inline-block;width:80px">Down Payment:</span>
+                {{ quoteState.collectionDownpayment }}
               </p>
-              <p v-if="quoteState.collectionDownpayment" style="margin:0 0 1mm">
-                <strong>Down Payment:</strong> {{ quoteState.collectionDownpayment }}
-              </p>
-              <p v-if="quoteState.collectionAmortization" style="margin:0">
-                <strong>Amortization:</strong> {{ quoteState.collectionAmortization }}
+              <p v-if="quoteState.collectionAmortization" style="margin:0;font-size:8pt">
+                <span style="display:inline-block;width:80px">Amortization:</span>
+                {{ quoteState.collectionAmortization }}
               </p>
             </div>
+          </template>
+
+          <!-- FREEBIES -->
+          <template v-if="quoteState.underPromo && quoteState.freebies.length > 0">
+            <div class="q-shdr">Freebies</div>
+            <ul style="list-style:none;padding-left:0;margin:0 0 2mm">
+              <li v-for="(freebie, idx) in quoteState.freebies" :key="idx" style="font-size:8pt;color:#444;line-height:1.8">
+                <span style="color:#c0392b;margin-right:5px">★</span> {{ freebie }}
+              </li>
+            </ul>
           </template>
 
           <!-- PACKAGE INCLUSIONS / EXCLUSIONS -->
@@ -392,7 +407,7 @@ function formatCurrency(value: number | null | undefined): string {
                 </div>
               </div>
               <div v-if="exclusionsList.length > 0">
-                <div class="q-col-hdr">Package Exclusions</div>
+                <div class="q-col-hdr" style="background:#c0392b">Exclusive</div>
                 <div class="q-col-body">
                   <ul>
                     <li v-for="(item, idx) in exclusionsList" :key="idx">{{ item }}</li>
@@ -402,9 +417,9 @@ function formatCurrency(value: number | null | undefined): string {
             </div>
           </template>
 
-          <!-- Optional Add-ons -->
+          <!-- OPTIONAL ADD-ONS -->
           <template v-if="addonDisplayItems.length > 0">
-            <div class="q-shdr">Optional Add-ons</div>
+            <div class="q-shdr">Optional Add-Ons</div>
             <ul style="list-style:none;padding-left:0;margin:0 0 2mm">
               <li
                 v-for="(addon, idx) in addonDisplayItems"
@@ -417,9 +432,9 @@ function formatCurrency(value: number | null | undefined): string {
             </ul>
           </template>
 
-          <!-- Consumables -->
+          <!-- CONSUMABLES -->
           <template v-if="consumableDisplayList.length > 0">
-            <div class="q-shdr">Consumable Prices</div>
+            <div class="q-shdr">Consumables</div>
             <div class="q-cons-grid">
               <div
                 v-for="(item, idx) in consumableDisplayList"
@@ -433,16 +448,10 @@ function formatCurrency(value: number | null | undefined): string {
             </div>
           </template>
 
-          <!-- Promo / Freebies -->
-          <template v-if="showPromo">
-            <div class="q-shdr">Promo Freebies</div>
-            <ul v-if="quoteState.freebies.length > 0" style="margin:0 0 1mm;padding-left:14px">
-              <li v-for="(freebie, idx) in quoteState.freebies" :key="idx" style="font-size:8pt;color:#444;line-height:1.6">{{ freebie }}</li>
-            </ul>
-            <p v-if="quoteState.promoValidity" style="font-size:8pt;color:#666;margin:0 0 2mm">
-              Promo valid until: <strong>{{ quoteState.promoValidity }}</strong>
-            </p>
-          </template>
+          <!-- AVAILABILITY -->
+          <div v-if="quoteState.availability" class="q-availability">
+            <strong>AVAILABILITY:</strong> {{ quoteState.availability }}
+          </div>
 
           <!-- WARRANTY -->
           <template v-if="showWarranty">
@@ -459,7 +468,7 @@ function formatCurrency(value: number | null | undefined): string {
             </ul>
           </template>
 
-          <!-- Closing + Signatories -->
+                    <!-- Closing + Signatories -->
           <div class="q-sig no-break">
             <p class="q-closing">
               Trusting that the above quotation will receive your favorable consideration and assuring you of our best service at all times. Thank you very much.
@@ -924,5 +933,13 @@ function formatCurrency(value: number | null | undefined): string {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+}
+.q-availability {
+  font-size: 8pt;
+  padding: 2mm 3mm;
+  border-left: 3px solid #c0392b;
+  background: #f9f9f9;
+  margin: 2mm 0;
+  color: #333;
 }
 </style>
