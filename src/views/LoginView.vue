@@ -7,7 +7,8 @@ const router = useRouter()
 
 const authStore = useAuthStore()
 
-const email = ref('')
+const LAST_EMAIL_KEY = 'espmi_last_email'
+const email = ref(localStorage.getItem(LAST_EMAIL_KEY) || '')
 const password = ref('')
 const isSubmitting = ref(false)
 
@@ -20,6 +21,8 @@ async function handleSubmit() {
     const result = await authStore.login(email.value, password.value)
 
     if (result.success) {
+      // Remember last email for next login
+      localStorage.setItem(LAST_EMAIL_KEY, email.value)
       // Redirect to saved return URL or dashboard
       const redirectPath = (router.currentRoute.value.query.redirect as string) || '/'
       router.push(redirectPath)
