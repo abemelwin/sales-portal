@@ -85,6 +85,7 @@ async function handleSubmit() {
 
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
+          <div class="password-wrapper">
           <input
             id="password"
             v-model="password"
@@ -98,6 +99,7 @@ async function handleSubmit() {
             aria-describedby="password-hint"
           />
           <button type="button" class="show-pass-btn" @click="showPassword = !showPassword" tabindex="-1">{{ showPassword ? 'Hide' : 'Show' }}</button>
+          </div>
           <span id="password-hint" class="sr-only">Enter your account password</span>
         </div>
 
@@ -247,25 +249,32 @@ async function handleSubmit() {
   color: var(--color-primary);
 }
 
-.form-group:has(#password) {
+.password-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper .form-input {
+  padding-right: 56px;
+  width: 100%;
 }
 
 .show-pass-btn {
   position: absolute;
-  right: 10px;
-  top: 38px;
+  right: 12px;
   background: none;
   border: none;
-  color: var(--color-gray-500);
+  color: #c0392b;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 2px 6px;
 }
 
 .show-pass-btn:hover {
-  color: var(--color-primary);
+  color: #7b1e13;
+  text-decoration: underline;
 }
 
 .btn-login {
