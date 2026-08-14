@@ -248,9 +248,6 @@ function openClosingDocuments() {
 
 function handleDocsConfirm(_data: any) {
   showDocsPrompt.value = false
-  // For now, trigger print (Save as PDF) with the T&C view
-  // TODO: implement full T&C document generation
-  alert('Closing Documents feature will open the T&C printable view. For now, use SAVE AS PDF to export the quotation.')
 }
 
 const tradeInDescriptions = computed(() =>
