@@ -376,6 +376,7 @@ function formatCurrency(value: number | null | undefined): string {
             <p v-if="quoteState.underPromo && quoteState.promoValidity" style="text-align:right;font-size:8.5pt;font-weight:700;color:#c0392b;margin:0 0 2mm">
               Promo Validity: {{ quoteState.promoValidity }}
             </p>
+            <span class="q-section-divider"></span>
           </template>
 
           <!-- Trade-ins -->
@@ -518,13 +519,13 @@ function formatCurrency(value: number | null | undefined): string {
             <div class="q-sig-grid">
               <div class="q-sig-cell">
                 <div class="q-sig-name">{{ quoteState.aeName || '' }}</div>
-                <div class="q-sig-line"></div>
+                <span class="q-sig-line"></span>
                 <div class="q-sig-role">Account Executive</div>
                 <div class="q-sig-sub">Signature over Printed Name</div>
               </div>
               <div class="q-sig-cell">
                 <div class="q-sig-name">{{ quoteState.clientConforme || '' }}</div>
-                <div class="q-sig-line"></div>
+                <span class="q-sig-line"></span>
                 <div class="q-sig-role">Client</div>
                 <div class="q-sig-sub">Signature over Printed Name</div>
               </div>
@@ -533,7 +534,7 @@ function formatCurrency(value: number | null | undefined): string {
             <div v-if="quoteState.notedByName || quoteState.notedByRole" class="q-noted">
               <div class="q-noted-label">Noted By:</div>
               <div class="q-noted-name">{{ quoteState.notedByName || '' }}</div>
-              <div class="q-noted-line"></div>
+              <span class="q-noted-line"></span>
               <div v-if="quoteState.notedByRole" class="q-noted-role">{{ quoteState.notedByRole }}</div>
             </div>
           </div>
@@ -742,6 +743,16 @@ function formatCurrency(value: number | null | undefined): string {
   color-adjust: exact !important;
 }
 
+.q-section-divider {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 2mm 0;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
 /* ─── Pricing / trade-in table ─── */
 .q-ptbl {
   width: 100%;
@@ -890,11 +901,14 @@ function formatCurrency(value: number | null | undefined): string {
 }
 
 .q-sig-line {
+  display: block;
   width: 90%;
-  height: 0;
-  border-top: 1px solid #333;
+  height: 1px;
+  background-color: #333;
   margin-top: 0;
   margin-bottom: 1mm;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }
 
 .q-sig-role {
@@ -913,11 +927,14 @@ function formatCurrency(value: number | null | undefined): string {
 }
 
 .q-noted-line {
+  display: block;
   width: 50%;
-  height: 0;
-  border-top: 1px solid #333;
+  height: 1px;
+  background-color: #333;
   margin-top: 0;
   margin-bottom: 1mm;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
 }
 
 
