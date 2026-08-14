@@ -31,7 +31,7 @@ export interface CreateUserInput {
 
 // ─── Machine Models ─────────────────────────────────────────────────────────────
 
-export type UnitCondition = 'Brand New' | 'Re-certified' | 'Demo Unit'
+export type UnitCondition = string
 export type Letterhead = 'ES Print Media Inc.' | 'ACS / Alternative'
 
 export interface MachineFeature {

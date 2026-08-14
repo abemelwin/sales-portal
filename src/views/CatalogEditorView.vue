@@ -7,6 +7,7 @@ const catalogStore = useCatalogStore()
 
 // ─── Machine Selector ─────────────────────────────────────────────────────────
 const selectedMachineId = ref('')
+const isEditingExisting = computed(() => !!selectedMachineId.value)
 
 const machineSelectorOptions = computed(() =>
   catalogStore.machines.map((m) => ({
@@ -163,8 +164,8 @@ function populateForm(machine: Machine) {
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((a) => ({
       name: a.description,
-      uom: '',
-      price: '',
+      uom: (a as any).uom ?? '',
+      price: (a as any).price != null ? String((a as any).price) : '',
     }))
 }
 
@@ -191,7 +192,7 @@ function buildInput(): MachineInput {
     brand: form.brand.trim(),
     model: form.quoteTitle.trim() || form.brand.trim(),
     sub_model: null,
-    unit_condition: (form.category as 'Brand New' | 'Re-certified' | 'Demo Unit') || 'Brand New',
+    unit_condition: form.category.trim() || 'Brand New',
     letterhead: 'ES Print Media Inc.',
     srp: form.srp ?? 0,
     lbp: form.lbp ?? 0,
@@ -301,7 +302,7 @@ onMounted(() => {
     <div class="cat-form">
       <div class="cf-row">
         <label>Key (unique ID)</label>
-        <input v-model="form.key" class="fp-in" />
+        <input v-model="form.key" class="fp-in" :readonly="isEditingExisting" :style="isEditingExisting ? 'background:#f5f5f5;color:#999' : ''" />
       </div>
       <div class="cf-row">
         <label>Quote Title</label>
@@ -427,6 +428,7 @@ onMounted(() => {
     <div class="cat-actions">
       <button class="cat-save" :disabled="saving" @click="save">&#128190; Save Changes</button>
       <span v-if="successMessage" class="cat-msg">{{ successMessage }}</span>
+      <span v-if="catalogStore.error" class="cat-error-inline">{{ catalogStore.error }}</span>
     </div>
 
     <!-- Store Error -->
@@ -665,6 +667,12 @@ onMounted(() => {
 .cat-msg {
   font-size: 12px;
   color: #27ae60;
+  font-weight: 700;
+}
+
+.cat-error-inline {
+  font-size: 12px;
+  color: #c0392b;
   font-weight: 700;
 }
 

@@ -47,7 +47,7 @@ export const useCatalogStore = defineStore('catalog', () => {
         query = query.eq('model', filters.model)
       }
       if (filters?.unit_condition) {
-        query = query.eq('unit_condition', filters.unit_condition)
+        query = query.eq('unit_condition', filters.unit_condition as never)
       }
       if (filters?.is_active !== undefined) {
         query = query.eq('is_active', filters.is_active)
