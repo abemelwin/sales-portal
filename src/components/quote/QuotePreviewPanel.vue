@@ -341,7 +341,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- PRICING -->
           <template v-if="showPricing">
-            <div class="q-shdr">Pricing</div>
+            <div class="q-shdr">Pricing<span class="q-shdr-line"></span></div>
             <table class="q-ptbl" style="width:100%;border-collapse:collapse;margin-bottom:1mm">
               <thead>
                 <tr>
@@ -380,7 +380,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- Trade-ins -->
           <template v-if="showTradeIns">
-            <div class="q-shdr">Trade-In Units</div>
+            <div class="q-shdr">Trade-In Units<span class="q-shdr-line"></span></div>
             <table class="q-ptbl" style="width:100%;border-collapse:collapse;margin-bottom:2mm">
               <thead>
                 <tr>
@@ -403,7 +403,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- COLLECTION ARRANGEMENTS -->
           <template v-if="showCollection">
-            <div class="q-shdr">Collection Arrangements</div>
+            <div class="q-shdr">Collection Arrangements<span class="q-shdr-line"></span></div>
             <div class="q-avail">
               <p v-if="quoteState.collectionPayment" style="margin:0 0 1mm;font-size:8pt">
                 <span style="display:inline-block;width:80px">Payment:</span>
@@ -422,7 +422,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- FREEBIES -->
           <template v-if="quoteState.underPromo && quoteState.freebies.length > 0">
-            <div class="q-shdr">Freebies</div>
+            <div class="q-shdr">Freebies<span class="q-shdr-line"></span></div>
             <ul style="list-style:none;padding-left:0;margin:0 0 2mm">
               <li v-for="(freebie, idx) in quoteState.freebies" :key="idx" style="font-size:8pt;color:#444;line-height:1.8">
                 <span style="color:#c0392b;margin-right:5px">★</span> {{ freebie }}
@@ -432,7 +432,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- PACKAGE INCLUSIONS / EXCLUSIONS -->
           <template v-if="inclusionsList.length > 0 || exclusionsList.length > 0">
-            <div class="q-shdr">Package Inclusions / Exclusions</div>
+            <div class="q-shdr">Package Inclusions / Exclusions<span class="q-shdr-line"></span></div>
             <div class="q-two">
               <div v-if="inclusionsList.length > 0">
                 <div class="q-col-hdr">Package Inclusions</div>
@@ -455,7 +455,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- OPTIONAL ADD-ONS -->
           <template v-if="addonDisplayItems.length > 0">
-            <div class="q-shdr">Optional Add-Ons</div>
+            <div class="q-shdr">Optional Add-Ons<span class="q-shdr-line"></span></div>
             <ul style="list-style:none;padding-left:0;margin:0 0 2mm">
               <li
                 v-for="(addon, idx) in addonDisplayItems"
@@ -470,7 +470,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- CONSUMABLES -->
           <template v-if="consumableDisplayList.length > 0">
-            <div class="q-shdr">Consumables</div>
+            <div class="q-shdr">Consumables<span class="q-shdr-line"></span></div>
             <div class="q-cons-grid">
               <div
                 v-for="(item, idx) in consumableDisplayList"
@@ -491,7 +491,7 @@ function formatCurrency(value: number | null | undefined): string {
 
           <!-- WARRANTY -->
           <template v-if="showWarranty">
-            <div class="q-shdr">Warranty</div>
+            <div class="q-shdr">Warranty<span class="q-shdr-line"></span></div>
             <ul style="list-style:disc;padding-left:14px;margin:0 0 2mm">
               <li
                 v-for="(line, idx) in warrantyLines"
@@ -724,11 +724,22 @@ function formatCurrency(value: number | null | undefined): string {
   font-weight: 700;
   text-transform: uppercase;
   color: #c0392b;
-  padding-bottom: 1.5mm;
-  margin-bottom: 1.5mm;
+  padding-bottom: 0;
+  margin-bottom: 0;
   letter-spacing: .4px;
   margin-top: 2mm;
-  border-bottom: 1px solid #c0392b;
+}
+
+.q-shdr-line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: #c0392b;
+  margin-top: 1mm;
+  margin-bottom: 1.5mm;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
 }
 
 /* ─── Pricing / trade-in table ─── */
