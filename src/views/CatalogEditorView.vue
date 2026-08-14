@@ -162,11 +162,22 @@ function populateForm(machine: Machine) {
 
   addons.value = machine.addons
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map((a) => ({
-      name: a.description,
-      uom: (a as any).uom ?? '',
-      price: (a as any).price != null ? String((a as any).price) : '',
-    }))
+    .map((a) => {
+      // Parse addon description: may be "NAME - P6,000.00" or just "NAME"
+      const desc = a.description || ''
+      const priceMatch = desc.match(/\s*[-–]\s*(?:₱|P)\s?([\d,]+(?:\.\d+)?)\s*$/)
+      let name = desc
+      let price = ''
+      if (priceMatch) {
+        price = String(parseFloat(priceMatch[1]!.replace(/,/g, '')) || '')
+        name = desc.replace(/\s*[-–]\s*(?:₱|P)\s?[\d,]+(?:\.\d+)?\s*$/, '').trim()
+      }
+      return {
+        name,
+        uom: (a as any).uom ?? '',
+        price,
+      }
+    })
 }
 
 // ─── CRUD Operations ──────────────────────────────────────────────────────────
@@ -211,29 +222,36 @@ function buildInput(): MachineInput {
       .map((c, i) => ({
         item_name: c.name.trim(),
         package_description: c.uom.trim() || null,
-        default_price: parseFloat(c.price) || 0,
+        default_price: Math.max(parseFloat(c.price) || 0, 0),
         sort_order: i,
       })),
     inclusions: inclusionsArr.map((desc, i) => ({ description: desc, sort_order: i })),
     exclusions: exclusionsArr.map((desc, i) => ({ description: desc, sort_order: i })),
     addons: addons.value
       .filter((a) => a.name.trim())
-      .map((a, i) => ({ description: a.name.trim(), sort_order: i })),
+      .map((a, i) => {
+        const price = parseFloat(a.price) || 0
+        const desc = price > 0
+          ? `${a.name.trim()} - P${price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : a.name.trim()
+        return { description: desc, sort_order: i }
+      }),
   }
 }
 
 async function save() {
   saving.value = true
+  successMessage.value = ''
   const input = buildInput()
 
   if (selectedMachineId.value) {
-    // Update existing
     const result = await catalogStore.updateMachine(selectedMachineId.value, input)
     if (result.success) {
       showSuccess('Saved successfully!')
+    } else {
+      showSuccess('') // clear any old message
     }
   } else {
-    // Create new
     const result = await catalogStore.createMachine(input)
     if (result.success) {
       showSuccess('Machine created successfully!')
