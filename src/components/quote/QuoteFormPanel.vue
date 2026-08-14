@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, watch, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import MachineSelector from './MachineSelector.vue'
 import ClosingDocsPrompt from './ClosingDocsPrompt.vue'
 import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
@@ -8,6 +9,8 @@ import { validateQuote } from '@/composables/useQuoteValidation'
 import type { DealType, Letterhead } from '@/types'
 
 const quoteState = inject(QUOTE_BUILDER_KEY)!
+const route = useRoute()
+const router = useRouter()
 
 const letterheadOptions: Letterhead[] = [
   'ES Print Media Inc.',
@@ -248,6 +251,14 @@ function openClosingDocuments() {
 
 function handleDocsConfirm(_data: any) {
   showDocsPrompt.value = false
+  const quoteId = route.params.id as string | undefined
+  if (quoteId) {
+    router.push({ name: 'quote-closing', params: { id: quoteId } })
+  } else {
+    // Quote not yet saved — prompt user to save first
+    quoteState.validationErrors = ['Please save the quotation first before opening Closing Documents.']
+    showValidationBox.value = true
+  }
 }
 
 const tradeInDescriptions = computed(() =>
