@@ -724,20 +724,11 @@ function formatCurrency(value: number | null | undefined): string {
   font-weight: 700;
   text-transform: uppercase;
   color: #c0392b;
-  padding-bottom: 1mm;
+  padding-bottom: 1.5mm;
   margin-bottom: 1.5mm;
   letter-spacing: .4px;
   margin-top: 2mm;
-  position: relative;
-}
-
-.q-shdr::after {
-  content: '';
-  display: block;
-  width: 100%;
-  height: 0;
-  border-top: 1px solid #c0392b;
-  margin-top: 1mm;
+  border-bottom: 1px solid #c0392b;
 }
 
 /* ─── Pricing / trade-in table ─── */
