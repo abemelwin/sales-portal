@@ -124,17 +124,17 @@ function populateForm(machine: Machine) {
   form.quoteTitle = `${machine.brand} ${machine.model}${machine.sub_model ? ' ' + machine.sub_model : ''}`
   form.brand = machine.brand
   form.category = machine.unit_condition
-  form.srp = null
-  form.lbp = null
-  form.cashPrice = null
-  form.defaultMonths = null
-  form.hasTradeIn = false
-  form.hasPrinthead = false
-  form.machineWarranty = machine.warranty_machine_duration ? parseInt(machine.warranty_machine_duration) || null : null
-  form.printheadWarranty = machine.warranty_printhead_duration ?? ''
-  form.serviceFee = null
+  form.srp = machine.srp ?? null
+  form.lbp = machine.lbp ?? null
+  form.cashPrice = machine.cash_price ?? null
+  form.defaultMonths = machine.default_months ?? machine.machine_warranty_months ?? null
+  form.hasTradeIn = machine.has_trade_in ?? false
+  form.hasPrinthead = machine.has_printhead ?? false
+  form.machineWarranty = machine.machine_warranty_months ?? null
+  form.printheadWarranty = machine.printhead_warranty ?? machine.warranty_printhead_duration ?? ''
+  form.serviceFee = machine.service_fee ?? null
   form.imageKey = machine.image_key ?? ''
-  form.availability = ''
+  form.availability = machine.availability ?? ''
 
   featuresText.value = machine.features
     .sort((a, b) => a.sort_order - b.sort_order)
@@ -193,6 +193,17 @@ function buildInput(): MachineInput {
     sub_model: null,
     unit_condition: (form.category as 'Brand New' | 'Re-certified' | 'Demo Unit') || 'Brand New',
     letterhead: 'ES Print Media Inc.',
+    srp: form.srp ?? 0,
+    lbp: form.lbp ?? 0,
+    cash_price: form.cashPrice ?? 0,
+    machine_warranty_months: form.machineWarranty ?? 0,
+    printhead_warranty: form.printheadWarranty || null,
+    has_trade_in: form.hasTradeIn,
+    has_printhead: form.hasPrinthead,
+    service_fee: form.serviceFee ?? null,
+    default_months: form.defaultMonths ?? null,
+    availability: form.availability.trim() || null,
+    image_key: form.imageKey.trim() || null,
     features: featuresArr.map((desc, i) => ({ description: desc, sort_order: i })),
     consumables: consumables.value
       .filter((c) => c.name.trim())

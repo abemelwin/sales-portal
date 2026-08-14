@@ -87,6 +87,11 @@ export interface Machine {
   cash_price: number
   machine_warranty_months: number
   printhead_warranty: string | null
+  has_trade_in: boolean
+  has_printhead: boolean
+  service_fee: number | null
+  default_months: number | null
+  availability: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -103,6 +108,19 @@ export interface MachineInput {
   sub_model?: string | null
   unit_condition: UnitCondition
   letterhead?: Letterhead
+  srp?: number | null
+  lbp?: number | null
+  cash_price?: number | null
+  machine_warranty_months?: number | null
+  printhead_warranty?: string | null
+  has_trade_in?: boolean
+  has_printhead?: boolean
+  service_fee?: number | null
+  default_months?: number | null
+  availability?: string | null
+  image_key?: string | null
+  warranty_machine_duration?: string | null
+  warranty_printhead_duration?: string | null
   features: Omit<MachineFeature, 'id' | 'machine_id'>[]
   consumables: Omit<MachineConsumable, 'id' | 'machine_id'>[]
   inclusions: Omit<MachineInclusion, 'id' | 'machine_id'>[]

@@ -90,7 +90,18 @@ export const useCatalogStore = defineStore('catalog', () => {
           sub_model: input.sub_model ?? null,
           unit_condition: input.unit_condition,
           letterhead: input.letterhead ?? 'ES Print Media Inc.',
-        })
+          srp: input.srp ?? 0,
+          lbp: input.lbp ?? 0,
+          cash_price: input.cash_price ?? 0,
+          machine_warranty_months: input.machine_warranty_months ?? 0,
+          printhead_warranty: input.printhead_warranty ?? null,
+          has_trade_in: input.has_trade_in ?? false,
+          has_printhead: input.has_printhead ?? false,
+          service_fee: input.service_fee ?? null,
+          default_months: input.default_months ?? null,
+          availability: input.availability ?? null,
+          image_key: input.image_key ?? null,
+        } as never)
         .select()
         .single()
 
@@ -211,6 +222,17 @@ export const useCatalogStore = defineStore('catalog', () => {
       if (update.unit_condition !== undefined) mainFields.unit_condition = update.unit_condition
       if (update.letterhead !== undefined) mainFields.letterhead = update.letterhead
       if (update.is_active !== undefined) mainFields.is_active = update.is_active
+      if (update.srp !== undefined) mainFields.srp = update.srp
+      if (update.lbp !== undefined) mainFields.lbp = update.lbp
+      if (update.cash_price !== undefined) mainFields.cash_price = update.cash_price
+      if (update.machine_warranty_months !== undefined) mainFields.machine_warranty_months = update.machine_warranty_months
+      if (update.printhead_warranty !== undefined) mainFields.printhead_warranty = update.printhead_warranty
+      if (update.has_trade_in !== undefined) mainFields.has_trade_in = update.has_trade_in
+      if (update.has_printhead !== undefined) mainFields.has_printhead = update.has_printhead
+      if (update.service_fee !== undefined) mainFields.service_fee = update.service_fee
+      if (update.default_months !== undefined) mainFields.default_months = update.default_months
+      if (update.availability !== undefined) mainFields.availability = update.availability
+      if (update.image_key !== undefined) mainFields.image_key = update.image_key
 
       if (Object.keys(mainFields).length > 0) {
         mainFields.updated_at = new Date().toISOString()
