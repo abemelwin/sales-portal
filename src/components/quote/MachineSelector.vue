@@ -101,6 +101,17 @@ watch(
   }
 )
 
+// Convert months number to word prefix matching the original HTML format
+// e.g. 12 → "Twelve (12)", 6 → "Six (6)", 24 → "Twenty-Four (24)", 36 → "Thirty-Six (36)"
+function _numToWords(n: number): string {
+  const words: Record<number, string> = {
+    1: 'One', 2: 'Two', 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six',
+    7: 'Seven', 8: 'Eight', 9: 'Nine', 10: 'Ten', 11: 'Eleven', 12: 'Twelve',
+    18: 'Eighteen', 24: 'Twenty-Four', 36: 'Thirty-Six', 48: 'Forty-Eight',
+  }
+  return words[n] ? `${words[n]} (${n})` : `${n}`
+}
+
 async function populateMachineData() {
   loading.value = true
   quoteState.catalogError = null
@@ -154,8 +165,19 @@ async function populateMachineData() {
     quoteState.hasComputerSetOption = machine.has_computer_set_option ?? false
 
     // Populate warranty durations (Req 12)
-    quoteState.warrantyMachineDuration = machine.warranty_machine_duration ?? ''
-    quoteState.warrantyPrintheadDuration = machine.warranty_printhead_duration ?? ''
+    quoteState.warrantyMachineDuration = machine.machine_warranty_months
+      ? `${_numToWords(machine.machine_warranty_months)} (${machine.machine_warranty_months})`
+      : (machine.warranty_machine_duration ?? '')
+    quoteState.warrantyPrintheadDuration = (machine as any).has_printhead
+      ? (machine.printhead_warranty ?? machine.warranty_printhead_duration ?? '')
+      : ''
+    quoteState.warrantyCompany = machine.letterhead === 'ACS / Alternative'
+      ? 'ACS / Alternative'
+      : 'ES Print Media Inc.'
+    quoteState.warrantySupplier = 'ESPMI'
+
+    // Auto-populate availability from catalog
+    quoteState.availability = (machine as any).availability ?? machine.warranty_machine_duration ?? ''
 
     // Map catalog inclusions/exclusions/addons to ToggleableItem[] arrays
     quoteState.inclusionItems = mapInclusionsToToggleable(machine.inclusions)
@@ -192,6 +214,10 @@ function clearMachineData() {
   quoteState.exclusionItems = []
   quoteState.addonItems = []
   quoteState.consumablePrices = []
+  quoteState.availability = ''
+  quoteState.warrantyCompany = ''
+  quoteState.warrantyMachineDuration = ''
+  quoteState.warrantyPrintheadDuration = ''
 }
 
 async function retryLoad() {
