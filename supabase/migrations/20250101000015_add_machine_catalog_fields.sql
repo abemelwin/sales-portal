@@ -7,4 +7,5 @@ ALTER TABLE machines
   ADD COLUMN IF NOT EXISTS has_printhead BOOLEAN NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS service_fee NUMERIC(12,2) DEFAULT 0,
   ADD COLUMN IF NOT EXISTS default_months INTEGER DEFAULT 12,
-  ADD COLUMN IF NOT EXISTS availability TEXT CHECK (char_length(availability) <= 200);
+  ADD COLUMN IF NOT EXISTS availability TEXT,
+  ADD COLUMN IF NOT EXISTS image_key TEXT;
