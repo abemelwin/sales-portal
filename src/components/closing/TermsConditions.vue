@@ -119,25 +119,62 @@ function update(field: keyof ClosingDocData, event: Event) {
         ></textarea>
       </div>
 
-      <div class="form-group">
-        <label for="tc-ae-name">Account Executive</label>
-        <input
-          id="tc-ae-name"
-          type="text"
-          :value="props.data.aeName"
-          @input="update('aeName', $event)"
-          placeholder="Account Executive name"
-        />
+    </div>
+
+    <!-- Signature block -->
+    <div class="sig-section">
+      <div class="sig-labels-row">
+        <span>Very truly yours,</span>
+        <span>Conforme:</span>
       </div>
 
-      <div class="form-group">
-        <label for="tc-client-conforme">Client Conforme</label>
+      <div class="sig-grid">
+        <div class="sig-cell">
+          <div class="sig-line"></div>
+          <input
+            class="sig-name-input"
+            type="text"
+            :value="props.data.aeName"
+            @input="update('aeName', $event)"
+            placeholder="Account Executive name"
+            aria-label="Account Executive name"
+          />
+          <div class="sig-role">Account Executive</div>
+          <div class="sig-sub">Signature over Printed Name</div>
+        </div>
+        <div class="sig-cell">
+          <div class="sig-line"></div>
+          <input
+            class="sig-name-input"
+            type="text"
+            :value="props.data.clientConforme"
+            @input="update('clientConforme', $event)"
+            placeholder="Client name"
+            aria-label="Client conforme name"
+          />
+          <div class="sig-role">Client</div>
+          <div class="sig-sub">Signature over Printed Name</div>
+        </div>
+      </div>
+
+      <div class="sig-noted">
+        <div class="sig-noted-label">Noted By:</div>
+        <div class="sig-noted-line"></div>
         <input
-          id="tc-client-conforme"
+          class="sig-noted-name-input"
           type="text"
-          :value="props.data.clientConforme"
-          @input="update('clientConforme', $event)"
-          placeholder="Client conforme"
+          :value="props.data.notedByName"
+          @input="update('notedByName', $event)"
+          placeholder="Noted by name"
+          aria-label="Noted by name"
+        />
+        <input
+          class="sig-noted-role-input"
+          type="text"
+          :value="props.data.notedByRole"
+          @input="update('notedByRole', $event)"
+          placeholder="Role / Title"
+          aria-label="Noted by role"
         />
       </div>
     </div>

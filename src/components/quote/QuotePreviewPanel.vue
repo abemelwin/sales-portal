@@ -229,18 +229,18 @@ const warrantyLines = computed(() => {
 
   if (quoteState.warrantyMachineDuration.trim()) {
     lines.push({
-      text: `${quoteState.warrantyMachineDuration} limited warranty on main unit excluding software-related concerns. Terms and conditions apply.`,
+      text: `${quoteState.warrantyMachineDuration} limited warranty on Main unit excluding software related concerns. Terms and conditions apply.`,
       bold: false,
     })
   }
 
   if (quoteState.warrantyPrintheadDuration.trim()) {
     lines.push({
-      text: `${quoteState.warrantyPrintheadDuration} limited warranty on print heads / laser tube.`,
+      text: `${quoteState.warrantyPrintheadDuration} limited warranty on Laser Tube.`,
       bold: false,
     })
     lines.push({
-      text: 'Use of parts and inks other than those supplied by the manufacturer will void the warranty.',
+      text: `Use of parts and inks other than those supplied by ${quoteState.warrantySupplier || 'ESPMI'} will void the warranty.`,
       bold: true,
     })
   }
@@ -248,13 +248,13 @@ const warrantyLines = computed(() => {
   lines.push({ text: 'No warranty for package inclusions.', bold: false })
 
   lines.push({
-    text: `The unit is exclusive to ${quoteState.warrantyCompany} and its authorized dealers. It is an essential consideration of this Agreement that all matters pertaining to the supply shall be held in the strictest confidence.`,
+    text: `After warranty, a service fee of ₱500.00 per case will be charged.`,
     bold: false,
   })
 
   lines.push({
-    text: `Any repairs or modifications made to this unit without the consent of ${quoteState.warrantySupplier || 'ESPMI'} will void the warranty.`,
-    bold: true,
+    text: `It is an essential consideration of this Agreement that all matters pertaining to the supply by ${quoteState.warrantyCompany} to the BUYER shall be held in the strictest confidence.`,
+    bold: false,
   })
 
   return lines
@@ -517,14 +517,14 @@ function formatCurrency(value: number | null | undefined): string {
 
             <div class="q-sig-grid">
               <div class="q-sig-cell">
-                <div class="q-sig-line"></div>
                 <div class="q-sig-name">{{ quoteState.aeName || '' }}</div>
+                <div class="q-sig-line"></div>
                 <div class="q-sig-role">Account Executive</div>
                 <div class="q-sig-sub">Signature over Printed Name</div>
               </div>
               <div class="q-sig-cell">
-                <div class="q-sig-line"></div>
                 <div class="q-sig-name">{{ quoteState.clientConforme || '' }}</div>
+                <div class="q-sig-line"></div>
                 <div class="q-sig-role">Client</div>
                 <div class="q-sig-sub">Signature over Printed Name</div>
               </div>
@@ -532,8 +532,8 @@ function formatCurrency(value: number | null | undefined): string {
 
             <div v-if="quoteState.notedByName || quoteState.notedByRole" class="q-noted">
               <div class="q-noted-label">Noted By:</div>
-              <div class="q-noted-line"></div>
               <div class="q-noted-name">{{ quoteState.notedByName || '' }}</div>
+              <div class="q-noted-line"></div>
               <div v-if="quoteState.notedByRole" class="q-noted-role">{{ quoteState.notedByRole }}</div>
             </div>
           </div>
@@ -735,11 +735,9 @@ function formatCurrency(value: number | null | undefined): string {
   content: '';
   display: block;
   width: 100%;
-  height: 1px;
-  background: #c0392b;
+  height: 0;
+  border-top: 1px solid #c0392b;
   margin-top: 1mm;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
 }
 
 /* ─── Pricing / trade-in table ─── */
@@ -872,6 +870,7 @@ function formatCurrency(value: number | null | undefined): string {
   grid-template-columns: 1fr 1fr;
   gap: 4mm;
   text-align: center;
+  margin-top: 8mm;
 }
 
 .q-sig-cell {
@@ -890,12 +889,10 @@ function formatCurrency(value: number | null | undefined): string {
 
 .q-sig-line {
   width: 90%;
-  height: 1px;
-  background: #333;
-  margin-top: 8mm;
+  height: 0;
+  border-top: 1px solid #333;
+  margin-top: 0;
   margin-bottom: 1mm;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
 }
 
 .q-sig-role {
@@ -915,12 +912,10 @@ function formatCurrency(value: number | null | undefined): string {
 
 .q-noted-line {
   width: 50%;
-  height: 1px;
-  background: #333;
-  margin-top: 8mm;
+  height: 0;
+  border-top: 1px solid #333;
+  margin-top: 0;
   margin-bottom: 1mm;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
 }
 
 
@@ -932,16 +927,16 @@ function formatCurrency(value: number | null | undefined): string {
 .q-noted-label {
   font-size: 8pt;
   color: #555;
-  margin-bottom: 1mm;
+  margin-bottom: 2mm;
 }
 
 .q-noted-name {
   font-size: 9pt;
   font-weight: 700;
   color: #111;
-  padding-top: 1mm;
   display: inline-block;
   min-width: 60mm;
+  margin-bottom: 1mm;
 }
 
 .q-noted-role {
