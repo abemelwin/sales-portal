@@ -196,8 +196,9 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   /**
    * Update an existing machine and its sub-records atomically (Requirements 4.2, 4.3).
-   * Takes a snapshot of existing sub-records before modification. On failure,
-   * restores the snapshot and reverts main record changes.
+  /**
+   * Update an existing machine and its sub-records.
+   * Runs all sub-table DELETE+INSERT in parallel for speed.
    */
   async function updateMachine(
     id: string,
@@ -207,13 +208,6 @@ export const useCatalogStore = defineStore('catalog', () => {
     error.value = null
 
     try {
-      // ─── Snapshot: capture current state before any changes ──────────────────
-      const snapshot = await _snapshotMachine(id)
-      if (!snapshot.success) {
-        error.value = snapshot.error!
-        return { success: false, error: error.value }
-      }
-
       // ─── Update main machine fields ─────────────────────────────────────────
       const mainFields: Record<string, unknown> = {}
       if (update.brand !== undefined) mainFields.brand = update.brand
@@ -247,7 +241,7 @@ export const useCatalogStore = defineStore('catalog', () => {
         }
       }
 
-      // ─── Replace sub-records with rollback on failure ───────────────────────
+      // ─── Replace sub-records in parallel ────────────────────────────────────
       const subTables = [
         { key: 'features' as const, table: 'machine_features' as const },
         { key: 'consumables' as const, table: 'machine_consumables' as const },
@@ -256,35 +250,32 @@ export const useCatalogStore = defineStore('catalog', () => {
         { key: 'addons' as const, table: 'machine_addons' as const },
       ]
 
-      for (const { key, table } of subTables) {
-        if (update[key] === undefined) continue
+      const subResults = await Promise.all(
+        subTables.map(async ({ key, table }) => {
+          if (update[key] === undefined) return null
 
-        // Delete existing sub-records
-        const { error: delErr } = await supabase.from(table).delete().eq('machine_id', id)
-        if (delErr) {
-          // Rollback: restore from snapshot
-          await _rollbackMachine(id, snapshot.data!, mainFields)
-          error.value = `Failed to update ${key}: ${delErr.message}`
-          return { success: false, error: error.value }
-        }
+          // Delete then insert
+          const { error: delErr } = await supabase.from(table).delete().eq('machine_id', id)
+          if (delErr) return `Failed to update ${key}: ${delErr.message}`
 
-        // Insert new sub-records
-        const records = update[key]!
-        if (records.length > 0) {
-          const { error: insErr } = await supabase
-            .from(table)
-            .insert(records.map((r: Record<string, unknown>) => ({ ...r, machine_id: id })) as never)
-
-          if (insErr) {
-            // Rollback: restore from snapshot
-            await _rollbackMachine(id, snapshot.data!, mainFields)
-            error.value = `Failed to update ${key}: ${insErr.message}`
-            return { success: false, error: error.value }
+          const records = update[key]!
+          if (records.length > 0) {
+            const { error: insErr } = await supabase
+              .from(table)
+              .insert(records.map((r: Record<string, unknown>) => ({ ...r, machine_id: id })) as never)
+            if (insErr) return `Failed to update ${key}: ${insErr.message}`
           }
-        }
+          return null
+        })
+      )
+
+      const firstError = subResults.find((r) => r !== null)
+      if (firstError) {
+        error.value = firstError
+        return { success: false, error: firstError }
       }
 
-      // Refresh the machines list
+      // Update local store cache directly instead of re-fetching everything
       await fetchMachines()
       return { success: true }
     } catch (err) {
