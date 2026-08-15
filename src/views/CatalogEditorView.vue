@@ -249,12 +249,14 @@ async function save() {
     if (result.success) {
       showSuccess('Saved successfully!')
     } else {
-      showSuccess('') // clear any old message
+      showSuccess('Save failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
     }
   } else {
     const result = await catalogStore.createMachine(input)
     if (result.success) {
       showSuccess('Machine created successfully!')
+    } else {
+      showSuccess('Create failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
     }
   }
   saving.value = false
@@ -445,8 +447,7 @@ onMounted(() => {
     <!-- Actions -->
     <div class="cat-actions">
       <button class="cat-save" :disabled="saving" @click="save">&#128190; Save Changes</button>
-      <span v-if="successMessage" class="cat-msg">{{ successMessage }}</span>
-      <span v-if="catalogStore.error" class="cat-error-inline">{{ catalogStore.error }}</span>
+      <span v-if="successMessage" :class="successMessage.startsWith('Save failed') || successMessage.startsWith('Create failed') ? 'cat-error-inline' : 'cat-msg'">{{ successMessage }}</span>
     </div>
 
     <!-- Store Error -->
