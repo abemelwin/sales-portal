@@ -296,6 +296,19 @@ onMounted(() => {
 
 <template>
   <div class="cat-page">
+
+    <!-- Toast notification -->
+    <transition name="cat-toast-fade">
+      <div
+        v-if="successMessage"
+        :class="['cat-toast', successMessage.startsWith('Save failed') || successMessage.startsWith('Create failed') ? 'cat-toast--error' : 'cat-toast--success']"
+      >
+        <span v-if="!successMessage.startsWith('Save failed') && !successMessage.startsWith('Create failed')" class="cat-toast-icon">✓</span>
+        <span v-else class="cat-toast-icon">✕</span>
+        {{ successMessage }}
+      </div>
+    </transition>
+
     <!-- Top bar -->
     <div class="cat-top">
       <h2>Machine Catalog Editor</h2>
@@ -446,8 +459,11 @@ onMounted(() => {
 
     <!-- Actions -->
     <div class="cat-actions">
-      <button class="cat-save" :disabled="saving" @click="save">&#128190; Save Changes</button>
-      <span v-if="successMessage" :class="successMessage.startsWith('Save failed') || successMessage.startsWith('Create failed') ? 'cat-error-inline' : 'cat-msg'">{{ successMessage }}</span>
+      <button class="cat-save" :disabled="saving" @click="save">
+        <span v-if="saving" class="cat-save-spinner"></span>
+        <span v-else>💾</span>
+        {{ saving ? 'Saving...' : 'Save Changes' }}
+      </button>
     </div>
 
     <!-- Store Error -->
@@ -693,6 +709,74 @@ onMounted(() => {
   font-size: 12px;
   color: #c0392b;
   font-weight: 700;
+}
+
+/* ─── Toast ─── */
+.cat-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  min-width: 260px;
+  max-width: 500px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.cat-toast--success {
+  background: #27ae60;
+  color: #fff;
+}
+
+.cat-toast--error {
+  background: #c0392b;
+  color: #fff;
+}
+
+.cat-toast-icon {
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cat-toast-fade-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.cat-toast-fade-leave-active {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.cat-toast-fade-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
+}
+.cat-toast-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+/* ─── Save button spinner ─── */
+.cat-save-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cat-spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes cat-spin {
+  to { transform: rotate(360deg); }
 }
 
 .cat-error {
