@@ -123,6 +123,76 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Send OTP code to email for login.
+   */
+  async function sendOtp(emailAddr: string): Promise<{ success: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: emailAddr,
+        options: { shouldCreateUser: false },
+      })
+
+      if (otpError) {
+        const errorMsg = otpError.message || 'Failed to send OTP. Please try again.'
+        error.value = errorMsg
+        return { success: false, error: errorMsg }
+      }
+
+      return { success: true }
+    } catch {
+      const errorMsg = 'An unexpected error occurred while sending OTP.'
+      error.value = errorMsg
+      return { success: false, error: errorMsg }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Verify OTP code and complete login.
+   */
+  async function verifyOtp(emailAddr: string, token: string): Promise<{ success: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: emailAddr,
+        token,
+        type: 'email',
+      })
+
+      if (verifyError || !data.session) {
+        const errorMsg = verifyError?.message || 'Invalid or expired OTP code.'
+        error.value = errorMsg
+        return { success: false, error: errorMsg }
+      }
+
+      session.value = data.session
+
+      const profileFound = await fetchUserProfile(data.session.user.id)
+      if (!profileFound) {
+        await supabase.auth.signOut()
+        clearState()
+        const errorMsg = 'User profile not found or account is deactivated.'
+        error.value = errorMsg
+        return { success: false, error: errorMsg }
+      }
+
+      return { success: true }
+    } catch {
+      const errorMsg = 'An unexpected error occurred while verifying OTP.'
+      error.value = errorMsg
+      return { success: false, error: errorMsg }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Logout - invalidate the current session (Requirement 1.5).
    */
   async function logout(): Promise<void> {
@@ -268,6 +338,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     login,
+    sendOtp,
+    verifyOtp,
     logout,
     refreshSession,
     changePassword,
