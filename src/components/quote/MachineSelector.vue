@@ -166,7 +166,7 @@ async function populateMachineData() {
 
     // Populate warranty durations (Req 12)
     quoteState.warrantyMachineDuration = machine.machine_warranty_months
-      ? `${_numToWords(machine.machine_warranty_months)} (${machine.machine_warranty_months})`
+      ? _numToWords(machine.machine_warranty_months)
       : (machine.warranty_machine_duration ?? '')
     quoteState.warrantyPrintheadDuration = (machine as any).has_printhead
       ? (machine.printhead_warranty ?? machine.warranty_printhead_duration ?? '')
