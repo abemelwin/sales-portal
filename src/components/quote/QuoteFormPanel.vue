@@ -229,6 +229,19 @@ function removeExclusionItem(id: string) {
 
 const isReCertified = computed(() => quoteState.unitCondition === 'Re-certified')
 
+// Auto-uncheck delivery exclusion when delivery is included in package, and vice versa
+watch(
+  () => quoteState.includeDelivery,
+  (included) => {
+    quoteState.exclusionItems = quoteState.exclusionItems.map((item) => {
+      if (/delivery charges apply/i.test(item.description)) {
+        return { ...item, enabled: !included }
+      }
+      return item
+    })
+  }
+)
+
 // --- Closing Documents validation & navigation ---
 
 const showDocsPrompt = ref(false)
