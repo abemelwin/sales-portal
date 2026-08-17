@@ -50,8 +50,6 @@ const roleLabel = computed(() => {
 /** Navigation links visible to all authenticated users */
 const navLinks = [
   { to: '/quotes/new', label: 'Quote Generator' },
-  { to: '/pricelist', label: 'Machine Pricelist' },
-  { to: '/consumables', label: 'Consumables Pricelist' },
   { to: '/product-info', label: 'Product Info' },
 ]
 

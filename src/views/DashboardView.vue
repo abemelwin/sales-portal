@@ -87,14 +87,6 @@ function handleRetry() {
           <span class="shortcut-icon" aria-hidden="true">📝</span>
           <span class="shortcut-label">Quote Builder</span>
         </RouterLink>
-        <RouterLink to="/pricelist" class="shortcut-link">
-          <span class="shortcut-icon" aria-hidden="true">🖨</span>
-          <span class="shortcut-label">Machine Pricelist</span>
-        </RouterLink>
-        <RouterLink to="/consumables" class="shortcut-link">
-          <span class="shortcut-icon" aria-hidden="true">🧴</span>
-          <span class="shortcut-label">Consumables Pricelist</span>
-        </RouterLink>
       </nav>
     </section>
 
