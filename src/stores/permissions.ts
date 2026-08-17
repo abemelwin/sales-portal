@@ -6,7 +6,6 @@ export interface RolePermissions {
   manage_product_files: boolean
   edit_machine_catalog: boolean
   upload_machine_catalog: boolean
-  upload_consumables_pricelist: boolean
   manage_users: boolean
   manage_roles_access: boolean
 }
@@ -15,7 +14,6 @@ const DEFAULT_PERMS: RolePermissions = {
   manage_product_files: false,
   edit_machine_catalog: false,
   upload_machine_catalog: false,
-  upload_consumables_pricelist: false,
   manage_users: false,
   manage_roles_access: false,
 }
@@ -33,7 +31,6 @@ export const usePermissionsStore = defineStore('permissions', () => {
         manage_product_files: true,
         edit_machine_catalog: true,
         upload_machine_catalog: true,
-        upload_consumables_pricelist: true,
         manage_users: true,
         manage_roles_access: true,
       }
@@ -54,7 +51,6 @@ export const usePermissionsStore = defineStore('permissions', () => {
         manage_product_files: (data as any).manage_product_files ?? false,
         edit_machine_catalog: (data as any).edit_machine_catalog ?? false,
         upload_machine_catalog: (data as any).upload_machine_catalog ?? false,
-        upload_consumables_pricelist: (data as any).upload_consumables_pricelist ?? false,
         manage_users: (data as any).manage_users ?? false,
         manage_roles_access: (data as any).manage_roles_access ?? false,
       }

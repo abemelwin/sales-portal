@@ -63,8 +63,6 @@ const router = createRouter({
   routes: [
     { path: '/', component: DashboardView },
     { path: '/quotes/new', component: { template: '<div />' } },
-    { path: '/pricelist', component: { template: '<div />' } },
-    { path: '/consumables', component: { template: '<div />' } },
   ],
 })
 
@@ -103,13 +101,11 @@ describe('DashboardView', () => {
     expect(cards[1].find('.data-card-label').text()).toBe('Active Users')
   })
 
-  it('provides navigation shortcuts to Quote Builder, Pricelist, and Consumables', () => {
+  it('provides navigation shortcut to Quote Builder', () => {
     const wrapper = mountDashboard()
     const links = wrapper.findAll('.shortcut-link')
-    expect(links.length).toBe(3)
+    expect(links.length).toBe(1)
     expect(links[0].attributes('href')).toBe('/quotes/new')
-    expect(links[1].attributes('href')).toBe('/pricelist')
-    expect(links[2].attributes('href')).toBe('/consumables')
   })
 
   it('shows error state with retry button when store has error', async () => {
