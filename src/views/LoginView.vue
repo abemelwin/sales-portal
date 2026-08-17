@@ -4,97 +4,31 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+
 const authStore = useAuthStore()
 
 const LAST_EMAIL_KEY = 'espmi_last_email'
-
-// ─── Step control ───────────────────────────────────────────────────────────
-type Step = 'credentials' | 'otp'
-const step = ref<Step>('credentials')
-
-// ─── Form fields ────────────────────────────────────────────────────────────
 const email = ref(localStorage.getItem(LAST_EMAIL_KEY) || '')
 const password = ref('')
-const otpCode = ref('')
 const showPassword = ref(false)
 const isSubmitting = ref(false)
-const otpResendCooldown = ref(0)
-let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
-// ─── Step 1: Submit credentials ─────────────────────────────────────────────
-async function handleCredentials() {
+async function handleSubmit() {
   if (isSubmitting.value) return
+
   isSubmitting.value = true
 
   try {
-    // First verify credentials via normal login
     const result = await authStore.login(email.value, password.value)
-    if (!result.success) return
 
-    // Credentials valid — sign out the session created by login,
-    // then send OTP for second factor
-    await authStore.logout()
-
-    const otpResult = await authStore.sendOtp(email.value)
-    if (!otpResult.success) return
-
-    // Move to OTP step
-    localStorage.setItem(LAST_EMAIL_KEY, email.value)
-    step.value = 'otp'
-    startCooldown()
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-// ─── Step 2: Verify OTP ──────────────────────────────────────────────────────
-async function handleOtp() {
-  if (isSubmitting.value) return
-  isSubmitting.value = true
-
-  try {
-    const result = await authStore.verifyOtp(email.value, otpCode.value.trim())
     if (result.success) {
+      localStorage.setItem(LAST_EMAIL_KEY, email.value)
       const redirectPath = (router.currentRoute.value.query.redirect as string) || '/'
       router.push(redirectPath)
     }
   } finally {
     isSubmitting.value = false
   }
-}
-
-// ─── Resend OTP ──────────────────────────────────────────────────────────────
-async function resendOtp() {
-  if (otpResendCooldown.value > 0) return
-  await authStore.sendOtp(email.value)
-  startCooldown()
-}
-
-function startCooldown(seconds = 60) {
-  otpResendCooldown.value = seconds
-  if (cooldownTimer) clearInterval(cooldownTimer)
-  cooldownTimer = setInterval(() => {
-    otpResendCooldown.value--
-    if (otpResendCooldown.value <= 0) {
-      clearInterval(cooldownTimer!)
-      cooldownTimer = null
-    }
-  }, 1000)
-}
-
-function goBack() {
-  step.value = 'credentials'
-  otpCode.value = ''
-  authStore.error = null
-  if (cooldownTimer) clearInterval(cooldownTimer)
-  otpResendCooldown.value = 0
-}
-
-// Only allow digits in OTP input
-function onOtpInput(e: Event) {
-  const val = (e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6)
-  otpCode.value = val
-  ;(e.target as HTMLInputElement).value = val
 }
 </script>
 
@@ -104,29 +38,44 @@ function onOtpInput(e: Event) {
       <h1 class="login-title">ES PRINT MEDIA INC.</h1>
       <p class="login-subtitle">Quotation System &mdash; Sign In</p>
 
-      <!-- Account locked -->
-      <div v-if="authStore.isLocked" class="alert alert-locked" role="alert" aria-live="assertive">
+      <!-- Account locked message -->
+      <div
+        v-if="authStore.isLocked"
+        class="alert alert-locked"
+        role="alert"
+        aria-live="assertive"
+      >
         Account locked due to too many failed login attempts. Please contact an administrator.
       </div>
 
-      <!-- Error -->
-      <div v-else-if="authStore.error" class="alert alert-error" role="alert" aria-live="polite">
+      <!-- Error message -->
+      <div
+        v-else-if="authStore.error"
+        class="alert alert-error"
+        role="alert"
+        aria-live="polite"
+      >
         {{ authStore.error }}
       </div>
 
-      <!-- ── Step 1: Email + Password ── -->
-      <form v-if="step === 'credentials'" @submit.prevent="handleCredentials" class="login-form" novalidate>
+      <form
+        @submit.prevent="handleSubmit"
+        class="login-form"
+        aria-label="Login form"
+        novalidate
+      >
         <div class="form-group">
           <label for="email" class="form-label">Email</label>
           <input
             id="email"
             v-model="email"
-            type="email"
+            type="text"
             class="form-input"
             placeholder="Enter your email"
             autocomplete="email"
             required
             :disabled="authStore.isLocked || isSubmitting"
+            aria-required="true"
           />
         </div>
 
@@ -142,6 +91,7 @@ function onOtpInput(e: Event) {
               autocomplete="current-password"
               required
               :disabled="authStore.isLocked || isSubmitting"
+              aria-required="true"
             />
             <button type="button" class="show-pass-btn" @click="showPassword = !showPassword" tabindex="-1">
               {{ showPassword ? 'Hide' : 'Show' }}
@@ -155,72 +105,10 @@ function onOtpInput(e: Event) {
           :disabled="authStore.isLocked || isSubmitting || !email || !password"
           :aria-busy="isSubmitting"
         >
-          <span v-if="isSubmitting" class="btn-spinner"></span>
-          {{ isSubmitting ? 'Verifying...' : 'Continue' }}
+          <span v-if="isSubmitting">Signing in...</span>
+          <span v-else>Sign In</span>
         </button>
       </form>
-
-      <!-- ── Step 2: OTP Code ── -->
-      <div v-else class="login-form">
-        <div class="otp-info">
-          <div class="otp-icon">✉️</div>
-          <p class="otp-desc">
-            A 6-digit verification code was sent to<br>
-            <strong>{{ email }}</strong>
-          </p>
-        </div>
-
-        <form @submit.prevent="handleOtp" novalidate>
-          <div class="form-group">
-            <label for="otp" class="form-label">Verification Code</label>
-            <input
-              id="otp"
-              :value="otpCode"
-              @input="onOtpInput"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              maxlength="6"
-              class="form-input otp-input"
-              placeholder="000000"
-              autocomplete="one-time-code"
-              required
-              :disabled="isSubmitting"
-            />
-          </div>
-
-          <button
-            type="submit"
-            class="btn-login"
-            :disabled="isSubmitting || otpCode.length !== 6"
-            :aria-busy="isSubmitting"
-          >
-            <span v-if="isSubmitting" class="btn-spinner"></span>
-            {{ isSubmitting ? 'Verifying...' : 'Verify & Sign In' }}
-          </button>
-        </form>
-
-        <div class="otp-actions">
-          <button class="otp-back-btn" type="button" @click="goBack" :disabled="isSubmitting">
-            ← Back
-          </button>
-          <button
-            class="otp-resend-btn"
-            type="button"
-            @click="resendOtp"
-            :disabled="otpResendCooldown > 0 || isSubmitting"
-          >
-            {{ otpResendCooldown > 0 ? `Resend in ${otpResendCooldown}s` : 'Resend Code' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Step indicator -->
-      <div class="step-indicator">
-        <span :class="['step-dot', step === 'credentials' ? 'step-dot--active' : 'step-dot--done']"></span>
-        <span class="step-line"></span>
-        <span :class="['step-dot', step === 'otp' ? 'step-dot--active' : '']"></span>
-      </div>
 
       <p class="security-notice">
         <span aria-hidden="true">&#128274;</span>
@@ -331,16 +219,6 @@ function onOtpInput(e: Event) {
   color: var(--color-gray-400);
 }
 
-/* OTP input — big centered digits */
-.otp-input {
-  font-size: 28px;
-  letter-spacing: 10px;
-  text-align: center;
-  font-weight: 700;
-  color: #c0392b;
-  padding: var(--space-3) var(--space-2);
-}
-
 .password-wrapper {
   position: relative;
   display: flex;
@@ -375,19 +253,15 @@ function onOtpInput(e: Event) {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-white);
-  background-color: #c0392b;
+  background-color: var(--color-primary);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: background-color var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
 .btn-login:hover:not(:disabled) {
-  background-color: #a93226;
+  background-color: var(--color-primary-hover);
 }
 
 .btn-login:disabled {
@@ -395,126 +269,8 @@ function onOtpInput(e: Event) {
   cursor: not-allowed;
 }
 
-/* Spinner */
-.btn-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* OTP info block */
-.otp-info {
-  text-align: center;
-  padding: var(--space-4) var(--space-2);
-  background: #fef9f9;
-  border: 1px solid #fde8e8;
-  border-radius: var(--radius-md);
-}
-
-.otp-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.otp-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-600);
-  margin: 0;
-  line-height: 1.6;
-}
-
-.otp-desc strong {
-  color: #c0392b;
-}
-
-/* OTP action buttons */
-.otp-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: -8px;
-}
-
-.otp-back-btn {
-  background: none;
-  border: none;
-  color: var(--color-gray-500);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  padding: 4px 0;
-}
-
-.otp-back-btn:hover:not(:disabled) {
-  color: var(--color-gray-800);
-}
-
-.otp-back-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.otp-resend-btn {
-  background: none;
-  border: none;
-  color: #c0392b;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 0;
-}
-
-.otp-resend-btn:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.otp-resend-btn:disabled {
-  color: var(--color-gray-400);
-  cursor: not-allowed;
-}
-
-/* Step indicator */
-.step-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin-top: var(--space-6);
-}
-
-.step-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #e0e0e0;
-  transition: background 0.3s;
-  flex-shrink: 0;
-}
-
-.step-dot--active {
-  background: #c0392b;
-}
-
-.step-dot--done {
-  background: #27ae60;
-}
-
-.step-line {
-  width: 40px;
-  height: 2px;
-  background: #e0e0e0;
-}
-
 .security-notice {
-  margin: var(--space-4) 0 0;
+  margin: var(--space-6) 0 0;
   font-size: var(--font-size-xs);
   color: var(--color-gray-400);
   text-align: center;
