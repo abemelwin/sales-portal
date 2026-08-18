@@ -257,12 +257,16 @@ watch(
   () => quoteState.includeDelivery,
   (included) => {
     quoteState.exclusionItems = quoteState.exclusionItems.map((item) => {
-      if (/delivery charges apply/i.test(item.description)) {
+      if (
+        /^\s*delivery/i.test(item.description) ||
+        (/freight/i.test(item.description) && /installation/i.test(item.description))
+      ) {
         return { ...item, enabled: !included }
       }
       return item
     })
-  }
+  },
+  { immediate: true }
 )
 
 // --- Closing Documents validation & navigation ---

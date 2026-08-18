@@ -156,13 +156,16 @@ export function removeCustomItem(items: ToggleableItem[], id: string): Toggleabl
 export function getDisplayedInclusions(state: QuoteBuilderState): ToggleableItem[] {
   const items = state.inclusionItems.filter(item => item.enabled)
   if (state.includeDelivery) {
-    items.push({
-      id: 'delivery-toggle',
-      description: 'Delivery and installation in cities with ESPMi branches',
-      enabled: true,
-      isCustom: false,
-      sortOrder: 999,
-    })
+    const hasDelivery = items.some(item => /^\s*delivery/i.test(item.description))
+    if (!hasDelivery) {
+      items.unshift({
+        id: 'delivery-toggle',
+        description: 'Delivery and Installation',
+        enabled: true,
+        isCustom: false,
+        sortOrder: -1,
+      })
+    }
   }
   if (state.includeComputerSet && state.computerSetSpec) {
     items.push({
@@ -182,9 +185,15 @@ export function getDisplayedInclusions(state: QuoteBuilderState): ToggleableItem
  * Requirements: 7.4, 7.5
  */
 export function getDisplayedExclusions(state: QuoteBuilderState): ToggleableItem[] {
-  const items = state.exclusionItems.filter(item => item.enabled)
-  // Delivery stays in exclusions by default (when includeDelivery is false)
-  // The delivery item is already part of exclusionItems from catalog,
-  // so we don't need to add it explicitly — it's toggled via the catalog-sourced item
+  let items = state.exclusionItems.filter(item => item.enabled)
+  if (state.includeDelivery) {
+    items = items.filter(
+      item =>
+        !(
+          /^\s*delivery/i.test(item.description) ||
+          (/freight/i.test(item.description) && /installation/i.test(item.description))
+        )
+    )
+  }
   return items
 }
