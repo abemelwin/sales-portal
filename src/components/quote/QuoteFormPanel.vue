@@ -281,7 +281,7 @@ function openClosingDocuments() {
   const result = validateQuote(quoteState)
   if (result.isValid) {
     showValidationBox.value = false
-    showDocsPrompt.value = true
+    emit('open-docs')
   } else {
     quoteState.validationErrors = result.errors
     showValidationBox.value = true
@@ -290,13 +290,7 @@ function openClosingDocuments() {
 
 function handleDocsConfirm(_data: any) {
   showDocsPrompt.value = false
-  const quoteId = route.params.id as string | undefined
-  if (quoteId) {
-    router.push({ name: 'quote-closing', params: { id: quoteId } })
-  } else {
-    // Quote not yet saved — emit to parent to save first, then navigate
-    emit('open-docs')
-  }
+  emit('open-docs')
 }
 
 const tradeInDescriptions = computed(() =>
