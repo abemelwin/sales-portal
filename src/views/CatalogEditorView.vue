@@ -417,7 +417,7 @@ onMounted(() => {
               <th>Name</th>
               <th>Unit of Measure</th>
               <th>Unit Price</th>
-              <th></th>
+              <th><span class="sr-only">Remove</span></th>
             </tr>
           </thead>
           <tbody>
@@ -441,7 +441,7 @@ onMounted(() => {
               <th>Name</th>
               <th>Unit of Measure</th>
               <th>Unit Price</th>
-              <th></th>
+              <th><span class="sr-only">Remove</span></th>
             </tr>
           </thead>
           <tbody>
@@ -669,6 +669,18 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .cat-actions {
