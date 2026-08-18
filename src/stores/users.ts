@@ -26,7 +26,7 @@ export const useUserStore = defineStore('users', () => {
 
     try {
       const { data, error: fetchError } = await supabase
-        .from('user_profiles')
+        .from('user_profiles_with_email' as any)
         .select('*')
         .order('display_name')
 

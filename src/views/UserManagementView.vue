@@ -170,8 +170,9 @@ onMounted(() => {
         <tbody>
           <tr v-for="user in userStore.users" :key="user.id">
             <td class="col-user">
-              {{ user.display_name }}
-              <span v-if="user.display_name === currentUsername" class="you-tag">(you)</span>
+              {{ user.email || user.display_name }}
+              <span v-if="user.user_id === authStore.user?.user_id" class="you-tag">(you)</span>
+              <div v-if="user.email && user.display_name !== user.email" class="user-name-sub">{{ user.display_name }}</div>
             </td>
             <td class="col-role">
               <select
@@ -314,6 +315,19 @@ onMounted(() => {
 
 .col-user {
   width: 35%;
+}
+
+.user-name-sub {
+  font-size: 11px;
+  color: #999;
+  margin-top: 1px;
+}
+
+.you-tag {
+  font-size: 10px;
+  color: #c0392b;
+  font-weight: 600;
+  margin-left: 4px;
 }
 
 .col-role {

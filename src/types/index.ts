@@ -16,6 +16,7 @@ export interface User {
   id: string
   user_id: string
   display_name: string
+  email?: string
   role: Role
   is_active: boolean
   created_at: string
