@@ -75,26 +75,25 @@ onMounted(async () => {
 
 <template>
   <div v-if="isOpen" class="closing-docs-view">
-    <!-- Tab navigation bar matching Image 2 -->
-    <div class="tc-bar no-print">
-      <div class="doc-tabs">
+    <div class="closing-overlay__bar no-print">
+      <div class="closing-overlay__tabs">
         <button
           v-for="tab in CLOSING_DOC_TABS"
           :key="tab.id"
-          :class="['doc-tab', { active: activeTab === tab.id }]"
+          :class="['co-tab', { 'co-tab--active': activeTab === tab.id }]"
           @click="activeTab = tab.id"
         >
           {{ tab.label }}
         </button>
       </div>
-      <div class="doc-actions">
-        <button class="doc-save doc-edit" @click="showDocsPrompt = true">
+      <div class="closing-overlay__actions">
+        <button class="co-btn co-btn--edit" @click="showDocsPrompt = true">
           ✏️ Edit Details
         </button>
-        <button class="doc-save" @click="handleExport" :disabled="loading || isPrinting">
+        <button class="co-btn co-btn--export" @click="handleExport" :disabled="loading || isPrinting">
           💾 {{ isPrinting ? 'Exporting...' : 'Save as PDF' }}
         </button>
-        <button class="doc-save doc-close" @click="handleClose">
+        <button class="co-btn co-btn--close" @click="handleClose">
           Close
         </button>
       </div>
@@ -103,7 +102,7 @@ onMounted(async () => {
     <!-- Print error notification -->
     <div v-if="printError" class="print-error-banner no-print" role="alert">
       <p>{{ printError }}</p>
-      <button class="doc-save" @click="dismissPrintError">Dismiss</button>
+      <button class="co-btn co-btn--close" @click="dismissPrintError">Dismiss</button>
     </div>
 
     <!-- Loading state -->
@@ -114,18 +113,16 @@ onMounted(async () => {
     <!-- Error state -->
     <div v-else-if="error" class="error-state">
       <p class="error-message">{{ error }}</p>
-      <button class="doc-save" @click="handleClose">Go Back</button>
+      <button class="co-btn co-btn--close" @click="handleClose">Go Back</button>
     </div>
 
     <!-- Main content -->
     <div v-else class="closing-docs-content">
-      <div class="tab-panel">
-        <ClosingDocPaper
-          :docType="activeTab"
-          :quoteState="currentQuote"
-          :promptDetails="promptDetails"
-        />
-      </div>
+      <ClosingDocPaper
+        :docType="activeTab"
+        :quoteState="currentQuote"
+        :promptDetails="promptDetails"
+      />
     </div>
 
     <!-- Details Prompt Modal -->
@@ -149,80 +146,106 @@ onMounted(async () => {
 .closing-docs-view {
   min-height: calc(100vh - var(--nav-height, 40px));
   background: #cccccc;
-  padding: 16px 20px;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
-.tc-bar {
-  max-width: 210mm;
-  width: 100%;
-  margin: 0 auto 12px;
+.closing-overlay__bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #802820;
+  border-bottom: 2px solid #561812;
+  color: #fff;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-.doc-tabs {
+.closing-overlay__tabs {
   display: flex;
-  flex-wrap: wrap;
   gap: 6px;
+  flex-wrap: wrap;
   flex: 1;
 }
 
-.doc-tab {
-  padding: 7px 11px;
+.co-tab {
+  padding: 7px 13px;
   border: 1px solid #c0392b;
-  background: #c0392b;
-  color: #fff;
   border-radius: 5px;
-  font-family: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  background: #c0392b;
+  color: #fff;
+  transition: all 0.2s;
 }
 
-.doc-tab:hover,
-.doc-tab.active {
+.co-tab:hover {
   background: #a93226;
-  border-color: #a93226;
 }
 
-.doc-actions {
+.co-tab--active {
+  background: #7b241c !important;
+  border-color: #e74c3c;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.closing-overlay__actions {
   display: flex;
   gap: 8px;
-  flex-shrink: 0;
+  margin-left: auto;
+  align-items: center;
 }
 
-.doc-save {
-  padding: 7px 14px;
-  background: #c0392b;
-  color: #fff;
-  border: 1px solid #c0392b;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 11.5px;
+.co-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  transition: background 0.2s;
 }
 
-.doc-save:hover {
+.co-btn--edit {
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #e74c3c;
+}
+
+.co-btn--edit:hover {
   background: #a93226;
 }
 
-.doc-close {
-  background: #555;
-  border-color: #555;
+.co-btn--export {
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #e74c3c;
 }
 
-.doc-close:hover {
-  background: #333;
+.co-btn--export:hover {
+  background: #a93226;
+}
+
+.co-btn--close {
+  background: #444;
+  color: #fff;
+}
+
+.co-btn--close:hover {
+  background: #222;
+}
+
+.closing-docs-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
 }
 
 /* Loading and Error states */
