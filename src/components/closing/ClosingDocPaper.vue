@@ -734,18 +734,41 @@ table.pdc-tbl td.amt {
 }
 
 @media print {
-  .closing-doc-paper {
-    width: 100%;
-    min-height: 0;
-    box-shadow: none;
-    padding: 0;
+  @page {
+    size: A4 portrait;
     margin: 0;
+  }
+
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .closing-doc-paper {
+    width: 210mm !important;
+    height: 297mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    background: #ffffff !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .tc-lh img,
+  .tc-ft img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   table.doc-form td.dsec,
   table.pdc-tbl th {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 </style>

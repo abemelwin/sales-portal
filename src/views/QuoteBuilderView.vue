@@ -675,4 +675,31 @@ watch(
   overflow-y: auto;
   padding: 20px;
 }
+
+@media print {
+  .closing-overlay {
+    position: static !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .closing-overlay__bar {
+    display: none !important;
+  }
+
+  .closing-overlay__body {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+}
 </style>

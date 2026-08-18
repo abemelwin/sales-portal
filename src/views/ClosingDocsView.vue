@@ -466,15 +466,22 @@ onMounted(async () => {
   }
 }
 
-/* Print — show form values as text */
 @media print {
-  .closing-doc-form .form-group input,
-  .closing-doc-form .form-group textarea {
-    border: none;
-    padding: var(--space-1) 0;
-    background: transparent;
-    box-shadow: none;
-    border-bottom: 1px solid var(--color-gray-300);
+  .closing-docs-view {
+    min-height: 0 !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .closing-overlay__bar {
+    display: none !important;
+  }
+
+  .closing-docs-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
   }
 }
 </style>
