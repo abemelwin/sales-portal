@@ -89,9 +89,6 @@ const loadingQuote = ref(false)
 
 /** Success message to display temporarily */
 
-/** Whether this is an existing quote being edited */
-const isEditing = computed(() => quoteId.value !== null)
-
 // ─── Quote Loading (Requirement 5.17) ───────────────────────────────────────────
 
 /**
@@ -193,16 +190,6 @@ watch(
 
 <template>
   <div class="quote-builder-view">
-    <!-- Save/Load Status Bar -->
-    <div class="quote-builder-view__toolbar">
-      <div class="quote-builder-view__toolbar-left">
-        <h2 class="quote-builder-view__title">
-          {{ isEditing ? 'Edit Quote' : 'New Quote' }}
-        </h2>
-      </div>
-    </div>
-
-
     <!-- Loading state when loading an existing quote -->
     <div v-if="loadingQuote" class="quote-builder-view__loading">
       <p>Loading quote...</p>
