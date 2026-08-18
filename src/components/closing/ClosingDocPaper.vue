@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import letterheadEspmi from '@/assets/letterhead-espmi.svg'
-import letterheadAcs from '@/assets/letterhead-acs.svg'
+import letterheadEspmiHeader from '@/assets/letterhead-espmi-1.jpg'
+import letterheadEspmiFooter from '@/assets/letterhead-espmi-2.jpg'
+import letterheadAcsHeader from '@/assets/letterhead-acs-1.jpg'
+import letterheadAcsFooter from '@/assets/letterhead-acs-2.jpg'
 
 const props = defineProps<{
   docType: string
@@ -86,9 +88,13 @@ function formatDate(val: string | null | undefined): string {
   return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
 }
 
-// Letterhead image source
-const letterheadSrc = computed(() => {
-  return props.quoteState?.letterhead === 'ACS / Alternative' ? letterheadAcs : letterheadEspmi
+// Letterhead image sources
+const letterheadHeaderSrc = computed(() => {
+  return props.quoteState?.letterhead === 'ACS / Alternative' ? letterheadAcsHeader : letterheadEspmiHeader
+})
+
+const letterheadFooterSrc = computed(() => {
+  return props.quoteState?.letterhead === 'ACS / Alternative' ? letterheadAcsFooter : letterheadEspmiFooter
 })
 
 // Company name substitution helper
@@ -221,9 +227,9 @@ const pdcRows = computed(() => {
 
 <template>
   <div id="tc-paper" class="closing-doc-paper">
-    <!-- Letterhead -->
+    <!-- Header Letterhead -->
     <div class="tc-lh">
-      <img :src="letterheadSrc" alt="Letterhead" />
+      <img :src="letterheadHeaderSrc" alt="Header Letterhead" />
     </div>
 
     <!-- 1. TERMS AND CONDITIONS -->
@@ -517,6 +523,11 @@ const pdcRows = computed(() => {
         </div>
       </template>
     </div>
+
+    <!-- Footer Letterhead -->
+    <div class="tc-ft">
+      <img :src="letterheadFooterSrc" alt="Footer Letterhead" />
+    </div>
   </div>
 </template>
 
@@ -526,19 +537,38 @@ const pdcRows = computed(() => {
   min-height: 297mm;
   background: #fff;
   margin: 0 auto;
-  padding: 0 0 14mm;
+  padding: 0;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
   color: #000;
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tc-lh {
+  width: 100%;
+  margin-bottom: 4mm;
 }
 
 .tc-lh img {
   width: 100%;
+  height: auto;
   display: block;
-  border-bottom: 3px solid #c0392b;
-  margin-bottom: 5mm;
+}
+
+.tc-ft {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 6mm;
+}
+
+.tc-ft img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .tc-body {

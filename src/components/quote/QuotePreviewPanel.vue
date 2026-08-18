@@ -4,8 +4,10 @@ import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { formatQuoteDate, getDisplayedInclusions, getDisplayedExclusions } from '@/utils/quote-calculations'
 import { supabase } from '@/services/supabase'
 import { useProductInfoStore } from '@/stores/productInfo'
-import letterheadEspmi from '@/assets/letterhead-espmi-1.jpg'
-import letterheadAcs from '@/assets/letterhead-acs-1.jpg'
+import letterheadEspmiHeader from '@/assets/letterhead-espmi-1.jpg'
+import letterheadEspmiFooter from '@/assets/letterhead-espmi-2.jpg'
+import letterheadAcsHeader from '@/assets/letterhead-acs-1.jpg'
+import letterheadAcsFooter from '@/assets/letterhead-acs-2.jpg'
 
 const quoteState = inject(QUOTE_BUILDER_KEY)!
 const productInfoStore = useProductInfoStore()
@@ -52,7 +54,11 @@ onUnmounted(() => {
 // --- Computed display values ---
 
 const letterheadImage = computed(() => {
-  return quoteState.letterhead === 'ACS / Alternative' ? letterheadAcs : letterheadEspmi
+  return quoteState.letterhead === 'ACS / Alternative' ? letterheadAcsHeader : letterheadEspmiHeader
+})
+
+const letterheadFooterImage = computed(() => {
+  return quoteState.letterhead === 'ACS / Alternative' ? letterheadAcsFooter : letterheadEspmiFooter
 })
 
 const machineTitle = computed(() => {
@@ -536,7 +542,7 @@ function formatCurrency(value: number | null | undefined): string {
 
         <!-- Footer -->
         <footer class="q-footer">
-          <p>&copy; {{ quoteState.letterhead }}</p>
+          <img :src="letterheadFooterImage" :alt="quoteState.letterhead + ' footer'" class="q-ft-img" />
         </footer>
 
       </div><!-- end #quote-paper -->
@@ -1033,5 +1039,17 @@ function formatCurrency(value: number | null | undefined): string {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+}
+
+.q-footer {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 4mm;
+}
+
+.q-ft-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 </style>
