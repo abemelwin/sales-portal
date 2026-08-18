@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import type { Role, User } from '@/types'
@@ -24,34 +24,38 @@ const ROLES: { value: Role; label: string }[] = [
 
 
 // --- Add User Form ---
-const newUsername = ref('')
+const newEmail = ref('')
 const newPassword = ref('')
 const newRole = ref<Role>('user')
 const addError = ref('')
 
 async function addUser() {
   addError.value = ''
-  const u = newUsername.value.trim()
+  const e = newEmail.value.trim()
   const p = newPassword.value
 
-  if (!u || !p) {
-    addError.value = 'Enter a username and password.'
+  if (!e || !p) {
+    addError.value = 'Enter an email and password.'
     return
   }
-  if (p.length < 4) {
-    addError.value = 'Password must be at least 4 characters.'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+    addError.value = 'Enter a valid email address.'
+    return
+  }
+  if (p.length < 6) {
+    addError.value = 'Password must be at least 6 characters.'
     return
   }
 
   const result = await userStore.createUser({
-    username: u,
-    display_name: u,
+    username: e,
+    display_name: e,
     password: p,
     role: newRole.value,
   })
 
   if (result.success) {
-    newUsername.value = ''
+    newEmail.value = ''
     newPassword.value = ''
     newRole.value = 'user'
   } else {
@@ -134,15 +138,16 @@ onMounted(() => {
       <!-- Add User Row -->
       <div class="um-add">
         <input
-          v-model="newUsername"
+          v-model="newEmail"
           class="um-input"
-          placeholder="Username"
+          type="email"
+          placeholder="Email address"
         />
         <input
           v-model="newPassword"
-          type="text"
+          type="password"
           class="um-input"
-          placeholder="Password"
+          placeholder="Password (min 6 chars)"
         />
         <select v-model="newRole" class="um-select">
           <option v-for="r in ROLES" :key="r.value" :value="r.value">

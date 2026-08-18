@@ -47,7 +47,8 @@ watch(
       newType === 'Trade-In Cash' ||
       newType === 'Trade-In Terms'
     ) {
-      if (quoteState.tradeIns.length === 0) {
+      // Always seed exactly 3 rows (matching original HTML)
+      while (quoteState.tradeIns.length < 3) {
         quoteState.tradeIns.push({ description: '', value: 0 })
       }
     }
@@ -115,24 +116,7 @@ function removeTermOption(index: number) {
   quoteState.termOptions.splice(index, 1)
 }
 
-// --- Trade-In management ---
-
-const canAddTradeIn = computed(() => quoteState.tradeIns.length < 3)
-
-function addTradeIn() {
-  if (!canAddTradeIn.value) return
-  quoteState.tradeIns.push({ description: '', value: 0 })
-}
-
-function removeTradeIn(index: number) {
-  quoteState.tradeIns.splice(index, 1)
-}
-
-function clampTradeInValue(index: number) {
-  const ti = quoteState.tradeIns[index]
-  if (!ti) return
-  if (ti.value < 0) ti.value = 0
-}
+// Trade-in always uses exactly 3 fixed rows — seeded on deal type change
 
 /**
  * Format a number as currency for display.
@@ -160,6 +144,22 @@ function handleMoneyBlur(event: Event, field: 'contractPrice' | 'downPayment') {
   const value = isNaN(num) ? 0 : num
   ;(quoteState as any)[field] = value
   input.value = formatMoney(value)
+}
+
+function handleTradeInInput(event: Event, index: number) {
+  const input = event.target as HTMLInputElement
+  const cursorPos = input.selectionStart ?? 0
+  const oldLen = input.value.length
+  const cleaned = input.value.replace(/[^0-9.]/g, '')
+  const num = parseFloat(cleaned)
+  const value = isNaN(num) ? 0 : num
+  if (quoteState.tradeIns[index]) {
+    quoteState.tradeIns[index].value = value
+  }
+  const formatted = cleaned ? Number(cleaned).toLocaleString('en-PH', { maximumFractionDigits: 2 }) : ''
+  input.value = formatted
+  const diff = formatted.length - oldLen
+  input.setSelectionRange(cursorPos + diff, cursorPos + diff)
 }
 
 function handleMoneyInput(event: Event, field: 'contractPrice' | 'downPayment') {
@@ -400,55 +400,87 @@ function dismissValidationBox() {
 
       <!-- Trade-In fields -->
       <div v-if="showTradeIns">
-        <div
-          v-for="(tradeIn, index) in quoteState.tradeIns"
-          :key="index"
-          class="trade-in-row"
-        >
-          <div class="fp-row">
-            <div class="fp-sec" style="flex: 0 0 44%">
-              <label :for="`ti-value-${index}`" class="fp-lbl">Trade-In Value {{ index + 1 }} (PHP)</label>
-              <input
-                :id="`ti-value-${index}`"
-                class="fp-in"
-                type="number"
-                v-model.number="tradeIn.value"
-                placeholder="0"
-                min="0"
-                step="0.01"
-                @blur="clampTradeInValue(index)"
-              />
-            </div>
-            <div class="fp-sec">
-              <label :for="`ti-desc-${index}`" class="fp-lbl">Description {{ index + 1 }}</label>
-              <input
-                :id="`ti-desc-${index}`"
-                class="fp-in"
-                type="text"
-                v-model="tradeIn.description"
-                placeholder="Brand, model, heads…"
-              />
-            </div>
+        <!-- Row 1 -->
+        <div class="fp-row">
+          <div class="fp-sec" style="flex: 0 0 44%">
+            <label for="ti-value-1" class="fp-lbl">Trade-In Value 1 (PHP)</label>
+            <input
+              id="ti-value-1"
+              class="fp-in"
+              type="text"
+              inputmode="decimal"
+              :value="formatMoney(quoteState.tradeIns[0]?.value || 0)"
+              @input="handleTradeInInput($event, 0)"
+              placeholder="0"
+            />
           </div>
-          <button
-            v-if="quoteState.tradeIns.length > 1"
-            type="button"
-            class="fp-remove-btn"
-            @click="removeTradeIn(index)"
-          >
-            Remove Trade-In {{ index + 1 }}
-          </button>
+          <div class="fp-sec">
+            <label for="ti-desc-1" class="fp-lbl">Description 1</label>
+            <input
+              id="ti-desc-1"
+              class="fp-in"
+              type="text"
+              v-model="quoteState.tradeIns[0]!.description"
+              placeholder="Brand, model, heads…"
+            />
+          </div>
         </div>
-        <button
-          v-if="canAddTradeIn"
-          type="button"
-          class="fp-add-btn"
-          @click="addTradeIn"
-        >
-          + Add Trade-In
-        </button>
+
+        <!-- Row 2 -->
+        <div class="fp-row">
+          <div class="fp-sec" style="flex: 0 0 44%">
+            <label for="ti-value-2" class="fp-lbl">Trade-In Value 2 (PHP)</label>
+            <input
+              id="ti-value-2"
+              class="fp-in"
+              type="text"
+              inputmode="decimal"
+              :value="formatMoney(quoteState.tradeIns[1]?.value || 0)"
+              @input="handleTradeInInput($event, 1)"
+              placeholder="0"
+            />
+          </div>
+          <div class="fp-sec">
+            <label for="ti-desc-2" class="fp-lbl">Description 2</label>
+            <input
+              id="ti-desc-2"
+              class="fp-in"
+              type="text"
+              v-model="quoteState.tradeIns[1]!.description"
+              placeholder="Optional"
+            />
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="fp-row">
+          <div class="fp-sec" style="flex: 0 0 44%">
+            <label for="ti-value-3" class="fp-lbl">Trade-In Value 3 (PHP)</label>
+            <input
+              id="ti-value-3"
+              class="fp-in"
+              type="text"
+              inputmode="decimal"
+              :value="formatMoney(quoteState.tradeIns[2]?.value || 0)"
+              @input="handleTradeInInput($event, 2)"
+              placeholder="0"
+            />
+          </div>
+          <div class="fp-sec">
+            <label for="ti-desc-3" class="fp-lbl">Description 3</label>
+            <input
+              id="ti-desc-3"
+              class="fp-in"
+              type="text"
+              v-model="quoteState.tradeIns[2]!.description"
+              placeholder="Optional"
+            />
+          </div>
+        </div>
+
+        <!-- Total Trade-In summary -->
         <div v-if="tradeInSum > 0" class="fp-computed">
-          Total Trade-In: {{ formatCurrency(tradeInSum) }}
+          Total Trade-In: PHP {{ formatCurrency(tradeInSum) }}
         </div>
       </div>
 
