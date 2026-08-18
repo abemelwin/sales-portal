@@ -14,7 +14,7 @@ const machineSelectorOptions = computed(() =>
     id: m.id,
     brand: m.brand,
     model: m.model,
-    label: `${m.brand} \u2014 ${m.model}${m.sub_model ? ' ' + m.sub_model : ''}`,
+    label: `${m.brand} \u2014 ${m.model}`,
   }))
 )
 
@@ -121,8 +121,8 @@ function generateKey(brand: string, model: string): string {
 }
 
 function populateForm(machine: Machine) {
-  form.key = generateKey(machine.brand, machine.model)
-  form.quoteTitle = `${machine.brand} ${machine.model}${machine.sub_model ? ' ' + machine.sub_model : ''}`
+  form.key = machine.id ? machine.id.substring(0, 8).toUpperCase() : generateKey(machine.brand, machine.model)
+  form.quoteTitle = machine.model
   form.brand = machine.brand
   form.category = machine.unit_condition
   form.srp = machine.srp ?? null
