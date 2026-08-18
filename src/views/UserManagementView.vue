@@ -94,6 +94,119 @@ async function resetPassword(user: User) {
   alert(`Password reset for ${user.display_name}.`)
 }
 
+const KNOWN_USER_NAMES: Record<string, string> = {
+  'espmi': 'Super Admin',
+  'lea@esprintmedia.com': 'Leonor Tenorio',
+  'emma@esprintmedia.com': 'Emmalyn Manallo',
+  'espmi.ariannesalandanan@gmail.com': 'Arianne Salandanan',
+  'liezel@esprintmedia.com': 'Liezel Bermudo',
+  'norelyn@esprintmedia.com': 'Ma. Norelyn Coquilla',
+  'apsi.ellyn@gmail.com': 'Ma. Ellyn Abello',
+  'angel@esprintmedia.com': 'Angel Cimafranca',
+  'espii.naryjane@gmail.com': 'Nary Jane Canalita',
+  'jane@esprintmedia.com': 'Jane Erniefer Ceniza',
+  'angelica@esprintmedia.com': 'Angelica Moreno',
+  'jayson@esprintmedia.com': 'Jayson Mabanag',
+  'ness@esprintmedia.com': 'Ness Deomano',
+  'rona@esprintmedia.com': 'Ronalyn Ubalde',
+  'kim@esprintmedia.com': 'Kimberly Lascano',
+  'arlene@esprintmedia.com': 'Arlene Samillano',
+  'ronnalyn@esprintmedia.com': 'Ronnalyn Laloy',
+  'esprint.marvin@gmail.com': 'Marvin Camaria',
+  'esprint.marielliboon@gmail.com': 'Mariel Libo-On',
+  'esprint.liezel1916@gmail.com': 'Liezel Placido',
+  'apsi.rovenie@gmail.com': 'Ronviel Cabriel',
+  'charlene@esprintmedia.com': 'Charlene Maglasang',
+  'christina@esprintmedia.com': 'Christina Dioquino',
+  'apsi.rizamaepepito@gmail.com': 'Riza Mae Pepito',
+  'sales05@esprintmedia.com': 'Kyzia Cheska Jaima',
+  'apsi.louiesanichole@gmail.com': 'Louiesa Nichole Santos',
+  'apsi.cristene@gmail.com': 'Cristene Marco',
+  'apsi.leolopez@gmail.com': 'Jenpol A. Lopez',
+  'apsi.jennymaebantiwel@gmail.com': 'Jenny Mae D. Bantiwel',
+  'jomarc@esprintmedia.com': 'Jomarc Encordia',
+  'apsi.kerengracenim@gmail.com': 'Keren Grace Nim',
+  'quennie@esprintmedia.com': 'Quennie Bahian',
+  'marjorie@esprintmedia.com': 'Marjorie Madula',
+  'espii.richardtabacon@gmail.com': 'Richard Tabacon',
+  'espii.reahglenne@gmail.com': 'Reah Glenne Manselao',
+  'espii.angelsastre@gmail.com': 'Angel Joy Sastre',
+  'espii.gretchen@gmail.com': 'Gretchen Tamariong',
+  'espii.rhia@gmail.com': 'Rhia C. Bardoquillo',
+  'espii.miahmae@gmail.com': 'Miah Mae Villaroza',
+  'espii.nieljohn@gmail.com': 'Neil John Pagaran',
+  'espii.joanalayaay@gmail.com': 'Joan Alaya-Ay',
+  'espii.sunshine@gmail.com': 'Sunshine De Lantar',
+  'espii.jealssarita@gmail.com': 'Jeals Absin Sarita',
+  'eldigrace@esprintmedia.com': 'Eldigrace Bracoma',
+  'esprint.renvincent@gmail.com': 'Ren Vincent Canoy',
+  'espii.elvie@gmail.com': 'Elvie Arawiran',
+  'espii.lourenzedave@gmail.com': 'Lourenze Dave Payot',
+  'espii.maribelnantin@gmail.com': 'Maribel Nantin',
+  'espii.rizamei@gmail.com': 'Rizamei Telafer',
+  'esprint.markjed@gmail.com': 'Mark Jed Pare',
+  'espii.staniel@gmail.com': 'Staniel Capilitan',
+  'jocelyn@esprintmedia.com': 'Jocelyn Ribo',
+  'grace@esprintmedia.com': 'Mary Grace San Jose',
+  'nikka@esprintmedia.com': 'Nikka Onia',
+  'rosanna@esprintmedia.com': 'Rosanna Galope',
+  'escgi.allen@gmail.com': 'Allen Cordova',
+  'espmi.edzlaririt@gmail.com': 'Edz Frankie Laririt',
+  'espmi.sethgabriel@gmail.com': 'Seth Gabriel Ramos',
+  'espmi.izelvean@gmail.com': 'Izel Vean Limbo',
+  'rubina@esprintmedia.com': 'Rubina Morano',
+  'espmi.marygrace@gmail.com': 'Mary Mirana',
+  'christian@esprintmedia.com': 'Christian Aguas',
+  'diannef@esprintmedia.com': 'Dianne Francisco',
+  'maryjoy@esprintmedia.com': 'Mary Joy Justiniani',
+  'espmi.joie@gmail.com': 'Joie Arpoceple',
+  'escgi.cyrilsalvador@gmail.com': 'Cyril Salvador',
+  'jodie@esprintmedia.com': 'Jodie Dalisay',
+  'espmi.christine@gmail.com': 'Christine Galleon',
+  'espmi.allysa@gmail.com': 'Allyssa Nicole Fajardo',
+  'espii.sharmaine@gmail.com': 'Sharmaine Teves',
+  'espii.maricrisloyola@gmail.com': 'Maricris Loyola',
+  'espii.roseley@gmail.com': 'Roseley Gayacao',
+  'esprint.lerma@gmail.com': 'Lerma Dalugdog',
+  'espii.kiarakris@gmail.com': 'Kiara Kris Villas',
+  'apsi.riccavanessa@gmail.com': 'Ricca Vanessa Santillan',
+  'esprint.aprilann@gmail.com': 'April Ann Palacios',
+  'apsi.christelanne@gmail.com': 'Christel Anne Gardose',
+  'esprint.joralyn@gmail.com': 'Joralyn Canlog',
+  'aschialexislobos2@gmail.com': 'Aschi Lobos',
+  'apsi.alonica@gmail.com': 'Alonica Dimpal',
+  'apsi.jane@gmail.com': 'Jane Mascariñas',
+  'apsi.stephainejene@gmail.com': 'Stephaine Jene Tabao',
+  'albert@esprintmedia.com': 'Albert Malalad',
+  'armando@esprintmedia.com': 'Armando Dimailig',
+  'arnold@esprintmedia.com': 'Arnold Rioja',
+  'arnulfo@esprintmedia.com': 'Arnulfo Alfiscar',
+  'vin@esprintmedia.com': 'Vin Technical Head',
+  'ron@esprintmedia.com': 'Ron Technical Head',
+  'janmark@esprintmedia.com': 'Janmark Technical Head',
+  'jonjon@esprintmedia.com': 'Jonjon Technical Head',
+  'francis@esprintmedia.com': 'Francis Product Development',
+  'kimpee@esprintmedia.com': 'Kimpee Product Development',
+  'mark@esprintmedia.com': 'Mark Product Development',
+  'rj@esprintmedia.com': 'RJ Product Development',
+  'dan@esprintmedia.com': 'Dan Service Manager'
+}
+function getUserDisplayName(u: User): string {
+  const email = (u.email || u.display_name || '').toLowerCase().trim()
+  if (u.display_name && u.display_name !== u.email) {
+    return u.display_name
+  }
+  if (KNOWN_USER_NAMES[email]) {
+    return KNOWN_USER_NAMES[email]
+  }
+  const prefix = email.split('@')[0] || ''
+  if (prefix.includes('.')) {
+    const parts = prefix.split('.')
+    return parts.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+  }
+  return u.display_name || ''
+}
+
 // --- Delete User ---
 async function deleteUser(user: User) {
   if (user.user_id === authStore.user?.user_id) {
@@ -113,9 +226,6 @@ async function deleteUser(user: User) {
   await userStore.deactivateUser(user.user_id)
 }
 
-// --- Computed ---
-// const currentUsername = computed(() => authStore.user?.display_name || '')
-
 // --- Lifecycle ---
 onMounted(() => {
   userStore.fetchUsers()
@@ -124,17 +234,14 @@ onMounted(() => {
 
 <template>
   <div class="um-view">
-    <div class="um-top">
-      <h2>User Management</h2>
-    </div>
-    <div class="um-note">
-      Accounts are stored in <b>this browser on this computer</b> (not shared across computers).
-      Roles: <b>Super Admin</b> (full access + user management),
-      <b>Product Manager</b> (can upload / attach links / delete product files),
-      <b>User</b> (view &amp; download only).
-    </div>
-
     <div class="um-content">
+      <div class="um-top">
+        <h2>User Management</h2>
+        <div class="um-note">
+          Manage system users and their assigned roles. Select a role from the drop-down menu next to any user to update their access permissions instantly.
+        </div>
+      </div>
+
       <!-- Add User Row -->
       <div class="um-add">
         <input
@@ -175,9 +282,11 @@ onMounted(() => {
         <tbody>
           <tr v-for="user in userStore.users" :key="user.id">
             <td class="col-user">
-              {{ user.email || user.display_name }}
+              <div>{{ user.email || user.display_name }}</div>
               <span v-if="user.user_id === authStore.user?.user_id" class="you-tag">(you)</span>
-              <div v-if="user.email && user.display_name !== user.email" class="user-name-sub">{{ user.display_name }}</div>
+              <div v-if="getUserDisplayName(user) && getUserDisplayName(user) !== user.email" class="user-name-sub">
+                {{ getUserDisplayName(user) }}
+              </div>
             </td>
             <td class="col-role">
               <select
