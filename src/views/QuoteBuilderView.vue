@@ -257,23 +257,23 @@ watch(
 
     <!-- ═══ Closing Documents Overlay ═══ -->
     <div v-if="showClosingDocs" class="closing-overlay">
-      <div class="closing-overlay__bar no-print">
-        <div class="closing-overlay__tabs">
-          <button :class="['co-tab', (closingDocTab === 'tc' || closingDocTab === 'terms-conditions') && 'co-tab--active']" @click="closingDocTab = 'tc'">Terms &amp; Conditions</button>
-          <button :class="['co-tab', (closingDocTab === 'di' || closingDocTab === 'delivery-instructions') && 'co-tab--active']" @click="closingDocTab = 'di'">Delivery Instructions</button>
-          <button :class="['co-tab', (closingDocTab === 'wc' || closingDocTab === 'warranty-card') && 'co-tab--active']" @click="closingDocTab = 'wc'">Warranty Certificate</button>
-          <button :class="['co-tab', closingDocTab === 'cac' && 'co-tab--active']" @click="closingDocTab = 'cac'">Customer Acceptance</button>
-          <button :class="['co-tab', closingDocTab === 'pdc' && 'co-tab--active']" @click="closingDocTab = 'pdc'">PDC Schedule</button>
-          <button :class="['co-tab', (closingDocTab === 'pull' || closingDocTab === 'pullout') && 'co-tab--active']" @click="closingDocTab = 'pull'">Trade-in Pullout</button>
+      <div class="tc-bar no-print">
+        <div class="doc-tabs">
+          <button :class="['doc-tab', (closingDocTab === 'tc' || closingDocTab === 'terms-conditions') && 'active']" @click="closingDocTab = 'tc'">Terms &amp; Conditions</button>
+          <button :class="['doc-tab', (closingDocTab === 'di' || closingDocTab === 'delivery-instructions') && 'active']" @click="closingDocTab = 'di'">Delivery Instructions</button>
+          <button :class="['doc-tab', (closingDocTab === 'wc' || closingDocTab === 'warranty-card') && 'active']" @click="closingDocTab = 'wc'">Warranty Certificate</button>
+          <button :class="['doc-tab', closingDocTab === 'cac' && 'active']" @click="closingDocTab = 'cac'">Customer Acceptance</button>
+          <button :class="['doc-tab', closingDocTab === 'pdc' && 'active']" @click="closingDocTab = 'pdc'">PDC Schedule</button>
+          <button :class="['doc-tab', (closingDocTab === 'pull' || closingDocTab === 'pullout') && 'active']" @click="closingDocTab = 'pull'">Trade-in Pullout</button>
         </div>
-        <div class="closing-overlay__actions">
-          <button class="co-btn co-btn--edit" @click="showDocsPrompt = true">
+        <div class="doc-actions">
+          <button class="doc-save doc-edit" @click="showDocsPrompt = true">
             ✏️ Edit Details
           </button>
-          <button class="co-btn co-btn--export" @click="exportClosingDoc" :disabled="isPrinting">
+          <button class="doc-save" @click="exportClosingDoc" :disabled="isPrinting">
             💾 {{ isPrinting ? 'Exporting...' : 'Save as PDF' }}
           </button>
-          <button class="co-btn co-btn--close" @click="closeClosingDocs">
+          <button class="doc-save doc-close" @click="closeClosingDocs">
             Close
           </button>
         </div>
@@ -316,13 +316,6 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-white);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-@media screen and (min-width: 768px) {
   .quote-builder-view__toolbar {
     padding: var(--space-3) var(--space-6);
   }

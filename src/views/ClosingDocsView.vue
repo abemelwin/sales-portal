@@ -75,36 +75,35 @@ onMounted(async () => {
 
 <template>
   <div v-if="isOpen" class="closing-docs-view">
-    <!-- Header -->
-    <header class="closing-docs-header no-print">
-      <h1>Closing Documents</h1>
-      <div class="header-actions">
+    <!-- Tab navigation bar matching Image 2 -->
+    <div class="tc-bar no-print">
+      <div class="doc-tabs">
         <button
-          class="btn btn-secondary"
-          @click="showDocsPrompt = true"
+          v-for="tab in CLOSING_DOC_TABS"
+          :key="tab.id"
+          :class="['doc-tab', { active: activeTab === tab.id }]"
+          @click="activeTab = tab.id"
         >
+          {{ tab.label }}
+        </button>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-save doc-edit" @click="showDocsPrompt = true">
           ✏️ Edit Details
         </button>
-        <button
-          class="btn btn-primary"
-          @click="handleExport"
-          :disabled="loading || isPrinting"
-        >
-          {{ isPrinting ? 'Exporting...' : 'Save as PDF' }}
+        <button class="doc-save" @click="handleExport" :disabled="loading || isPrinting">
+          💾 {{ isPrinting ? 'Exporting...' : 'Save as PDF' }}
         </button>
-        <button
-          class="btn btn-secondary"
-          @click="handleClose"
-        >
+        <button class="doc-save doc-close" @click="handleClose">
           Close
         </button>
       </div>
-    </header>
+    </div>
 
     <!-- Print error notification -->
     <div v-if="printError" class="print-error-banner no-print" role="alert">
       <p>{{ printError }}</p>
-      <button class="btn btn-secondary" @click="dismissPrintError">Dismiss</button>
+      <button class="doc-save" @click="dismissPrintError">Dismiss</button>
     </div>
 
     <!-- Loading state -->
@@ -115,33 +114,12 @@ onMounted(async () => {
     <!-- Error state -->
     <div v-else-if="error" class="error-state">
       <p class="error-message">{{ error }}</p>
-      <button class="btn btn-secondary" @click="handleClose">Go Back</button>
+      <button class="doc-save" @click="handleClose">Go Back</button>
     </div>
 
     <!-- Main content -->
     <div v-else class="closing-docs-content">
-      <!-- Tab navigation -->
-      <nav class="tab-nav no-print" role="tablist" aria-label="Closing document types">
-        <button
-          v-for="tab in CLOSING_DOC_TABS"
-          :key="tab.id"
-          role="tab"
-          :aria-selected="activeTab === tab.id"
-          :aria-controls="`panel-${tab.id}`"
-          :class="['tab-button', { active: activeTab === tab.id }]"
-          @click="activeTab = tab.id"
-        >
-          {{ tab.label }}
-        </button>
-      </nav>
-
-      <!-- Tab panel -->
-      <div
-        :id="`panel-${activeTab}`"
-        role="tabpanel"
-        :aria-label="CLOSING_DOC_TABS.find(t => t.id === activeTab)?.label"
-        class="tab-panel"
-      >
+      <div class="tab-panel">
         <ClosingDocPaper
           :docType="activeTab"
           :quoteState="currentQuote"
@@ -169,62 +147,82 @@ onMounted(async () => {
 
 <style scoped>
 .closing-docs-view {
-  padding: var(--space-6);
+  min-height: calc(100vh - var(--nav-height, 40px));
+  background: #cccccc;
+  padding: 16px 20px;
+  box-sizing: border-box;
 }
 
-.closing-docs-header {
+.tc-bar {
+  max-width: 210mm;
+  width: 100%;
+  margin: 0 auto 12px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-6);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border-color);
 }
 
-.closing-docs-header h1 {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-}
-
-.header-actions {
+.doc-tabs {
   display: flex;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
 }
 
-/* Buttons */
-.btn {
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+.doc-tab {
+  padding: 7px 11px;
+  border: 1px solid #c0392b;
+  background: #c0392b;
+  color: #fff;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color var(--transition-fast);
-  min-height: 44px;
-  min-width: 44px;
+  transition: background 0.2s;
 }
 
-.btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-white);
+.doc-tab:hover,
+.doc-tab.active {
+  background: #a93226;
+  border-color: #a93226;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+.doc-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.doc-save {
+  padding: 7px 14px;
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #c0392b;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.btn-secondary {
-  background-color: var(--color-gray-200);
-  color: var(--color-gray-700);
+.doc-save:hover {
+  background: #a93226;
 }
 
-.btn-secondary:hover {
-  background-color: var(--color-gray-300);
+.doc-close {
+  background: #555;
+  border-color: #555;
+}
+
+.doc-close:hover {
+  background: #333;
 }
 
 /* Loading and Error states */
