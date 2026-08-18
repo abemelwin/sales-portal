@@ -12,6 +12,11 @@ const quoteState = inject(QUOTE_BUILDER_KEY)!
 const route = useRoute()
 const router = useRouter()
 
+const emit = defineEmits<{
+  (e: 'save-pdf'): void
+  (e: 'open-docs'): void
+}>()
+
 const letterheadOptions: Letterhead[] = [
   'ES Print Media Inc.',
   'ACS / Alternative',
@@ -289,9 +294,8 @@ function handleDocsConfirm(_data: any) {
   if (quoteId) {
     router.push({ name: 'quote-closing', params: { id: quoteId } })
   } else {
-    // Quote not yet saved — prompt user to save first
-    quoteState.validationErrors = ['Please save the quotation first before opening Closing Documents.']
-    showValidationBox.value = true
+    // Quote not yet saved — emit to parent to save first, then navigate
+    emit('open-docs')
   }
 }
 

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { provide, watch, ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useQuoteBuilder, QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { useQuoteStore } from '@/stores/quotes'
 import { computeAmortization } from '@/utils/quote-calculations'
-import { restoreFromQuote } from '@/utils/quote-state-mapper'
+import { restoreFromQuote, toQuotePayload } from '@/utils/quote-state-mapper'
 import { useExportPDF } from '@/composables/useExportPDF'
 import QuoteFormPanel from '@/components/quote/QuoteFormPanel.vue'
 import QuotePreviewPanel from '@/components/quote/QuotePreviewPanel.vue'
 
 const route = useRoute()
+const router = useRouter()
 const quoteStore = useQuoteStore()
 const { printQuote, isPrinting } = useExportPDF()
 
@@ -112,6 +113,28 @@ onMounted(async () => {
   }
 })
 
+/**
+ * Handle open-docs event from QuoteFormPanel.
+ * Auto-saves the quote first if not yet saved, then navigates to closing docs.
+ */
+async function handleOpenDocs() {
+  let id = quoteId.value ?? (route.params.id as string | undefined)
+  if (!id) {
+    // Auto-save before opening closing docs
+    const payload = toQuotePayload(quoteState)
+    const result = await quoteStore.saveQuote(payload)
+    if (!result.success || !result.quote) {
+      quoteState.validationErrors = ['Failed to save quote. Please try again.']
+      return
+    }
+    quoteId.value = result.quote.id
+    id = result.quote.id
+    // Update the URL to reflect the saved quote
+    router.replace({ name: 'quote-edit', params: { id } })
+  }
+  router.push({ name: 'quote-closing', params: { id } })
+}
+
 
 /**
  * Dismiss the error message.
@@ -204,7 +227,7 @@ watch(
 
       <!-- Left panel: Form -->
       <div v-show="showForm" class="quote-builder-view__form">
-        <QuoteFormPanel @save-pdf="() => printQuote(quoteState)" />
+        <QuoteFormPanel @save-pdf="() => printQuote(quoteState)" @open-docs="handleOpenDocs" />
       </div>
 
       <!-- Right panel: Preview -->
