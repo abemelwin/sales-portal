@@ -162,6 +162,27 @@ function handleMoneyBlur(event: Event, field: 'contractPrice' | 'downPayment') {
   input.value = formatMoney(value)
 }
 
+function handleMoneyInput(event: Event, field: 'contractPrice' | 'downPayment') {
+  const input = event.target as HTMLInputElement
+  const cursorPos = input.selectionStart ?? 0
+  const oldLen = input.value.length
+
+  // Strip non-numeric (keep decimal point)
+  const cleaned = input.value.replace(/[^0-9.]/g, '')
+  const num = parseFloat(cleaned)
+  const value = isNaN(num) ? 0 : num
+  ;(quoteState as any)[field] = value
+
+  // Format with commas
+  const formatted = cleaned ? Number(cleaned).toLocaleString('en-PH', { maximumFractionDigits: 2 }) : ''
+  input.value = formatted
+
+  // Restore cursor position adjusted for added commas
+  const newLen = formatted.length
+  const diff = newLen - oldLen
+  input.setSelectionRange(cursorPos + diff, cursorPos + diff)
+}
+
 const freebieInput = ref('')
 
 function addFreebie() {
@@ -371,7 +392,7 @@ function dismissValidationBox() {
           type="text"
           inputmode="decimal"
           :value="formatMoney(quoteState.contractPrice)"
-          @focus="($event.target as HTMLInputElement).value = quoteState.contractPrice ? String(quoteState.contractPrice) : ''"
+          @input="handleMoneyInput($event, 'contractPrice')"
           @blur="handleMoneyBlur($event, 'contractPrice')"
           placeholder="0"
         />
@@ -440,7 +461,7 @@ function dismissValidationBox() {
           type="text"
           inputmode="decimal"
           :value="formatMoney(quoteState.downPayment)"
-          @focus="($event.target as HTMLInputElement).value = quoteState.downPayment ? String(quoteState.downPayment) : ''"
+          @input="handleMoneyInput($event, 'downPayment')"
           @blur="handleMoneyBlur($event, 'downPayment')"
           placeholder="0"
         />
