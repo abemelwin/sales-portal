@@ -583,12 +583,12 @@ watch(
 /* ═══ Closing Documents Overlay ═══ */
 .closing-overlay {
   position: fixed;
-  top: 0;
+  top: 40px;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9000;
-  background: #691d16;
+  z-index: 500;
+  background: #cccccc;
   display: flex;
   flex-direction: column;
 }

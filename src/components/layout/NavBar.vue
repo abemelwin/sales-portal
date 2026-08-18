@@ -142,7 +142,7 @@ async function handleLogout() {
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
   height: 40px;
   background-color: #fff;
   border-bottom: 2px solid #c0392b;
