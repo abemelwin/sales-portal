@@ -1,24 +1,10 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuoteStore } from '@/stores/quotes'
 import { useExportPDF } from '@/composables/useExportPDF'
-import {
-  TermsConditions,
-  DeliveryInstructions,
-  WarrantyCard,
-  CACForm,
-  PDCForm,
-  PulloutForm,
-} from '@/components/closing'
-import {
-  CLOSING_DOC_TABS,
-  createBlankClosingDocData,
-  type ClosingDocTab,
-  type ClosingDocData,
-} from '@/components/closing/types'
-import letterheadEspmi from '@/assets/letterhead-espmi.svg'
-import letterheadAcs from '@/assets/letterhead-acs.svg'
+import { ClosingDocPaper, CLOSING_DOC_TABS, type ClosingDocTab } from '@/components/closing'
+import ClosingDocsPrompt from '@/components/quote/ClosingDocsPrompt.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,127 +14,39 @@ const { printClosingDoc, isPrinting, printError, dismissPrintError } = useExport
 // Active tab
 const activeTab = ref<ClosingDocTab>('terms-conditions')
 
-// Per-tab data storage — retains data across tab switches (Requirement 8.3)
-const tabData = reactive<Record<ClosingDocTab, ClosingDocData>>({
-  'terms-conditions': createBlankClosingDocData(),
-  'delivery-instructions': createBlankClosingDocData(),
-  'warranty-card': createBlankClosingDocData(),
-  'cac': createBlankClosingDocData(),
-  'pdc': createBlankClosingDocData(),
-  'pullout': createBlankClosingDocData(),
-})
+// Details prompt modal state
+const showDocsPrompt = ref(false)
+const promptDetails = ref<any>(null)
+
+function handleDocsConfirm(data: any) {
+  promptDetails.value = data
+  showDocsPrompt.value = false
+}
 
 // Loading and error states
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-// The letterhead from the quote (used in export, passed along for task 13.2)
-const letterhead = ref<string>('ES Print Media Inc.')
-
 // Whether this view is shown as a modal overlay or a standalone page
 const isOpen = ref(true)
 
-/**
- * Pre-populate fields from quote data (Requirement 8.1).
- * Leaves fields blank when corresponding quote data is unavailable.
- */
-function populateFromQuote() {
-  const quote = quoteStore.currentQuote
-  if (!quote) return
-
-  letterhead.value = quote.letterhead ?? 'ES Print Media Inc.'
-
-  // Determine first term option values for down payment and amortization
-  const firstTerm = quote.term_options?.[0]
-  const downPayment = firstTerm?.down_payment != null
-    ? String(firstTerm.down_payment)
-    : ''
-  const monthlyAmortization = firstTerm?.monthly_amortization != null
-    ? String(firstTerm.monthly_amortization)
-    : ''
-
-  // Build the machine model display string
-  const machineModel = quote.machine_id ? '' : '' // Will be populated if machine data available
-
-  // Common pre-populated values
-  const commonData: Partial<ClosingDocData> = {
-    clientName: quote.client_name ?? '',
-    company: quote.company ?? '',
-    address: quote.address ?? '',
-    contact: quote.contact ?? '',
-    machineModel,
-    contractPrice: quote.contract_price != null ? String(quote.contract_price) : '',
-    downPayment,
-    monthlyAmortization,
-    aeName: quote.ae_name ?? '',
-    clientConforme: quote.client_conforme ?? '',
-    notedByName: quote.noted_by_name ?? '',
-    notedByRole: quote.noted_by_role ?? '',
-  }
-
-  // Apply common data to all tabs
-  for (const tabId of Object.keys(tabData) as ClosingDocTab[]) {
-    Object.assign(tabData[tabId], commonData)
-  }
-}
+const currentQuote = computed(() => quoteStore.currentQuote)
 
 /**
- * Handle field update from a tab component.
- * Updates only the current tab's data so each tab maintains independent state.
- */
-function handleUpdate(field: keyof ClosingDocData, value: string) {
-  tabData[activeTab.value][field] = value
-}
-
-/**
- * Close the closing docs view — discard all unsaved data (Requirement 8.6).
+ * Close the closing docs view.
  */
 function handleClose() {
-  // Reset all tab data
-  for (const tabId of Object.keys(tabData) as ClosingDocTab[]) {
-    Object.assign(tabData[tabId], createBlankClosingDocData())
-  }
   isOpen.value = false
-  // Navigate back to the quote
   const quoteId = route.params.id as string
   router.push({ name: 'quote-edit', params: { id: quoteId } })
 }
 
 /**
- * Export/print the currently active document tab as PDF (Requirement 8.4, 8.5).
- * Uses useExportPDF composable which manages body class and data attribute for print CSS.
+ * Export/print the currently active document tab as PDF.
  */
 function handleExport() {
   printClosingDoc(activeTab.value)
 }
-
-// Active tab's component
-const activeTabComponent = computed(() => {
-  switch (activeTab.value) {
-    case 'terms-conditions': return TermsConditions
-    case 'delivery-instructions': return DeliveryInstructions
-    case 'warranty-card': return WarrantyCard
-    case 'cac': return CACForm
-    case 'pdc': return PDCForm
-    case 'pullout': return PulloutForm
-    default: return TermsConditions
-  }
-})
-
-// Active tab's data
-const activeTabData = computed(() => tabData[activeTab.value])
-
-// Letterhead image source based on quote's letterhead selection (Requirement 8.5)
-const letterheadSrc = computed(() => {
-  return letterhead.value === 'ACS / Alternative' ? letterheadAcs : letterheadEspmi
-})
-
-// Letterhead alt text
-const letterheadAlt = computed(() => {
-  return letterhead.value === 'ACS / Alternative'
-    ? 'ACS / Alternative letterhead'
-    : 'ES Print Media Inc. letterhead'
-})
 
 // Load quote on mount
 onMounted(async () => {
@@ -167,7 +65,6 @@ onMounted(async () => {
       error.value = result.error ?? 'Failed to load quote data.'
       return
     }
-    populateFromQuote()
   } catch (err) {
     error.value = 'An unexpected error occurred while loading quote data.'
   } finally {
@@ -183,11 +80,17 @@ onMounted(async () => {
       <h1>Closing Documents</h1>
       <div class="header-actions">
         <button
+          class="btn btn-secondary"
+          @click="showDocsPrompt = true"
+        >
+          ✏️ Edit Details
+        </button>
+        <button
           class="btn btn-primary"
           @click="handleExport"
           :disabled="loading || isPrinting"
         >
-          {{ isPrinting ? 'Exporting...' : 'Export PDF' }}
+          {{ isPrinting ? 'Exporting...' : 'Save as PDF' }}
         </button>
         <button
           class="btn btn-secondary"
@@ -239,24 +142,28 @@ onMounted(async () => {
         :aria-label="CLOSING_DOC_TABS.find(t => t.id === activeTab)?.label"
         class="tab-panel"
       >
-        <div class="a4-paper closing-doc-paper">
-          <!-- Letterhead image (Requirement 8.5) — displays at top of each closing doc -->
-          <div class="closing-doc-letterhead">
-            <img
-              :src="letterheadSrc"
-              :alt="letterheadAlt"
-              class="closing-doc-letterhead__img"
-            />
-          </div>
-
-          <component
-            :is="activeTabComponent"
-            :data="activeTabData"
-            @update="handleUpdate"
-          />
-        </div>
+        <ClosingDocPaper
+          :docType="activeTab"
+          :quoteState="currentQuote"
+          :promptDetails="promptDetails"
+        />
       </div>
     </div>
+
+    <!-- Details Prompt Modal -->
+    <ClosingDocsPrompt
+      v-if="currentQuote"
+      :open="showDocsPrompt"
+      :company="currentQuote.company || ''"
+      :address="currentQuote.address || ''"
+      :clientName="currentQuote.client_name || ''"
+      :clientContact="currentQuote.contact || ''"
+      :clientConforme="currentQuote.client_conforme || ''"
+      :aeName="currentQuote.ae_name || ''"
+      :tradeInDescriptions="(currentQuote.trade_ins || []).map((t: any) => t.description || t.desc || '')"
+      @close="showDocsPrompt = false"
+      @confirm="handleDocsConfirm"
+    />
   </div>
 </template>
 

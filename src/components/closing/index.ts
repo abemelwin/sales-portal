@@ -4,4 +4,6 @@ export { default as WarrantyCard } from './WarrantyCard.vue'
 export { default as CACForm } from './CACForm.vue'
 export { default as PDCForm } from './PDCForm.vue'
 export { default as PulloutForm } from './PulloutForm.vue'
+export { default as ClosingDocPaper } from './ClosingDocPaper.vue'
 export * from './types'
+

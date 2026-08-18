@@ -8,6 +8,8 @@ import { restoreFromQuote } from '@/utils/quote-state-mapper'
 import { useExportPDF } from '@/composables/useExportPDF'
 import QuoteFormPanel from '@/components/quote/QuoteFormPanel.vue'
 import QuotePreviewPanel from '@/components/quote/QuotePreviewPanel.vue'
+import { ClosingDocPaper } from '@/components/closing'
+import ClosingDocsPrompt from '@/components/quote/ClosingDocsPrompt.vue'
 
 const route = useRoute()
 const quoteStore = useQuoteStore()
@@ -16,6 +18,14 @@ const { printQuote, printClosingDoc, isPrinting } = useExportPDF()
 // Create the shared quote builder state and provide it to child components
 const quoteState = useQuoteBuilder()
 provide(QUOTE_BUILDER_KEY, quoteState)
+
+const showDocsPrompt = ref(false)
+const promptDetails = ref<any>(null)
+
+function handleDocsConfirm(data: any) {
+  promptDetails.value = data
+  showDocsPrompt.value = false
+}
 
 // Auto-open Closing Docs modal when navigated with ?openDocs=true
 onMounted(() => {
@@ -247,29 +257,49 @@ watch(
 
     <!-- ═══ Closing Documents Overlay ═══ -->
     <div v-if="showClosingDocs" class="closing-overlay">
-      <div class="closing-overlay__bar">
-        <h2 class="closing-overlay__title">Closing Documents</h2>
+      <div class="closing-overlay__bar no-print">
         <div class="closing-overlay__tabs">
-          <button :class="['co-tab', closingDocTab === 'tc' && 'co-tab--active']" @click="closingDocTab = 'tc'">Terms &amp; Conditions</button>
-          <button :class="['co-tab', closingDocTab === 'di' && 'co-tab--active']" @click="closingDocTab = 'di'">Delivery Instructions</button>
-          <button :class="['co-tab', closingDocTab === 'wc' && 'co-tab--active']" @click="closingDocTab = 'wc'">Warranty Certificate</button>
-          <button :class="['co-tab', closingDocTab === 'cac' && 'co-tab--active']" @click="closingDocTab = 'cac'">CAC</button>
-          <button :class="['co-tab', closingDocTab === 'pdc' && 'co-tab--active']" @click="closingDocTab = 'pdc'">PDC</button>
-          <button :class="['co-tab', closingDocTab === 'pullout' && 'co-tab--active']" @click="closingDocTab = 'pullout'">Pullout</button>
+          <button :class="['co-tab', (closingDocTab === 'tc' || closingDocTab === 'terms-conditions') && 'co-tab--active']" @click="closingDocTab = 'tc'">Terms &amp; Conditions</button>
+          <button :class="['co-tab', (closingDocTab === 'di' || closingDocTab === 'delivery-instructions') && 'co-tab--active']" @click="closingDocTab = 'di'">Delivery Instructions</button>
+          <button :class="['co-tab', (closingDocTab === 'wc' || closingDocTab === 'warranty-card') && 'co-tab--active']" @click="closingDocTab = 'wc'">Warranty Certificate</button>
+          <button :class="['co-tab', closingDocTab === 'cac' && 'co-tab--active']" @click="closingDocTab = 'cac'">Customer Acceptance</button>
+          <button :class="['co-tab', closingDocTab === 'pdc' && 'co-tab--active']" @click="closingDocTab = 'pdc'">PDC Schedule</button>
+          <button :class="['co-tab', (closingDocTab === 'pull' || closingDocTab === 'pullout') && 'co-tab--active']" @click="closingDocTab = 'pull'">Trade-in Pullout</button>
         </div>
         <div class="closing-overlay__actions">
-          <button class="co-btn co-btn--export" @click="exportClosingDoc" :disabled="isPrinting">
-            {{ isPrinting ? 'Exporting...' : 'Export PDF' }}
+          <button class="co-btn co-btn--edit" @click="showDocsPrompt = true">
+            ✏️ Edit Details
           </button>
-          <button class="co-btn co-btn--close" @click="closeClosingDocs">Close</button>
+          <button class="co-btn co-btn--export" @click="exportClosingDoc" :disabled="isPrinting">
+            💾 {{ isPrinting ? 'Exporting...' : 'Save as PDF' }}
+          </button>
+          <button class="co-btn co-btn--close" @click="closeClosingDocs">
+            Close
+          </button>
         </div>
       </div>
       <div class="closing-overlay__body">
-        <p style="text-align:center;color:#999;padding:40px 20px;font-size:14px">
-          Closing Documents feature coming soon. Use the original Sales-Portal.html for now.
-        </p>
+        <ClosingDocPaper
+          :docType="closingDocTab"
+          :quoteState="quoteState"
+          :promptDetails="promptDetails"
+        />
       </div>
     </div>
+
+    <!-- Closing Docs Prompt Modal -->
+    <ClosingDocsPrompt
+      :open="showDocsPrompt"
+      :company="quoteState.company"
+      :address="quoteState.address"
+      :clientName="quoteState.clientName"
+      :clientContact="quoteState.contact"
+      :clientConforme="quoteState.clientConforme"
+      :aeName="quoteState.aeName"
+      :tradeInDescriptions="quoteState.tradeIns.map(t => t.description)"
+      @close="showDocsPrompt = false"
+      @confirm="handleDocsConfirm"
+    />
   </div>
 </template>
 
@@ -564,7 +594,7 @@ watch(
   right: 0;
   bottom: 0;
   z-index: 9000;
-  background: #f5f5f5;
+  background: #691d16;
   display: flex;
   flex-direction: column;
 }
@@ -573,79 +603,90 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
-  background: #c0392b;
+  padding: 12px 20px;
+  background: #802820;
+  border-bottom: 2px solid #561812;
   color: #fff;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
 
-.closing-overlay__title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .closing-overlay__tabs {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
   flex: 1;
 }
 
 .co-tab {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
+  padding: 7px 13px;
+  border: 1px solid #c0392b;
+  border-radius: 5px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  background: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.85);
-  transition: background 0.2s;
+  background: #c0392b;
+  color: #fff;
+  transition: all 0.2s;
 }
 
 .co-tab:hover {
-  background: rgba(255,255,255,0.25);
+  background: #a93226;
 }
 
 .co-tab--active {
-  background: #fff;
-  color: #c0392b;
+  background: #7b241c !important;
+  border-color: #e74c3c;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .closing-overlay__actions {
   display: flex;
   gap: 8px;
   margin-left: auto;
+  align-items: center;
 }
 
 .co-btn {
-  padding: 6px 14px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 6px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.co-btn--edit {
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #e74c3c;
+}
+
+.co-btn--edit:hover {
+  background: #a93226;
 }
 
 .co-btn--export {
-  background: #fff;
-  color: #c0392b;
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #e74c3c;
 }
 
 .co-btn--export:hover {
-  background: #fde8e8;
+  background: #a93226;
 }
 
 .co-btn--close {
-  background: rgba(255,255,255,0.2);
+  background: #444;
   color: #fff;
 }
 
 .co-btn--close:hover {
-  background: rgba(255,255,255,0.35);
+  background: #222;
 }
 
 .closing-overlay__body {
