@@ -11,7 +11,7 @@ DECLARE
 BEGIN
   -- 1. Vin Christine Jamin - Product Technical Head
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'vin@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'vin@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -27,7 +27,7 @@ BEGIN
   -- 2. Ronwaldo Mariano - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'ron@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'ron@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -43,7 +43,7 @@ BEGIN
   -- 3. Janmark Erfe - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'janmark@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'janmark@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -59,7 +59,7 @@ BEGIN
   -- 4. Jonjon Galido - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'jonjon@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'jonjon@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -75,7 +75,7 @@ BEGIN
   -- 5. Albert Malalad - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'albert@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'albert@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -91,7 +91,7 @@ BEGIN
   -- 6. Armando Dimailig - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'armando@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'armando@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -107,7 +107,7 @@ BEGIN
   -- 7. Arnulfo Alfiscar - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'arnulfo@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'arnulfo@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -123,7 +123,7 @@ BEGIN
   -- 8. Francis Amit - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'francis@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'francis@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -139,7 +139,7 @@ BEGIN
   -- 9. Kimpee Llamado - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'kimpee@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'kimpee@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -155,7 +155,7 @@ BEGIN
   -- 10. Mark Anthony Martin - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'mark@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'mark@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -171,7 +171,7 @@ BEGIN
   -- 11. Ron Jerald Masangcay - Product Development Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'rj@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'rj@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -187,7 +187,7 @@ BEGIN
   -- 12. Arnold Rioja - Service Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'arnold@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'arnold@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -203,7 +203,7 @@ BEGIN
   -- 13. Danilo Carangan - Service Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'dan@esprintmedia.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'dan@esprintmedia.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
@@ -219,7 +219,7 @@ BEGIN
   -- 14. Ricky Eina - Service Manager
   new_uid := NULL;
   INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, aud, role)
-  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'esprintrickyeina@gmail.com', crypt('ESPMi2026!', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
+  VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'esprintrickyeina@gmail.com', crypt('espmi2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', 'authenticated', 'authenticated')
   ON CONFLICT (email) DO NOTHING
   RETURNING id INTO new_uid;
   IF new_uid IS NOT NULL THEN
