@@ -81,7 +81,7 @@ async function handleLogout() {
     <div class="navbar-container">
       <!-- Brand -->
       <div class="navbar-brand">
-        <router-link to="/" class="navbar-logo" @click="closeMobileMenu">
+        <router-link to="/quotes/new" class="navbar-logo" @click="closeMobileMenu">
           ESPMI
         </router-link>
       </div>

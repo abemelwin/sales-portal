@@ -17,9 +17,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    name: 'dashboard',
-    component: () => import('@/views/DashboardView.vue'),
-    meta: { requiresAuth: true }
+    redirect: '/quotes/new'
+  },
+  {
+    path: '/dashboard',
+    redirect: '/quotes/new'
   },
   {
     path: '/quotes/new',

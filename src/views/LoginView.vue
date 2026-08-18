@@ -22,8 +22,7 @@ async function handleSubmit() {
     const result = await authStore.login(email.value, password.value)
 
     if (result.success) {
-      localStorage.setItem(LAST_EMAIL_KEY, email.value)
-      const redirectPath = (router.currentRoute.value.query.redirect as string) || '/'
+      const redirectPath = (router.currentRoute.value.query.redirect as string) || '/quotes/new'
       router.push(redirectPath)
     }
   } finally {
