@@ -10,7 +10,9 @@ const authStore = useAuthStore()
 // --- Roles list matching reference ---
 const ROLES: { value: Role; label: string }[] = [
   { value: 'superadmin', label: 'Super Admin' },
-  { value: 'product_manager', label: 'Product Manager' },
+  { value: 'product_technical_head', label: 'Product Technical Head' },
+  { value: 'product_development_manager', label: 'Product Development Manager' },
+  { value: 'service_manager', label: 'Service Manager' },
   { value: 'sales_admin_manager', label: 'Sales Admin Manager' },
   { value: 'sales_admin_supervisor', label: 'Sales Admin Supervisor' },
   { value: 'sales_admin_assistant', label: 'Sales Admin Assistant' },
