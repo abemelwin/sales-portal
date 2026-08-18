@@ -103,7 +103,7 @@ export const useUserStore = defineStore('users', () => {
           display_name: input.display_name,
           role: input.role,
           is_active: true,
-        })
+        } as never)
 
       if (profileError) {
         error.value = profileError.message
