@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { provide, watch, ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useQuoteBuilder, QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { useQuoteStore } from '@/stores/quotes'
 import { computeAmortization } from '@/utils/quote-calculations'
-import { restoreFromQuote, toQuotePayload } from '@/utils/quote-state-mapper'
+import { restoreFromQuote } from '@/utils/quote-state-mapper'
 import { useExportPDF } from '@/composables/useExportPDF'
 import QuoteFormPanel from '@/components/quote/QuoteFormPanel.vue'
 import QuotePreviewPanel from '@/components/quote/QuotePreviewPanel.vue'
 
 const route = useRoute()
-const router = useRouter()
 const quoteStore = useQuoteStore()
 const { printQuote, printClosingDoc, isPrinting } = useExportPDF()
 
