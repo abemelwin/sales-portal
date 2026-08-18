@@ -7,7 +7,6 @@ interface RolePermission {
   manage_product_files: boolean
   edit_machine_catalog: boolean
   upload_machine_catalog: boolean
-  upload_consumables_pricelist: boolean
   manage_users: boolean
   manage_roles_access: boolean
   isLocked?: boolean
@@ -20,13 +19,16 @@ const loading = ref(true)
 const error = ref('')
 
 const ROLE_ORDER = [
-  'superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor',
+  'superadmin', 'product_technical_head', 'product_development_manager', 'service_manager',
+  'sales_admin_manager', 'sales_admin_supervisor',
   'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant', 'user'
 ]
 
 const ROLE_LABELS: Record<string, string> = {
   superadmin: 'Super Admin',
-  product_manager: 'Product Manager',
+  product_technical_head: 'Product Technical Head',
+  product_development_manager: 'Product Development Manager',
+  service_manager: 'Service Manager',
   sales_admin_manager: 'Sales Admin Manager',
   sales_admin_supervisor: 'Sales Admin Supervisor',
   sales_admin_assistant: 'Sales Admin Assistant',
@@ -59,7 +61,6 @@ onMounted(async () => {
         manage_product_files: false,
         edit_machine_catalog: false,
         upload_machine_catalog: false,
-        upload_consumables_pricelist: false,
         manage_users: false,
         manage_roles_access: false,
       }
@@ -90,7 +91,6 @@ async function saveAccess() {
           manage_product_files: r.manage_product_files,
           edit_machine_catalog: r.edit_machine_catalog,
           upload_machine_catalog: r.upload_machine_catalog,
-          upload_consumables_pricelist: r.upload_consumables_pricelist,
           manage_users: r.manage_users,
           manage_roles_access: r.manage_roles_access,
           updated_at: new Date().toISOString(),
@@ -141,7 +141,6 @@ async function saveAccess() {
             <th>Manage Product Files</th>
             <th>Edit Machine Catalog</th>
             <th>Upload Machine Catalog</th>
-            <th>Upload Consumables Pricelist</th>
             <th>Manage Users</th>
             <th>Manage Roles &amp; Access</th>
           </tr>
@@ -163,9 +162,6 @@ async function saveAccess() {
             </td>
             <td class="col-check">
               <input type="checkbox" v-model="r.upload_machine_catalog" :disabled="r.isLocked" />
-            </td>
-            <td class="col-check">
-              <input type="checkbox" v-model="r.upload_consumables_pricelist" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
               <input type="checkbox" v-model="r.manage_users" :disabled="r.isLocked" />
