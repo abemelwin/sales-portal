@@ -132,7 +132,7 @@ function extractModel(quoteTitle: string, brand: string): string {
  * New roles: admin, salesperson
  */
 function mapRole(oldRole: string): Role {
-  // Map old roles directly — they match the new expanded role set
+  // Map old roles directly ï¿½ they match the new expanded role set
   const validRoles = ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin', 'area_sales_manager', 'account_executive', 'sales_assistant', 'user']
   return (validRoles.includes(oldRole) ? oldRole : 'user') as Role
 }
@@ -448,7 +448,7 @@ async function migrateSingleUser(oldUser: OldUser) {
       display_name: displayName,
       role,
       is_active: true,
-    })
+    } as never)
 
   if (error) {
     throw new Error(error.message)

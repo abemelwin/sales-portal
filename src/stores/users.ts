@@ -134,7 +134,7 @@ export const useUserStore = defineStore('users', () => {
     try {
       const { error: updateError } = await supabase
         .from('user_profiles')
-        .update({ role, updated_at: new Date().toISOString() })
+        .update({ role, updated_at: new Date().toISOString() } as never)
         .eq('user_id', userId)
 
       if (updateError) {
