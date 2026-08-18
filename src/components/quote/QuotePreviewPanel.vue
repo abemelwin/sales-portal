@@ -134,6 +134,12 @@ const tradeInSum = computed(() => {
   return quoteState.tradeIns.reduce((sum, ti) => sum + (ti.value || 0), 0)
 })
 
+const tradeInDescriptions = computed(() => {
+  return quoteState.tradeIns
+    .map((ti) => ti.description?.trim())
+    .filter((d): d is string => !!d)
+})
+
 const inclusionsList = computed(() => {
   const items = getDisplayedInclusions(quoteState).map((item) => item.description)
 
@@ -347,6 +353,7 @@ function formatCurrency(value: number | null | undefined): string {
                 <tr>
                   <th>Model</th>
                   <th>Contract Price</th>
+                  <th v-if="showTradeIns">Trade-In Value</th>
                   <th>Down Payment</th>
                   <th>Balance</th>
                   <th>Payment Terms</th>
@@ -355,20 +362,27 @@ function formatCurrency(value: number | null | undefined): string {
               </thead>
               <tbody>
                 <tr v-for="(row, idx) in pricingRows" :key="idx">
-                  <td>{{ machineTitle }}</td>
+                  <td>{{ idx === 0 ? machineTitle : '' }}</td>
                   <td>{{ formatCurrency(quoteState.contractPrice) }}</td>
-                  <td>{{ formatCurrency(row.downPayment) }}</td>
+                  <td v-if="showTradeIns" style="text-align:right">{{ tradeInSum > 0 ? formatCurrency(tradeInSum) : '—' }}</td>
+                  <td>{{ row.downPayment ? formatCurrency(row.downPayment) : '—' }}</td>
                   <td>{{ formatCurrency(row.balance) }}</td>
                   <td>{{ row.paymentTerms }}</td>
                   <td>{{ row.monthly !== null ? formatCurrency(row.monthly) : '—' }}</td>
                 </tr>
                 <tr class="note-row">
-                  <td colspan="6">
+                  <td :colspan="showTradeIns ? 7 : 6">
                     <div style="display:flex;justify-content:space-between;align-items:center">
                       <span v-if="quoteState.vatInclusive" style="font-weight:700;color:#c0392b;letter-spacing:.5px">VAT INCLUSIVE</span>
                       <span v-else></span>
                       <span style="font-style:italic;font-size:7pt;color:#888">in Philippine Pesos. Prices may change without prior notice.</span>
                     </div>
+                  </td>
+                </tr>
+                <!-- Trade-In Unit(s) description row -->
+                <tr v-if="showTradeIns && tradeInDescriptions.length > 0" style="font-size:7.5pt;color:#444">
+                  <td :colspan="showTradeIns ? 7 : 6">
+                    <strong>Trade-In Unit(s):</strong> {{ tradeInDescriptions.join('; ') }}
                   </td>
                 </tr>
               </tbody>
@@ -379,28 +393,7 @@ function formatCurrency(value: number | null | undefined): string {
             <span class="q-section-divider"></span>
           </template>
 
-          <!-- Trade-ins -->
-          <template v-if="showTradeIns">
-            <div class="q-shdr">Trade-In Units<span class="q-shdr-line"></span></div>
-            <table class="q-ptbl" style="width:100%;border-collapse:collapse;margin-bottom:2mm">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(ti, idx) in quoteState.tradeIns" :key="idx">
-                  <td>{{ ti.description || '(No description)' }}</td>
-                  <td style="text-align:right">{{ formatCurrency(ti.value) }}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;border-top:2px solid #ddd">Total Trade-In</td>
-                  <td style="font-weight:700;border-top:2px solid #ddd;text-align:right">{{ formatCurrency(tradeInSum) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </template>
+          <!-- Trade-in units table removed — trade-in is now shown inline in the pricing table -->
 
           <!-- COLLECTION ARRANGEMENTS -->
           <template v-if="showCollection">
@@ -408,7 +401,7 @@ function formatCurrency(value: number | null | undefined): string {
             <div class="q-avail">
               <p v-if="quoteState.collectionPayment" style="margin:0 0 1mm;font-size:8pt">
                 <span style="display:inline-block;width:80px">Payment:</span>
-                {{ formatCurrency(quoteState.contractPrice) }} — {{ quoteState.collectionPayment }}
+                {{ formatCurrency((quoteState.contractPrice || 0) - tradeInSum) }} — {{ quoteState.collectionPayment }}
               </p>
               <p v-if="quoteState.collectionDownpayment" style="margin:0 0 1mm;font-size:8pt">
                 <span style="display:inline-block;width:80px">Down Payment:</span>
