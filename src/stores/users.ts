@@ -35,7 +35,7 @@ export const useUserStore = defineStore('users', () => {
         return
       }
 
-      users.value = (data as User[]) ?? []
+      users.value = (data as unknown as User[]) ?? []
     } catch (err) {
       error.value = 'An unexpected error occurred while fetching users.'
     } finally {

@@ -110,7 +110,7 @@ async function deleteUser(user: User) {
 }
 
 // --- Computed ---
-const currentUsername = computed(() => authStore.user?.display_name || '')
+// const currentUsername = computed(() => authStore.user?.display_name || '')
 
 // --- Lifecycle ---
 onMounted(() => {
