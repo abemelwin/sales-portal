@@ -31,24 +31,7 @@ const displayName = computed(() => {
 
 const isAdmin = computed(() => adminLinks.value.length > 0)
 
-const roleLabel = computed(() => {
-  const labels: Record<string, string> = {
-    superadmin: 'Super Admin',
-    product_technical_head: 'Product Technical Head',
-    product_development_manager: 'Product Development Manager',
-    service_manager: 'Service Manager',
-    product_manager: 'Product Manager',
-    sales_admin_manager: 'Sales Admin Manager',
-    sales_admin_supervisor: 'Sales Admin Supervisor',
-    sales_admin_assistant: 'Sales Admin Assistant',
-    area_sales_manager: 'Area Sales Manager',
-    account_executive: 'Account Executive',
-    sales_assistant: 'Sales Assistant',
-    user: 'User',
-  }
-  if (!role.value) return ''
-  return labels[role.value] || role.value
-})
+
 
 /** Navigation links visible to authenticated users based on permissions */
 const navLinks = computed(() => {
@@ -134,7 +117,7 @@ async function handleLogout() {
         <!-- User info & logout -->
         <div class="navbar-user">
           <span class="navbar-user-name" :title="user?.display_name">
-            {{ displayName }}<template v-if="roleLabel"> ({{ roleLabel }})</template>
+            {{ displayName }}
           </span>
           <span class="navbar-sep">&middot;</span>
           <router-link to="/change-password" class="navbar-action-link" @click="closeMobileMenu">Change Password</router-link>
