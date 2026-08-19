@@ -21,6 +21,11 @@ const canManageProductFiles = computed(() => {
   return permStore.can('manage_product_files')
 })
 
+const canUploadFiles = computed(() => {
+  if (role.value === 'superadmin') return true
+  return permStore.can('upload_machine_catalog')
+})
+
 // View mode
 type ViewMode = 'list' | 'detail'
 const mode = ref<ViewMode>('list')
@@ -269,9 +274,9 @@ async function deleteLink(linkId: string) {
           </ul>
           <p v-else class="no-files">No files yet.</p>
 
-          <div v-if="canManageProductFiles" class="card-actions">
-            <button class="btn-upload" @click="uploadFile(cat.key)">&uarr; Upload File</button>
-            <button class="btn-link" @click="addLink(cat.key)">&#128279; Add Link</button>
+          <div v-if="canManageProductFiles || canUploadFiles" class="card-actions">
+            <button v-if="canUploadFiles" class="btn-upload" @click="uploadFile(cat.key)">&uarr; Upload File</button>
+            <button v-if="canManageProductFiles" class="btn-link" @click="addLink(cat.key)">&#128279; Add Link</button>
           </div>
         </div>
       </div>
