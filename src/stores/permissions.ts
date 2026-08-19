@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { supabase } from '@/services/supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface RolePermissions {
   create_quotes: boolean
@@ -23,6 +24,7 @@ const DEFAULT_PERMS: RolePermissions = {
 export const usePermissionsStore = defineStore('permissions', () => {
   const permissions = ref<RolePermissions>({ ...DEFAULT_PERMS })
   const loaded = ref(false)
+  let realtimeChannel: RealtimeChannel | null = null
 
   async function fetchPermissions(role: string): Promise<void> {
     if (!role) return
@@ -67,7 +69,31 @@ export const usePermissionsStore = defineStore('permissions', () => {
     loaded.value = true
   }
 
+  function subscribeToRealtime(currentRole: string): void {
+    if (realtimeChannel || !currentRole) return
+
+    realtimeChannel = supabase
+      .channel('permissions:role_permissions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'role_permissions' },
+        () => {
+          // Refetch permissions dynamically whenever an admin edits roles matrix
+          fetchPermissions(currentRole)
+        }
+      )
+      .subscribe()
+  }
+
+  function unsubscribeFromRealtime(): void {
+    if (realtimeChannel) {
+      supabase.removeChannel(realtimeChannel)
+      realtimeChannel = null
+    }
+  }
+
   function reset() {
+    unsubscribeFromRealtime()
     permissions.value = { ...DEFAULT_PERMS }
     loaded.value = false
   }
@@ -81,6 +107,8 @@ export const usePermissionsStore = defineStore('permissions', () => {
     permissions,
     loaded,
     fetchPermissions,
+    subscribeToRealtime,
+    unsubscribeFromRealtime,
     reset,
     can,
   }

@@ -7,6 +7,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useCatalogStore } from '@/stores/catalog'
 import { useQuoteStore } from '@/stores/quotes'
 import { useUserStore } from '@/stores/users'
+import { usePermissionsStore } from '@/stores/permissions'
 import { useRealtimeStore } from '@/stores/realtime'
 import { supabase } from '@/services/supabase'
 import NavBar from '@/components/layout/NavBar.vue'
@@ -18,13 +19,21 @@ useIdleLogout()
 
 const router = useRouter()
 const route = useRoute()
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, role } = useAuth()
 
 const dashboardStore = useDashboardStore()
 const catalogStore = useCatalogStore()
 const quoteStore = useQuoteStore()
 const userStore = useUserStore()
+const permissionsStore = usePermissionsStore()
 const realtimeStore = useRealtimeStore()
+
+watch(role, (newRole) => {
+  if (isAuthenticated.value && newRole) {
+    permissionsStore.fetchPermissions(newRole)
+    permissionsStore.subscribeToRealtime(newRole)
+  }
+}, { immediate: true })
 
 // ─── Reconnection Logic (Requirements 11.4, 11.5, 11.6) ──────────────────────
 
@@ -134,6 +143,9 @@ watch(isAuthenticated, (isAuth) => {
     catalogStore.subscribeToRealtime()
     quoteStore.subscribeToRealtime()
     userStore.subscribeToRealtime()
+    if (role.value) {
+      permissionsStore.subscribeToRealtime(role.value)
+    }
     setupRealtimeMonitor()
     realtimeStore.setStatus('connected')
   } else {
@@ -141,6 +153,7 @@ watch(isAuthenticated, (isAuth) => {
     catalogStore.unsubscribeFromRealtime()
     quoteStore.unsubscribeFromRealtime()
     userStore.unsubscribeFromRealtime()
+    permissionsStore.unsubscribeFromRealtime()
     teardownRealtimeMonitor()
     resetReconnection()
     realtimeStore.$reset()
@@ -153,6 +166,7 @@ onUnmounted(() => {
   catalogStore.unsubscribeFromRealtime()
   quoteStore.unsubscribeFromRealtime()
   userStore.unsubscribeFromRealtime()
+  permissionsStore.unsubscribeFromRealtime()
   teardownRealtimeMonitor()
   resetReconnection()
 })

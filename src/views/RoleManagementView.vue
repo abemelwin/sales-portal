@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import { supabase } from '@/services/supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface RolePermission {
   role: string
@@ -22,6 +23,7 @@ const saving = ref(false)
 const saved = ref(false)
 const loading = ref(true)
 const error = ref('')
+let realtimeChannel: RealtimeChannel | null = null
 
 const ROLE_ORDER = [
   'superadmin', 'product_technical_head', 'product_development_manager', 'service_manager',
@@ -43,7 +45,7 @@ const ROLE_LABELS: Record<string, string> = {
   user: 'User',
 }
 
-onMounted(async () => {
+async function loadRolePermissions() {
   loading.value = true
   error.value = ''
   try {
@@ -81,6 +83,28 @@ onMounted(async () => {
     error.value = e.message || 'Failed to load permissions'
   } finally {
     loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadRolePermissions()
+
+  realtimeChannel = supabase
+    .channel('roles-view:role_permissions')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'role_permissions' },
+      () => {
+        loadRolePermissions()
+      }
+    )
+    .subscribe()
+})
+
+onUnmounted(() => {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel)
+    realtimeChannel = null
   }
 })
 
