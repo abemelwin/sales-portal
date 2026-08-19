@@ -117,6 +117,7 @@ async function saveAccess() {
     for (const r of roles) {
       if (r.isLocked) continue
       const updatePayload: Record<string, any> = {
+        role: r.role,
         create_quotes: r.create_quotes,
         manage_product_files: r.manage_product_files,
         edit_machine_catalog: r.edit_machine_catalog,
@@ -128,16 +129,14 @@ async function saveAccess() {
 
       let { error: updateErr } = await supabase
         .from('role_permissions' as any)
-        .update(updatePayload)
-        .eq('role', r.role)
+        .upsert(updatePayload, { onConflict: 'role' })
 
       // Fallback if create_quotes column does not exist in Supabase DB schema yet
       if (updateErr && updateErr.message?.includes('create_quotes')) {
         delete updatePayload.create_quotes
         const fallback = await supabase
           .from('role_permissions' as any)
-          .update(updatePayload)
-          .eq('role', r.role)
+          .upsert(updatePayload, { onConflict: 'role' })
         updateErr = fallback.error
       }
 

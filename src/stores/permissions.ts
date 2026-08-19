@@ -47,7 +47,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
       .from('role_permissions' as any)
       .select('*')
       .eq('role', role)
-      .single()
+      .maybeSingle()
 
     const isSalesRole = ['superadmin', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant'].includes(role)
 
