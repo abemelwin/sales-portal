@@ -4,6 +4,7 @@ import { supabase } from '@/services/supabase'
 import { useProductInfoStore } from '@/stores/productInfo'
 import { useCatalogStore } from '@/stores/catalog'
 import { useAuth } from '@/composables/useAuth'
+import { usePermissionsStore } from '@/stores/permissions'
 import type { ProductInfoLink } from '@/types'
 
 defineOptions({
@@ -12,9 +13,13 @@ defineOptions({
 
 const productInfoStore = useProductInfoStore()
 const catalogStore = useCatalogStore()
+const permStore = usePermissionsStore()
 const { role } = useAuth()
 
-const isAdmin = computed(() => ['superadmin', 'product_manager', 'sales_admin_manager', 'sales_admin_supervisor'].includes(role.value || ''))
+const canManageProductFiles = computed(() => {
+  if (role.value === 'superadmin') return true
+  return permStore.can('manage_product_files')
+})
 
 // View mode
 type ViewMode = 'list' | 'detail'
@@ -38,6 +43,9 @@ type CategoryKey = (typeof categories)[number]['key']
 
 // Load data
 onMounted(async () => {
+  if (role.value) {
+    permStore.fetchPermissions(role.value)
+  }
   await Promise.all([
     productInfoStore.fetchLinks(),
     catalogStore.fetchMachines(),
@@ -107,7 +115,7 @@ async function addLink(category: CategoryKey) {
   )
 }
 
-// Upload file (for now, same as add link but with file prompt label)
+// Upload file
 async function uploadFile(category: CategoryKey) {
   if (!selectedMachineId.value) return
   
@@ -172,7 +180,6 @@ async function deleteLink(linkId: string) {
       <p class="page-subtitle">
         Click a <strong>model name</strong> to view or manage its files.
         A ticked box means at least one file/link exists for that category.
-        Files are stored in <strong>this browser on this computer</strong> (not shared across computers).
       </p>
 
       <!-- Loading -->
@@ -252,7 +259,7 @@ async function deleteLink(linkId: string) {
                 {{ link.display_name }}
               </a>
               <button
-                v-if="isAdmin"
+                v-if="canManageProductFiles"
                 class="btn-remove"
                 @click="deleteLink(link.id)"
                 :aria-label="`Remove ${link.display_name}`"
@@ -262,7 +269,7 @@ async function deleteLink(linkId: string) {
           </ul>
           <p v-else class="no-files">No files yet.</p>
 
-          <div v-if="isAdmin" class="card-actions">
+          <div v-if="canManageProductFiles" class="card-actions">
             <button class="btn-upload" @click="uploadFile(cat.key)">&uarr; Upload File</button>
             <button class="btn-link" @click="addLink(cat.key)">&#128279; Add Link</button>
           </div>
@@ -301,120 +308,117 @@ async function deleteLink(linkId: string) {
 }
 
 .page-subtitle {
-  font-size: 0.92rem;
-  color: #555;
+  color: #666;
+  font-size: 0.88rem;
   margin-bottom: 20px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-/* ─── Loading & Error ───────────────────────────────────────────────────────── */
-.loading-state {
+.loading-state,
+.error-state {
+  padding: 32px;
   text-align: center;
-  padding: 40px;
-  color: #888;
+  font-size: 1rem;
 }
 
 .error-state {
-  text-align: center;
-  padding: 24px;
-  color: #c0392b;
-  background: #fdeaea;
-  border: 1px solid #c0392b;
-  border-radius: 6px;
+  color: #e74c3c;
 }
 
 /* ─── Table ─────────────────────────────────────────────────────────────────── */
 .table-wrapper {
   overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .info-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-}
-
-.info-table thead tr {
-  background: #c0392b;
-  color: #fff;
+  background: #fff;
 }
 
 .info-table th {
-  padding: 10px 12px;
+  background: #c0392b;
+  color: #fff;
+  padding: 10px 14px;
   text-align: left;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
 .info-table td {
-  padding: 9px 12px;
+  padding: 9px 14px;
   border-bottom: 1px solid #eee;
-}
-
-.info-table tbody tr:hover {
-  background: #fff3cd !important;
+  color: #333;
 }
 
 .row-even {
-  background: #fbeeec;
+  background-color: #fbeeec;
 }
 
 .cell-center {
   text-align: center;
 }
 
+.cell-center input[type='checkbox'] {
+  accent-color: #c0392b;
+  width: 16px;
+  height: 16px;
+  cursor: default;
+}
+
 .model-link {
   color: #c0392b;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .model-link:hover {
-  text-decoration: underline;
+  color: #962d22;
 }
 
 .empty-row {
   text-align: center;
-  color: #999;
-  font-style: italic;
-  padding: 24px 12px;
+  color: #888;
+  padding: 24px;
 }
 
 /* ─── Detail View ───────────────────────────────────────────────────────────── */
 .btn-back {
   background: none;
-  border: 1px solid #c0392b;
-  color: #c0392b;
+  border: 1px solid #ccc;
   padding: 6px 14px;
   border-radius: 4px;
+  font-size: 0.85rem;
   cursor: pointer;
-  font-size: 0.9rem;
   margin-bottom: 16px;
-  transition: background 0.2s, color 0.2s;
+  color: #555;
+  transition: all 0.15s ease;
 }
 
 .btn-back:hover {
-  background: #c0392b;
-  color: #fff;
+  background: #eee;
+  color: #2c3e50;
 }
 
 .detail-title {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #2c3e50;
-  margin: 0 0 8px;
+  margin-bottom: 6px;
 }
 
-/* ─── Category Grid ─────────────────────────────────────────────────────────── */
 .category-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .category-card {
@@ -422,25 +426,25 @@ async function deleteLink(linkId: string) {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 16px 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
 }
 
 .card-title {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: #c0392b;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin: 0 0 12px;
+  color: #7f8c8d;
+  letter-spacing: 0.8px;
+  margin: 0 0 12px 0;
   padding-bottom: 8px;
-  border-bottom: 2px solid #c0392b;
+  border-bottom: 2px solid #f2f2f2;
 }
 
 .card-links {
   list-style: none;
-  margin: 0 0 12px;
   padding: 0;
+  margin: 0 0 16px 0;
   flex: 1;
 }
 
@@ -448,18 +452,15 @@ async function deleteLink(linkId: string) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.card-link-item:last-child {
-  border-bottom: none;
+  padding: 6px 0;
+  border-bottom: 1px dashed #eee;
+  gap: 8px;
 }
 
 .card-link-anchor {
   color: #2980b9;
-  text-decoration: none;
   font-size: 0.88rem;
+  text-decoration: none;
   word-break: break-all;
 }
 
@@ -470,74 +471,48 @@ async function deleteLink(linkId: string) {
 .btn-remove {
   background: none;
   border: none;
-  color: #c0392b;
-  font-size: 1.2rem;
+  color: #e74c3c;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
 }
 
 .btn-remove:hover {
-  color: #e74c3c;
+  color: #c0392b;
 }
 
 .no-files {
-  flex: 1;
-  color: #999;
+  color: #aaa;
+  font-size: 0.85rem;
   font-style: italic;
-  font-size: 0.88rem;
-  margin: 0 0 12px;
+  margin: 0 0 16px 0;
+  flex: 1;
 }
 
 .card-actions {
   display: flex;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
+  gap: 8px;
 }
 
 .btn-upload,
 .btn-link {
   flex: 1;
   padding: 7px 10px;
-  border: 1px solid #c0392b;
   border-radius: 4px;
-  background: #fff;
-  color: #c0392b;
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  text-align: center;
-  transition: background 0.2s, color 0.2s;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #444;
+  transition: background 0.15s ease;
 }
 
 .btn-upload:hover,
 .btn-link:hover {
-  background: #c0392b;
-  color: #fff;
-}
-
-/* ─── Responsive ────────────────────────────────────────────────────────────── */
-@media screen and (max-width: 767px) {
-  .product-info-page {
-    padding: 16px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .category-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .info-table th,
-  .info-table td {
-    padding: 7px 8px;
-    font-size: 0.82rem;
-  }
+  background: #f5f5f5;
+  color: #2c3e50;
 }
 </style>

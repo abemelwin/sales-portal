@@ -139,12 +139,27 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // Admin routes: elevated roles get access
-  const adminRoles = ['superadmin', 'product_development_manager', 'product_technical_head', 'service_manager', 'sales_admin_manager', 'sales_admin_supervisor']
-  if (to.meta.requiresAdmin && !adminRoles.includes(authStore.role || '')) {
-    // If role not loaded yet but has session, allow (profile will load async)
-    if (hasSession && !authStore.role) return
-    return { name: 'dashboard' }
+  // Dynamic permission check based on Roles & Access matrix
+  const routePermissions: Record<string, 'edit_machine_catalog' | 'manage_users' | 'manage_roles_access'> = {
+    catalog: 'edit_machine_catalog',
+    users: 'manage_users',
+    roles: 'manage_roles_access',
+    migrate: 'manage_roles_access',
+  }
+
+  const requiredPermission = routePermissions[to.name as string]
+  if (to.meta.requiresAdmin && requiredPermission && isAuthenticated) {
+    const currentRole = authStore.role || 'user'
+    if (currentRole !== 'superadmin') {
+      const { usePermissionsStore } = await import('@/stores/permissions')
+      const permStore = usePermissionsStore()
+      if (!permStore.loaded) {
+        await permStore.fetchPermissions(currentRole)
+      }
+      if (!permStore.can(requiredPermission)) {
+        return { name: 'quote-new' }
+      }
+    }
   }
 })
 

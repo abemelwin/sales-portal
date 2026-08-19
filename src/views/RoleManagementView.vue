@@ -106,6 +106,12 @@ async function saveAccess() {
         return
       }
     }
+    const { usePermissionsStore } = await import('@/stores/permissions')
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    if (authStore.role) {
+      await usePermissionsStore().fetchPermissions(authStore.role)
+    }
     saved.value = true
     setTimeout(() => { saved.value = false }, 3000)
   } catch (e: any) {
