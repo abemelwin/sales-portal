@@ -311,36 +311,43 @@ async function handleLogout() {
 /* --- Mobile Responsive (< 768px) ------------------------------------------- */
 @media screen and (max-width: 767px) {
   .navbar {
-    height: auto;
-    min-height: 44px;
+    height: 44px;
     overflow: visible;
   }
 
   .navbar-container {
-    flex-wrap: wrap;
+    height: 100%;
     padding: 0 12px;
-    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
   }
 
   .navbar-toggle {
     display: flex;
     margin-left: auto;
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 40px;
+    min-width: 40px;
     align-items: center;
     justify-content: center;
   }
 
   .navbar-menu {
     display: none;
+    position: absolute;
+    top: 44px;
+    left: 0;
+    right: 0;
     width: 100%;
     flex-direction: column;
     align-items: stretch;
-    padding: 8px 0 12px;
+    padding: 10px 12px 14px;
     border-top: 1px solid #e5e7eb;
+    border-bottom: 2px solid #c0392b;
     background-color: #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow: visible;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
   }
 
   .navbar-menu--open {
@@ -350,31 +357,42 @@ async function handleLogout() {
   .navbar-nav {
     flex-direction: column;
     align-items: stretch;
-    gap: 2px;
-    flex-wrap: wrap;
+    gap: 4px;
+    flex-wrap: nowrap;
+    width: 100%;
+  }
+
+  .nav-item {
+    width: 100%;
   }
 
   .nav-link {
-    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 14px;
     font-size: 14px;
-    min-height: 44px;
+    min-height: 40px;
     border-radius: 6px;
   }
 
   .navbar-user {
     margin-left: 0;
-    padding: 12px 16px 4px;
+    padding: 10px 14px 4px;
     border-top: 1px solid #e5e7eb;
-    margin-top: 8px;
-    flex-wrap: wrap;
-    gap: 8px 12px;
+    margin-top: 10px;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 
   .navbar-user-name {
     max-width: 100%;
     width: 100%;
+    font-size: 13px;
     font-weight: 600;
-    margin-bottom: 2px;
+    color: #374151;
   }
 
   .navbar-sep {
@@ -383,10 +401,11 @@ async function handleLogout() {
 
   .navbar-action-link,
   .navbar-logout-btn {
+    font-size: 13px;
+    padding: 4px 0;
     min-height: 36px;
     display: inline-flex;
     align-items: center;
-    font-size: 12px;
   }
 }
 </style>
