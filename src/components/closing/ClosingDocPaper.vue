@@ -120,16 +120,37 @@ const price = computed(() => Number(props.quoteState?.contract_price ?? props.qu
 const priceWords = computed(() => numWords(price.value))
 const priceFig = computed(() => Math.round(price.value))
 
-const dt = computed(() => props.quoteState?.deal_type ?? props.quoteState?.dealType ?? 'STD_CASH')
-const isTerms = computed(() => dt.value === 'STD_TERMS' || dt.value === 'TI_TERMS')
-const isTI = computed(() => dt.value === 'TI_CASH' || dt.value === 'TI_TERMS')
+const dt = computed(() => String(props.quoteState?.deal_type ?? props.quoteState?.dealType ?? 'Cash'))
+const isTerms = computed(() => {
+  const d = dt.value.toLowerCase()
+  return d.includes('term') || d.includes('installment') || d === 'std_terms' || d === 'ti_terms'
+})
 
-const ptDown = computed(() => Number(props.quoteState?.down_payment ?? props.quoteState?.downPayment) || 0)
-const months = computed(() => Number(props.quoteState?.months) || (isTerms.value ? 12 : 0))
+const ptDown = computed(() => {
+  if (props.quoteState?.down_payment !== undefined && props.quoteState?.down_payment !== null) {
+    return Number(props.quoteState.down_payment) || 0
+  }
+  if (props.quoteState?.downPayment !== undefined && props.quoteState?.downPayment !== null) {
+    return Number(props.quoteState.downPayment) || 0
+  }
+  return 0
+})
 
 const tradeIns = computed(() => props.quoteState?.trade_ins ?? props.quoteState?.tradeIns ?? [])
 const tradeInSum = computed(() => tradeIns.value.reduce((sum: number, ti: any) => sum + (Number(ti.value ?? ti.val) || 0), 0))
 const tiDesc = computed(() => tradeIns.value.map((t: any) => t.description ?? t.desc).filter(Boolean).join('; '))
+
+const isTI = computed(() => {
+  const d = dt.value.toLowerCase()
+  const hasTradeInRecords = tradeIns.value.length > 0 && tradeInSum.value > 0
+  return d.includes('trade') || d.includes('ti_') || hasTradeInRecords
+})
+
+const months = computed(() => {
+  const m = Number(props.quoteState?.months)
+  if (!isNaN(m) && m > 0) return m
+  return isTerms.value ? 12 : 0
+})
 
 const balance = computed(() => Math.max(price.value - (isTerms.value ? ptDown.value : 0) - tradeInSum.value, 0))
 const monthly = computed(() => (isTerms.value && months.value > 0) ? balance.value / months.value : 0)
@@ -137,10 +158,14 @@ const monthly = computed(() => (isTerms.value && months.value > 0) ? balance.val
 const machineTitle = computed(() => {
   if (props.quoteState?.selectedModel) return props.quoteState.selectedModel
   if (props.quoteState?.selectedBrand) return props.quoteState.selectedBrand
+  if (props.quoteState?.model) return props.quoteState.model
+  if (props.quoteState?.brand) return props.quoteState.brand
   if (props.quoteState?.quote_title) return props.quoteState.quote_title
   return ''
 })
-const machineCondition = computed(() => props.quoteState?.unitCondition ?? props.quoteState?.unit_condition ?? '')
+const machineCondition = computed(() => {
+  return props.quoteState?.unitCondition ?? props.quoteState?.unit_condition ?? props.quoteState?.unit_condition_override ?? ''
+})
 const machineLabel = computed(() => {
   const t = machineTitle.value
   const c = machineCondition.value
@@ -148,7 +173,13 @@ const machineLabel = computed(() => {
 })
 
 const hasPrinthead = computed(() => {
-  const cat = (props.quoteState?.selectedCategory || props.quoteState?.selectedBrand || '').toLowerCase()
+  if (props.quoteState?.has_printhead !== undefined && props.quoteState?.has_printhead !== null) {
+    return !!props.quoteState.has_printhead
+  }
+  if (props.quoteState?.hasPrinthead !== undefined && props.quoteState?.hasPrinthead !== null) {
+    return !!props.quoteState.hasPrinthead
+  }
+  const cat = (props.quoteState?.selectedCategory || props.quoteState?.selectedBrand || props.quoteState?.brand || '').toLowerCase()
   const title = (machineTitle.value || '').toLowerCase()
   const printerKeywords = ['eco solvent', 'solvent', 'sublimation', 'dtf', 'dtg', 'uv', 'large format', 'printer', 'inkjet', 'printhead']
   return printerKeywords.some(k => cat.includes(k) || title.includes(k))

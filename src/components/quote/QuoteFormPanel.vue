@@ -30,7 +30,8 @@ const dealTypes: DealType[] = [
 const showTradeIns = computed(() => {
   return (
     quoteState.dealType === 'Trade-In Cash' ||
-    quoteState.dealType === 'Trade-In Terms'
+    quoteState.dealType === 'Trade-In Terms' ||
+    quoteState.termOptions.some((opt) => opt.dealType?.includes('Trade-In'))
   )
 })
 
@@ -39,23 +40,18 @@ const tradeInSum = computed(() => {
   return quoteState.tradeIns.reduce((sum, ti) => sum + (ti.value || 0), 0)
 })
 
-// When deal type changes, handle trade-in field visibility/clearing
+// When deal type or showTradeIns changes, handle trade-in field seeding
 watch(
-  () => quoteState.dealType,
-  (newType) => {
-    if (newType === 'Standard Cash' || newType === 'Standard Terms') {
-      quoteState.tradeIns = []
-    } else if (
-      newType === 'Trade-In Cash' ||
-      newType === 'Trade-In Terms'
-    ) {
-      // Always seed exactly 3 rows (matching original HTML)
+  showTradeIns,
+  (visible) => {
+    if (visible) {
       while (quoteState.tradeIns.length < 3) {
         quoteState.tradeIns.push({ description: '', value: 0 })
       }
     }
     recomputeAllAmortizations()
-  }
+  },
+  { immediate: true }
 )
 
 // Watch contract price changes to recompute amortizations
@@ -534,8 +530,10 @@ function dismissValidationBox() {
           <div class="fp-sec">
             <label :for="`deal-type-${index}`" class="fp-lbl">Deal Type</label>
             <select :id="`deal-type-${index}`" class="fp-in" v-model="option.dealType">
-              <option value="Installment">Installment</option>
               <option value="Cash">Cash</option>
+              <option value="Installment">Installment</option>
+              <option value="Trade-In — Cash">Trade-In — Cash</option>
+              <option value="Trade-In — Installment">Trade-In — Installment</option>
             </select>
           </div>
           <div class="fp-sec">
