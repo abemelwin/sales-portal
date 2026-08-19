@@ -3,6 +3,10 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
 import type { Machine, MachineInput } from '@/types'
 
+defineOptions({
+  name: 'CatalogEditorView',
+})
+
 const catalogStore = useCatalogStore()
 
 // ─── Machine Selector ─────────────────────────────────────────────────────────

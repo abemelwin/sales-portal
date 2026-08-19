@@ -12,6 +12,10 @@ interface RolePermission {
   isLocked?: boolean
 }
 
+defineOptions({
+  name: 'RoleManagementView',
+})
+
 const roles = reactive<RolePermission[]>([])
 const saving = ref(false)
 const saved = ref(false)

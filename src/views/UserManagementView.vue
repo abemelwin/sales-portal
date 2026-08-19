@@ -4,6 +4,10 @@ import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import type { Role, User } from '@/types'
 
+defineOptions({
+  name: 'UserManagementView',
+})
+
 const userStore = useUserStore()
 const authStore = useAuthStore()
 

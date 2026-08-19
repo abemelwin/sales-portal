@@ -6,6 +6,10 @@ import { useCatalogStore } from '@/stores/catalog'
 import { useAuth } from '@/composables/useAuth'
 import type { ProductInfoLink } from '@/types'
 
+defineOptions({
+  name: 'ProductInfoView',
+})
+
 const productInfoStore = useProductInfoStore()
 const catalogStore = useCatalogStore()
 const { role } = useAuth()

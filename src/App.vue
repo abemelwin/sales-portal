@@ -193,7 +193,7 @@ function dismissError() {
     <!-- Main content area -->
     <main class="app-main" :class="{ 'app-main--with-nav': isAuthenticated }">
       <RouterView v-slot="{ Component }">
-        <KeepAlive :include="['QuoteBuilderView']">
+        <KeepAlive>
           <component :is="Component" />
         </KeepAlive>
       </RouterView>
