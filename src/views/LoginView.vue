@@ -124,16 +124,17 @@ async function handleSubmit() {
   justify-content: center;
   min-height: 100vh;
   padding: var(--space-4);
-  background: linear-gradient(135deg, #c0392b, #7b1e13);
+  background-color: #ffffff;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  padding: var(--space-8);
-  background-color: var(--color-white);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  padding: 36px 32px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
 }
 
 .login-title {
