@@ -125,7 +125,16 @@ router.beforeEach(async (to) => {
 
   // Redirect authenticated users away from login page
   if (to.name === 'login' && isAuthenticated) {
-    return { name: 'dashboard' }
+    const currentRole = authStore.role || 'user'
+    if (currentRole !== 'superadmin') {
+      const { usePermissionsStore } = await import('@/stores/permissions')
+      const permStore = usePermissionsStore()
+      if (!permStore.loaded) {
+        await permStore.fetchPermissions(currentRole)
+      }
+      return permStore.can('create_quotes') ? { name: 'quote-new' } : { name: 'product-info' }
+    }
+    return { name: 'quote-new' }
   }
 
   // Redirect unauthenticated users to login
@@ -140,15 +149,7 @@ router.beforeEach(async (to) => {
   }
 
   // Dynamic permission check based on Roles & Access matrix
-  const routePermissions: Record<string, 'edit_machine_catalog' | 'manage_users' | 'manage_roles_access'> = {
-    catalog: 'edit_machine_catalog',
-    users: 'manage_users',
-    roles: 'manage_roles_access',
-    migrate: 'manage_roles_access',
-  }
-
-  const requiredPermission = routePermissions[to.name as string]
-  if (to.meta.requiresAdmin && requiredPermission && isAuthenticated) {
+  if (isAuthenticated) {
     const currentRole = authStore.role || 'user'
     if (currentRole !== 'superadmin') {
       const { usePermissionsStore } = await import('@/stores/permissions')
@@ -156,8 +157,25 @@ router.beforeEach(async (to) => {
       if (!permStore.loaded) {
         await permStore.fetchPermissions(currentRole)
       }
-      if (!permStore.can(requiredPermission)) {
-        return { name: 'quote-new' }
+
+      // Check Quote Generator permission
+      if ((to.name === 'quote-new' || to.name === 'quote-edit') && !permStore.can('create_quotes')) {
+        return { name: 'product-info' }
+      }
+
+      // Check Admin route permissions
+      const routePermissions: Record<string, 'edit_machine_catalog' | 'manage_users' | 'manage_roles_access'> = {
+        catalog: 'edit_machine_catalog',
+        users: 'manage_users',
+        roles: 'manage_roles_access',
+        migrate: 'manage_roles_access',
+      }
+
+      const requiredPermission = routePermissions[to.name as string]
+      if (to.meta.requiresAdmin && requiredPermission) {
+        if (!permStore.can(requiredPermission)) {
+          return permStore.can('create_quotes') ? { name: 'quote-new' } : { name: 'product-info' }
+        }
       }
     }
   }

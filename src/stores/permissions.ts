@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { supabase } from '@/services/supabase'
 
 export interface RolePermissions {
+  create_quotes: boolean
   manage_product_files: boolean
   edit_machine_catalog: boolean
   upload_machine_catalog: boolean
@@ -11,6 +12,7 @@ export interface RolePermissions {
 }
 
 const DEFAULT_PERMS: RolePermissions = {
+  create_quotes: true,
   manage_product_files: false,
   edit_machine_catalog: false,
   upload_machine_catalog: false,
@@ -28,6 +30,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     // Superadmin always has full access
     if (role === 'superadmin') {
       permissions.value = {
+        create_quotes: true,
         manage_product_files: true,
         edit_machine_catalog: true,
         upload_machine_catalog: true,
@@ -44,10 +47,16 @@ export const usePermissionsStore = defineStore('permissions', () => {
       .eq('role', role)
       .single()
 
+    const isSalesRole = ['superadmin', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant'].includes(role)
+
     if (error || !data) {
-      permissions.value = { ...DEFAULT_PERMS }
+      permissions.value = {
+        ...DEFAULT_PERMS,
+        create_quotes: isSalesRole,
+      }
     } else {
       permissions.value = {
+        create_quotes: (data as any).create_quotes ?? isSalesRole,
         manage_product_files: (data as any).manage_product_files ?? false,
         edit_machine_catalog: (data as any).edit_machine_catalog ?? false,
         upload_machine_catalog: (data as any).upload_machine_catalog ?? false,

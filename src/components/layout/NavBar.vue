@@ -47,11 +47,15 @@ const roleLabel = computed(() => {
   return labels[role.value] || role.value
 })
 
-/** Navigation links visible to all authenticated users */
-const navLinks = [
-  { to: '/quotes/new', label: 'Quote Generator' },
-  { to: '/product-info', label: 'Product Info' },
-]
+/** Navigation links visible to authenticated users based on permissions */
+const navLinks = computed(() => {
+  const links: { to: string; label: string }[] = []
+  if (permStore.can('create_quotes')) {
+    links.push({ to: '/quotes/new', label: 'Quote Generator' })
+  }
+  links.push({ to: '/product-info', label: 'Product Info' })
+  return links
+})
 
 /** Admin navigation links with permission requirements */
 const adminLinks = computed(() => {

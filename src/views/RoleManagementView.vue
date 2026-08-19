@@ -4,6 +4,7 @@ import { supabase } from '@/services/supabase'
 
 interface RolePermission {
   role: string
+  create_quotes: boolean
   manage_product_files: boolean
   edit_machine_catalog: boolean
   upload_machine_catalog: boolean
@@ -60,13 +61,15 @@ onMounted(async () => {
     // Sort by defined order
     const sorted = ROLE_ORDER.map(r => {
       const found = (data || []).find((d: any) => d.role === r) as any
-      return found || {
+      const isSales = ['superadmin', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant'].includes(r)
+      return {
         role: r,
-        manage_product_files: false,
-        edit_machine_catalog: false,
-        upload_machine_catalog: false,
-        manage_users: false,
-        manage_roles_access: false,
+        create_quotes: found && found.create_quotes !== undefined ? !!found.create_quotes : isSales,
+        manage_product_files: found ? !!found.manage_product_files : false,
+        edit_machine_catalog: found ? !!found.edit_machine_catalog : false,
+        upload_machine_catalog: found ? !!found.upload_machine_catalog : false,
+        manage_users: found ? !!found.manage_users : false,
+        manage_roles_access: found ? !!found.manage_roles_access : false,
       }
     }).map(r => ({
       ...r,
@@ -92,6 +95,7 @@ async function saveAccess() {
       const { error: updateErr } = await supabase
         .from('role_permissions' as any)
         .update({
+          create_quotes: r.create_quotes,
           manage_product_files: r.manage_product_files,
           edit_machine_catalog: r.edit_machine_catalog,
           upload_machine_catalog: r.upload_machine_catalog,
@@ -148,6 +152,7 @@ async function saveAccess() {
         <thead>
           <tr>
             <th class="col-role">Role</th>
+            <th>Create Quotes</th>
             <th>Manage Product Files</th>
             <th>Edit Machine Catalog</th>
             <th>Upload Machine Catalog</th>
@@ -163,6 +168,9 @@ async function saveAccess() {
           >
             <td class="col-role">
               <span :class="{ 'role-super': r.isLocked }">{{ ROLE_LABELS[r.role] || r.role }}</span>
+            </td>
+            <td class="col-check">
+              <input type="checkbox" v-model="r.create_quotes" :disabled="r.isLocked" />
             </td>
             <td class="col-check">
               <input type="checkbox" v-model="r.manage_product_files" :disabled="r.isLocked" />
