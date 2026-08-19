@@ -188,51 +188,58 @@ function populateForm(machine: Machine) {
 const saving = ref(false)
 
 function buildInput(): MachineInput {
-  const featuresArr = featuresText.value
+  const brand = (form.brand || '').trim()
+  const model = (form.quoteTitle || '').trim() || brand
+  const category = (form.category || '').trim() || 'Brand New'
+  const printheadWarranty = (form.printheadWarranty || '').trim() || null
+  const availability = (form.availability || '').trim() || null
+  const imageKey = (form.imageKey || '').trim() || null
+
+  const featuresArr = (featuresText.value || '')
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean)
 
-  const inclusionsArr = inclusionsText.value
+  const inclusionsArr = (inclusionsText.value || '')
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean)
 
-  const exclusionsArr = exclusivesText.value
+  const exclusionsArr = (exclusivesText.value || '')
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean)
 
   return {
-    brand: form.brand.trim(),
-    model: form.quoteTitle.trim() || form.brand.trim(),
+    brand,
+    model,
     sub_model: null,
-    unit_condition: form.category.trim() || 'Brand New',
+    unit_condition: category,
     letterhead: 'ES Print Media Inc.',
     srp: form.srp ?? 0,
     lbp: form.lbp ?? 0,
     cash_price: form.cashPrice ?? 0,
     machine_warranty_months: form.machineWarranty ?? 0,
-    printhead_warranty: form.printheadWarranty || null,
+    printhead_warranty: printheadWarranty,
     has_trade_in: form.hasTradeIn,
     has_printhead: form.hasPrinthead,
     service_fee: form.serviceFee ?? null,
     default_months: form.defaultMonths ?? null,
-    availability: form.availability.trim() || null,
-    image_key: form.imageKey.trim() || null,
+    availability,
+    image_key: imageKey,
     features: featuresArr.map((desc, i) => ({ description: desc, sort_order: i })),
-    consumables: consumables.value
-      .filter((c) => c.name.trim())
+    consumables: (consumables.value || [])
+      .filter((c) => c && c.name && c.name.trim())
       .map((c, i) => ({
         item_name: c.name.trim(),
-        package_description: c.uom.trim() || null,
+        package_description: (c.uom || '').trim() || null,
         default_price: Math.max(parseFloat(c.price) || 0, 0),
         sort_order: i,
       })),
     inclusions: inclusionsArr.map((desc, i) => ({ description: desc, sort_order: i })),
     exclusions: exclusionsArr.map((desc, i) => ({ description: desc, sort_order: i })),
-    addons: addons.value
-      .filter((a) => a.name.trim())
+    addons: (addons.value || [])
+      .filter((a) => a && a.name && a.name.trim())
       .map((a, i) => {
         const price = parseFloat(a.price) || 0
         const desc = price > 0
@@ -244,26 +251,39 @@ function buildInput(): MachineInput {
 }
 
 async function save() {
+  if (saving.value) return
   saving.value = true
   successMessage.value = ''
-  const input = buildInput()
 
-  if (selectedMachineId.value) {
-    const result = await catalogStore.updateMachine(selectedMachineId.value, input)
-    if (result.success) {
-      showSuccess('Saved successfully!')
-    } else {
-      showSuccess('Save failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
+  try {
+    const input = buildInput()
+
+    if (!input.brand || !input.model) {
+      showSuccess('Save failed: Brand and Model / Quote Title are required.')
+      return
     }
-  } else {
-    const result = await catalogStore.createMachine(input)
-    if (result.success) {
-      showSuccess('Machine created successfully!')
+
+    if (selectedMachineId.value) {
+      const result = await catalogStore.updateMachine(selectedMachineId.value, input)
+      if (result.success) {
+        showSuccess('Saved successfully!')
+      } else {
+        showSuccess('Save failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
+      }
     } else {
-      showSuccess('Create failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
+      const result = await catalogStore.createMachine(input)
+      if (result.success) {
+        showSuccess('Machine created successfully!')
+      } else {
+        showSuccess('Create failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
+      }
     }
+  } catch (err: any) {
+    console.error('Error saving machine:', err)
+    showSuccess('Save failed: ' + (err?.message || 'An unexpected error occurred.'))
+  } finally {
+    saving.value = false
   }
-  saving.value = false
 }
 
 function createNew() {
@@ -275,13 +295,22 @@ async function deleteMachine() {
   if (!selectedMachineId.value) return
   if (!confirm('Delete this machine?')) return
   saving.value = true
-  const result = await catalogStore.softDeleteMachine(selectedMachineId.value)
-  if (result.success) {
-    showSuccess('Machine deleted.')
-    selectedMachineId.value = ''
-    resetForm()
+
+  try {
+    const result = await catalogStore.softDeleteMachine(selectedMachineId.value)
+    if (result.success) {
+      showSuccess('Machine deleted.')
+      selectedMachineId.value = ''
+      resetForm()
+    } else {
+      showSuccess('Delete failed: ' + (result.error ?? catalogStore.error ?? 'Unknown error'))
+    }
+  } catch (err: any) {
+    console.error('Error deleting machine:', err)
+    showSuccess('Delete failed: ' + (err?.message || 'An unexpected error occurred.'))
+  } finally {
+    saving.value = false
   }
-  saving.value = false
 }
 
 async function revert() {

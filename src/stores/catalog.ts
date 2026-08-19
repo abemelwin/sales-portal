@@ -342,6 +342,15 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   // ─── Realtime Subscriptions ──────────────────────────────────────────────────
 
+  let debouncedFetchTimer: ReturnType<typeof setTimeout> | null = null
+
+  function debouncedFetchMachines() {
+    if (debouncedFetchTimer) clearTimeout(debouncedFetchTimer)
+    debouncedFetchTimer = setTimeout(() => {
+      fetchMachines()
+    }, 400)
+  }
+
   /**
    * Subscribe to machines and all sub-tables via Supabase Realtime (Requirement 11.2).
    * When an admin updates the machine catalog, changes propagate to all active
@@ -366,8 +375,8 @@ export const useCatalogStore = defineStore('catalog', () => {
           'postgres_changes',
           { event: '*', schema: 'public', table },
           () => {
-            // Refetch all machines when any catalog table changes
-            fetchMachines()
+            // Debounced refetch to avoid query stampede during multi-table batch inserts
+            debouncedFetchMachines()
           }
         )
         .subscribe()
