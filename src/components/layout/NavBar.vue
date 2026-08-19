@@ -65,8 +65,7 @@ const navLinks = computed(() => {
 /** Admin navigation links with permission requirements */
 const adminLinks = computed(() => {
   const links: { to: string; label: string }[] = []
-  if (permStore.can('manage_users')) links.push({ to: '/users', label: 'Users' })
-  if (permStore.can('manage_roles_access')) links.push({ to: '/roles', label: 'Roles' })
+  if (permStore.can('manage_users') || permStore.can('manage_roles_access')) links.push({ to: '/users', label: 'Users & Access' })
   if (permStore.can('edit_machine_catalog')) links.push({ to: '/catalog', label: 'Catalog Editor' })
   return links
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import type { Role, User } from '@/types'
@@ -25,7 +25,6 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'sales_assistant', label: 'Sales Assistant' },
   { value: 'user', label: 'User' },
 ]
-
 
 // --- Add User Form ---
 const newEmail = ref('')
@@ -86,6 +85,54 @@ async function handleRoleChange(user: User, newRoleValue: Role) {
   await userStore.updateRole(user.user_id, newRoleValue)
 }
 
+// --- Edit Access State ---
+const editingUserId = ref<string | null>(null)
+const userPermsForm = reactive({
+  create_quotes: false,
+  manage_product_files: false,
+  edit_machine_catalog: false,
+  upload_machine_catalog: false,
+  manage_users: false,
+  manage_roles_access: false,
+})
+const savePermsMsg = ref('')
+
+function openEditAccess(user: User) {
+  editingUserId.value = user.user_id
+  savePermsMsg.value = ''
+
+  const role = user.role
+  const isSales = ['superadmin', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant'].includes(role)
+  const isProductTech = ['product_technical_head', 'product_development_manager', 'service_manager'].includes(role)
+  const isSalesAdminMgr = ['sales_admin_manager', 'sales_admin_supervisor', 'area_sales_manager'].includes(role)
+
+  userPermsForm.create_quotes = user.create_quotes ?? isSales
+  userPermsForm.manage_product_files = user.manage_product_files ?? (isSales || isProductTech)
+  userPermsForm.edit_machine_catalog = user.edit_machine_catalog ?? (isSales || isProductTech)
+  userPermsForm.upload_machine_catalog = user.upload_machine_catalog ?? (isProductTech || isSalesAdminMgr)
+  userPermsForm.manage_users = user.manage_users ?? isSalesAdminMgr
+  userPermsForm.manage_roles_access = user.manage_roles_access ?? isSalesAdminMgr
+}
+
+function closeEditAccess() {
+  editingUserId.value = null
+  savePermsMsg.value = ''
+}
+
+async function saveUserAccess(userId: string) {
+  savePermsMsg.value = ''
+  const res = await userStore.updateUserPermissions(userId, { ...userPermsForm })
+  if (res.success) {
+    savePermsMsg.value = 'Access saved successfully!'
+    setTimeout(() => {
+      editingUserId.value = null
+      savePermsMsg.value = ''
+    }, 1200)
+  } else {
+    alert(res.error || 'Failed to save access permissions.')
+  }
+}
+
 // --- Reset Password ---
 async function resetPassword(user: User) {
   const np = prompt(`New password for "${user.display_name}" (min 4 characters):`)
@@ -94,7 +141,6 @@ async function resetPassword(user: User) {
     alert('Password too short.')
     return
   }
-  // TODO: Implement actual password reset via Supabase admin API
   alert(`Password reset for ${user.display_name}.`)
 }
 
@@ -195,6 +241,7 @@ const KNOWN_USER_NAMES: Record<string, string> = {
   'rj@esprintmedia.com': 'RJ Product Development',
   'dan@esprintmedia.com': 'Dan Service Manager'
 }
+
 function getUserDisplayName(u: User): string {
   const email = (u.email || u.display_name || '').toLowerCase().trim()
   if (u.display_name && u.display_name !== u.email) {
@@ -233,6 +280,7 @@ async function deleteUser(user: User) {
 // --- Lifecycle ---
 onMounted(() => {
   userStore.fetchUsers()
+  userStore.subscribeToRealtime()
 })
 </script>
 
@@ -240,9 +288,9 @@ onMounted(() => {
   <div class="um-view">
     <div class="um-content">
       <div class="um-top">
-        <h2>User Management</h2>
+        <h2>User & Access Management</h2>
         <div class="um-note">
-          Manage system users and their assigned roles. Select a role from the drop-down menu next to any user to update their access permissions instantly.
+          Manage system users and configure custom access permissions per individual user. Click <strong>Edit Access</strong> on any user row to customize capabilities.
         </div>
       </div>
 
@@ -284,30 +332,75 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in userStore.users" :key="user.id">
-            <td class="col-user">
-              <div>{{ user.email || user.display_name }}</div>
-              <span v-if="user.user_id === authStore.user?.user_id" class="you-tag">(you)</span>
-              <div v-if="getUserDisplayName(user) && getUserDisplayName(user) !== user.email" class="user-name-sub">
-                {{ getUserDisplayName(user) }}
-              </div>
-            </td>
-            <td class="col-role">
-              <select
-                :value="user.role"
-                class="um-role-select"
-                @change="handleRoleChange(user, ($event.target as HTMLSelectElement).value as Role)"
-              >
-                <option v-for="r in ROLES" :key="r.value" :value="r.value">
-                  {{ r.label }}
-                </option>
-              </select>
-            </td>
-            <td class="col-actions">
-              <button class="um-btn2" @click="resetPassword(user)">Reset Password</button>
-              <button class="um-btn2 um-del" @click="deleteUser(user)">Delete</button>
-            </td>
-          </tr>
+          <template v-for="user in userStore.users" :key="user.id">
+            <tr>
+              <td class="col-user">
+                <div>{{ user.email || user.display_name }}</div>
+                <span v-if="user.user_id === authStore.user?.user_id" class="you-tag">(you)</span>
+                <div v-if="getUserDisplayName(user) && getUserDisplayName(user) !== user.email" class="user-name-sub">
+                  {{ getUserDisplayName(user) }}
+                </div>
+              </td>
+              <td class="col-role">
+                <select
+                  :value="user.role"
+                  class="um-role-select"
+                  @change="handleRoleChange(user, ($event.target as HTMLSelectElement).value as Role)"
+                >
+                  <option v-for="r in ROLES" :key="r.value" :value="r.value">
+                    {{ r.label }}
+                  </option>
+                </select>
+              </td>
+              <td class="col-actions">
+                <button class="um-btn2 um-access" @click="openEditAccess(user)">Edit Access</button>
+                <button class="um-btn2" @click="resetPassword(user)">Reset</button>
+                <button class="um-btn2 um-del" @click="deleteUser(user)">Delete</button>
+              </td>
+            </tr>
+
+            <!-- Expandable Edit Access Panel -->
+            <tr v-if="editingUserId === user.user_id" class="access-editor-row">
+              <td colspan="3">
+                <div class="access-editor-panel">
+                  <div class="access-editor-header">
+                    <strong>Customize Individual Access Permissions &mdash; {{ getUserDisplayName(user) || user.email }}</strong>
+                    <span v-if="savePermsMsg" class="save-perms-success">{{ savePermsMsg }}</span>
+                  </div>
+                  <div class="access-grid">
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.create_quotes" :disabled="user.role === 'superadmin'" />
+                      Create Quotes
+                    </label>
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.manage_product_files" :disabled="user.role === 'superadmin'" />
+                      Manage Product Files
+                    </label>
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.edit_machine_catalog" :disabled="user.role === 'superadmin'" />
+                      Edit Machine Catalog
+                    </label>
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.upload_machine_catalog" :disabled="user.role === 'superadmin'" />
+                      Upload Machine Catalog
+                    </label>
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.manage_users" :disabled="user.role === 'superadmin'" />
+                      Manage Users
+                    </label>
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.manage_roles_access" :disabled="user.role === 'superadmin'" />
+                      Manage Access
+                    </label>
+                  </div>
+                  <div class="access-actions">
+                    <button class="um-btn-add" @click="saveUserAccess(user.user_id)">Save Access</button>
+                    <button class="um-btn2 um-del" @click="closeEditAccess">Cancel</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
@@ -336,12 +429,12 @@ onMounted(() => {
   font-size: 11px;
   color: #666;
   margin-bottom: 14px;
-  max-width: 780px;
+  max-width: 840px;
   line-height: 1.5;
 }
 
 .um-content {
-  max-width: 780px;
+  max-width: 840px;
 }
 
 /* --- Add User Row --- */
@@ -432,7 +525,7 @@ onMounted(() => {
 }
 
 .col-user {
-  width: 35%;
+  width: 32%;
 }
 
 .user-name-sub {
@@ -449,16 +542,11 @@ onMounted(() => {
 }
 
 .col-role {
-  width: 30%;
+  width: 28%;
 }
 
 .col-actions {
-  width: 35%;
-}
-
-.you-tag {
-  color: #999;
-  font-size: 11px;
+  width: 40%;
 }
 
 /* --- Role dropdown in table --- */
@@ -473,26 +561,89 @@ onMounted(() => {
 
 /* --- Action Buttons --- */
 .um-btn2 {
-  padding: 3px 10px;
-  border: 1px solid #c62828;
+  padding: 3px 8px;
+  border: 1px solid #777;
   border-radius: 3px;
   background: #fff;
-  color: #c62828;
+  color: #333;
   font-size: 11px;
   cursor: pointer;
-  margin-right: 6px;
+  margin-right: 5px;
 }
 
 .um-btn2:hover {
-  background: #ffebee;
+  background: #f0f0f0;
+}
+
+.um-access {
+  border-color: #8b1a1a;
+  color: #8b1a1a;
+  font-weight: 600;
+}
+
+.um-access:hover {
+  background: #fbe9e7;
 }
 
 .um-del {
-  border-color: #555;
-  color: #555;
+  border-color: #d32f2f;
+  color: #d32f2f;
 }
 
 .um-del:hover {
-  background: #eee;
+  background: #ffebee;
+}
+
+/* --- Access Editor Panel --- */
+.access-editor-row td {
+  background: #fff8f8;
+  padding: 12px 16px;
+  border-bottom: 2px solid #8b1a1a;
+}
+
+.access-editor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.access-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #8b1a1a;
+}
+
+.save-perms-success {
+  color: #2e7d32;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.access-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 16px;
+  background: #fff;
+  padding: 10px 14px;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+}
+
+.access-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+}
+
+.access-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
 }
 </style>

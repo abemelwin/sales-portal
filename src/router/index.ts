@@ -67,9 +67,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/roles',
-    name: 'roles',
-    component: () => import('@/views/RoleManagementView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
+    redirect: { name: 'users' }
   },
   {
     path: '/migrate',

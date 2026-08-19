@@ -316,6 +316,49 @@ export const useUserStore = defineStore('users', () => {
     }
   }
 
+  /**
+   * Update individual permission overrides for a user.
+   */
+  async function updateUserPermissions(
+    userId: string,
+    perms: {
+      create_quotes?: boolean
+      manage_product_files?: boolean
+      edit_machine_catalog?: boolean
+      upload_machine_catalog?: boolean
+      manage_users?: boolean
+      manage_roles_access?: boolean
+    }
+  ): Promise<{ success: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update(perms)
+        .eq('user_id', userId)
+
+      if (updateError) {
+        error.value = updateError.message
+        return { success: false, error: updateError.message }
+      }
+
+      // Update local state
+      const targetUser = users.value.find((u) => u.user_id === userId)
+      if (targetUser) {
+        Object.assign(targetUser, perms)
+      }
+
+      return { success: true }
+    } catch (err) {
+      error.value = 'An unexpected error occurred while updating permissions.'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   // ─── Public Interface ───────────────────────────────────────────────────────
 
   return {
@@ -328,6 +371,7 @@ export const useUserStore = defineStore('users', () => {
     fetchUsers,
     createUser,
     updateRole,
+    updateUserPermissions,
     deactivateUser,
     reactivateUser,
     subscribeToRealtime,

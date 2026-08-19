@@ -45,28 +45,38 @@ export const usePermissionsStore = defineStore('permissions', () => {
       return
     }
 
-    const { data, error } = await supabase
+    // Check user_profiles for individual user permissions override first
+    let userProfilePerms: Partial<RolePermissions> | null = null
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user?.id) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('create_quotes, manage_product_files, edit_machine_catalog, upload_machine_catalog, manage_users, manage_roles_access')
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+      if (profile) {
+        userProfilePerms = profile as any
+      }
+    }
+
+    // Fetch default role_permissions
+    const { data: roleData } = await supabase
       .from('role_permissions' as any)
       .select('*')
       .eq('role', role)
       .maybeSingle()
 
     const isSalesRole = ['superadmin', 'sales_admin_manager', 'sales_admin_supervisor', 'sales_admin_assistant', 'area_sales_manager', 'account_executive', 'sales_assistant'].includes(role)
+    const isProductTechRole = ['product_technical_head', 'product_development_manager', 'service_manager'].includes(role)
+    const isSalesAdminRole = ['sales_admin_manager', 'sales_admin_supervisor', 'area_sales_manager'].includes(role)
 
-    if (error || !data) {
-      permissions.value = {
-        ...DEFAULT_PERMS,
-        create_quotes: isSalesRole,
-      }
-    } else {
-      permissions.value = {
-        create_quotes: (data as any).create_quotes ?? isSalesRole,
-        manage_product_files: (data as any).manage_product_files ?? false,
-        edit_machine_catalog: (data as any).edit_machine_catalog ?? false,
-        upload_machine_catalog: (data as any).upload_machine_catalog ?? false,
-        manage_users: (data as any).manage_users ?? false,
-        manage_roles_access: (data as any).manage_roles_access ?? false,
-      }
+    permissions.value = {
+      create_quotes: userProfilePerms?.create_quotes ?? (roleData as any)?.create_quotes ?? isSalesRole,
+      manage_product_files: userProfilePerms?.manage_product_files ?? (roleData as any)?.manage_product_files ?? (isSalesRole || isProductTechRole),
+      edit_machine_catalog: userProfilePerms?.edit_machine_catalog ?? (roleData as any)?.edit_machine_catalog ?? (isSalesRole || isProductTechRole),
+      upload_machine_catalog: userProfilePerms?.upload_machine_catalog ?? (roleData as any)?.upload_machine_catalog ?? (isProductTechRole || isSalesAdminRole),
+      manage_users: userProfilePerms?.manage_users ?? (roleData as any)?.manage_users ?? isSalesAdminRole,
+      manage_roles_access: userProfilePerms?.manage_roles_access ?? (roleData as any)?.manage_roles_access ?? isSalesAdminRole,
     }
     loaded.value = true
   }
@@ -75,12 +85,20 @@ export const usePermissionsStore = defineStore('permissions', () => {
     if (realtimeChannel || !roleToSubscribe) return
 
     realtimeChannel = supabase
-      .channel('permissions:role_permissions')
+      .channel('permissions:live_updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_profiles' },
+        () => {
+          if (currentRole.value) {
+            fetchPermissions(currentRole.value)
+          }
+        }
+      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'role_permissions' },
         () => {
-          // Refetch permissions dynamically whenever an admin edits roles matrix
           if (currentRole.value) {
             fetchPermissions(currentRole.value)
           }

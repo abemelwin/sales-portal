@@ -21,6 +21,12 @@ export interface User {
   is_active: boolean
   created_at: string
   updated_at: string
+  create_quotes?: boolean | null
+  manage_product_files?: boolean | null
+  edit_machine_catalog?: boolean | null
+  upload_machine_catalog?: boolean | null
+  manage_users?: boolean | null
+  manage_roles_access?: boolean | null
 }
 
 export interface CreateUserInput {
