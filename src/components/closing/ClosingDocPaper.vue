@@ -1,9 +1,37 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import letterheadEspmiHeader from '@/assets/letterhead-espmi-1.jpg'
 import letterheadEspmiFooter from '@/assets/letterhead-espmi-2.jpg'
 import letterheadAcsHeader from '@/assets/letterhead-acs-1.jpg'
 import letterheadAcsFooter from '@/assets/letterhead-acs-2.jpg'
+
+const containerRef = ref<HTMLElement | null>(null)
+const scale = ref(1)
+
+function updateScale() {
+  if (!containerRef.value) return
+  const containerWidth = containerRef.value.clientWidth
+  const a4WidthPx = 793.7
+  if (containerWidth > 0 && containerWidth < a4WidthPx) {
+    scale.value = containerWidth / a4WidthPx
+  } else {
+    scale.value = 1
+  }
+}
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  updateScale()
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver(updateScale)
+    resizeObserver.observe(containerRef.value)
+  }
+})
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+})
 
 const props = defineProps<{
   docType: string
@@ -264,11 +292,16 @@ const pdcRows = computed(() => {
 </script>
 
 <template>
-  <div id="tc-paper" class="closing-doc-paper">
-    <!-- Header Letterhead -->
-    <div class="tc-lh">
-      <img :src="letterheadHeaderSrc" alt="Header Letterhead" />
-    </div>
+  <div ref="containerRef" class="closing-doc-container">
+    <div
+      id="tc-paper"
+      class="closing-doc-paper"
+      :style="{ transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: 'top left' }"
+    >
+      <!-- Header Letterhead -->
+      <div class="tc-lh">
+        <img :src="letterheadHeaderSrc" alt="Header Letterhead" />
+      </div>
 
     <!-- 1. TERMS AND CONDITIONS -->
     <div v-if="activeDoc === 'tc'" class="tc-body">
@@ -567,9 +600,25 @@ const pdcRows = computed(() => {
       <img :src="letterheadFooterSrc" alt="Footer Letterhead" />
     </div>
   </div>
+  <div
+    class="closing-doc-spacer"
+    :style="{ height: scale < 1 ? `${(1122 * scale) - 1122}px` : '0px' }"
+  ></div>
+  </div>
 </template>
 
 <style scoped>
+.closing-doc-container {
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto;
+  position: relative;
+}
+
+.closing-doc-spacer {
+  pointer-events: none;
+}
+
 .closing-doc-paper {
   width: 210mm;
   min-height: 297mm;

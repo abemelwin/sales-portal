@@ -326,27 +326,50 @@ onMounted(async () => {
 
 /* Responsive: on mobile, scale paper to fit viewport */
 @media screen and (max-width: 767px) {
-  .closing-docs-header {
+  .closing-overlay__bar {
+    padding: 8px 10px;
+    gap: 8px;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
+    align-items: stretch;
   }
 
-  .tab-nav {
-    gap: 0;
-  }
-
-  .tab-button {
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--font-size-xs);
-  }
-
-  .closing-doc-paper {
+  .closing-overlay__tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
     width: 100%;
-    min-height: auto;
-    padding: var(--space-4);
-    box-shadow: none;
-    border: none;
+  }
+
+  .co-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    min-height: 38px;
+  }
+
+  .closing-overlay__actions {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .co-btn {
+    flex: 1;
+    padding: 7px 8px;
+    font-size: 11.5px;
+    justify-content: center;
+    white-space: nowrap;
+    min-height: 38px;
+  }
+
+  .closing-docs-content {
+    padding: 10px 6px;
   }
 }
 
