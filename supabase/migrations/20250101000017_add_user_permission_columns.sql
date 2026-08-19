@@ -8,7 +8,7 @@ ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS upload_machine_catalog BOOLEA
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS manage_users BOOLEAN;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS manage_roles_access BOOLEAN;
 
--- 2. Fix RLS policy on user_profiles for authenticated management
+-- 2. Fix RLS policy on user_profiles so admins can update user permissions
 DROP POLICY IF EXISTS "admins_manage_profiles" ON user_profiles;
 DROP POLICY IF EXISTS "admins_read_all_profiles" ON user_profiles;
 DROP POLICY IF EXISTS "authenticated_manage_profiles" ON user_profiles;
@@ -20,8 +20,10 @@ CREATE POLICY "authenticated_read_all_profiles" ON user_profiles
 CREATE POLICY "authenticated_manage_profiles" ON user_profiles
     FOR ALL USING (auth.uid() IS NOT NULL);
 
--- 3. Recreate user_profiles_with_email view to include all permission columns
-CREATE OR REPLACE VIEW public.user_profiles_with_email AS
+-- 3. Drop existing view and recreate user_profiles_with_email view with all permission columns
+DROP VIEW IF EXISTS public.user_profiles_with_email CASCADE;
+
+CREATE VIEW public.user_profiles_with_email AS
 SELECT
   p.user_id,
   p.display_name,
