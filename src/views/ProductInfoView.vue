@@ -16,12 +16,7 @@ const catalogStore = useCatalogStore()
 const permStore = usePermissionsStore()
 const { role } = useAuth()
 
-const canManageProductFiles = computed(() => {
-  if (role.value === 'superadmin') return true
-  return permStore.can('manage_product_files')
-})
-
-const canUploadFiles = computed(() => {
+const canModifyProductFiles = computed(() => {
   if (role.value === 'superadmin') return true
   return permStore.can('upload_machine_catalog')
 })
@@ -264,7 +259,7 @@ async function deleteLink(linkId: string) {
                 {{ link.display_name }}
               </a>
               <button
-                v-if="canManageProductFiles"
+                v-if="canModifyProductFiles"
                 class="btn-remove"
                 @click="deleteLink(link.id)"
                 :aria-label="`Remove ${link.display_name}`"
@@ -274,9 +269,9 @@ async function deleteLink(linkId: string) {
           </ul>
           <p v-else class="no-files">No files yet.</p>
 
-          <div v-if="canManageProductFiles || canUploadFiles" class="card-actions">
-            <button v-if="canUploadFiles" class="btn-upload" @click="uploadFile(cat.key)">&uarr; Upload File</button>
-            <button v-if="canManageProductFiles" class="btn-link" @click="addLink(cat.key)">&#128279; Add Link</button>
+          <div v-if="canModifyProductFiles" class="card-actions">
+            <button class="btn-upload" @click="uploadFile(cat.key)">&uarr; Upload File</button>
+            <button class="btn-link" @click="addLink(cat.key)">&#128279; Add Link</button>
           </div>
         </div>
       </div>
