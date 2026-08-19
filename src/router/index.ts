@@ -132,7 +132,7 @@ router.beforeEach(async (to) => {
       if (!permStore.loaded) {
         await permStore.fetchPermissions(currentRole)
       }
-      return permStore.can('create_quotes') ? { name: 'quote-new' } : { name: 'product-info' }
+      return getDefaultRoute(permStore)
     }
     return { name: 'quote-new' }
   }
@@ -158,27 +158,31 @@ router.beforeEach(async (to) => {
         await permStore.fetchPermissions(currentRole)
       }
 
-      // Check Quote Generator permission
-      if ((to.name === 'quote-new' || to.name === 'quote-edit') && !permStore.can('create_quotes')) {
-        return { name: 'product-info' }
-      }
-
-      // Check Admin route permissions
-      const routePermissions: Record<string, 'edit_machine_catalog' | 'manage_users' | 'manage_roles_access'> = {
-        catalog: 'edit_machine_catalog',
-        users: 'manage_users',
-        roles: 'manage_roles_access',
-        migrate: 'manage_roles_access',
+      const routePermissions: Record<string, keyof typeof permStore.permissions> = {
+        'quote-new': 'create_quotes',
+        'quote-edit': 'create_quotes',
+        'product-info': 'manage_product_files',
+        'catalog': 'edit_machine_catalog',
+        'users': 'manage_users',
+        'roles': 'manage_roles_access',
+        'migrate': 'manage_roles_access',
       }
 
       const requiredPermission = routePermissions[to.name as string]
-      if (to.meta.requiresAdmin && requiredPermission) {
-        if (!permStore.can(requiredPermission)) {
-          return permStore.can('create_quotes') ? { name: 'quote-new' } : { name: 'product-info' }
-        }
+      if (requiredPermission && !permStore.can(requiredPermission)) {
+        return getDefaultRoute(permStore)
       }
     }
   }
 })
+
+function getDefaultRoute(permStore: any) {
+  if (permStore.can('create_quotes')) return { name: 'quote-new' }
+  if (permStore.can('manage_product_files')) return { name: 'product-info' }
+  if (permStore.can('edit_machine_catalog')) return { name: 'catalog' }
+  if (permStore.can('manage_users')) return { name: 'users' }
+  if (permStore.can('manage_roles_access')) return { name: 'roles' }
+  return { name: 'catalog' }
+}
 
 export default router

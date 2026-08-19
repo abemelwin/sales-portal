@@ -53,7 +53,9 @@ const navLinks = computed(() => {
   if (permStore.can('create_quotes')) {
     links.push({ to: '/quotes/new', label: 'Quote Generator' })
   }
-  links.push({ to: '/product-info', label: 'Product Info' })
+  if (permStore.can('manage_product_files')) {
+    links.push({ to: '/product-info', label: 'Product Info' })
+  }
   return links
 })
 
