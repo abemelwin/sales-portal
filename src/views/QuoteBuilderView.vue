@@ -11,6 +11,10 @@ import QuotePreviewPanel from '@/components/quote/QuotePreviewPanel.vue'
 import { ClosingDocPaper } from '@/components/closing'
 import ClosingDocsPrompt from '@/components/quote/ClosingDocsPrompt.vue'
 
+defineOptions({
+  name: 'QuoteBuilderView',
+})
+
 const route = useRoute()
 const quoteStore = useQuoteStore()
 const { printQuote, printClosingDoc, isPrinting } = useExportPDF()

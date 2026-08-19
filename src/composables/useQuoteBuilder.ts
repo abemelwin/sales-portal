@@ -113,10 +113,10 @@ export interface QuoteBuilderState {
 export const QUOTE_BUILDER_KEY: InjectionKey<QuoteBuilderState> = Symbol('quoteBuilder')
 
 /**
- * Creates a new reactive QuoteBuilderState with default values.
+ * Generates default values for a fresh QuoteBuilderState.
  */
-export function useQuoteBuilder(): QuoteBuilderState {
-  return reactive<QuoteBuilderState>({
+export function createDefaultQuoteState(): QuoteBuilderState {
+  return {
     // Machine selection
     selectedBrand: '',
     selectedModel: '',
@@ -147,7 +147,7 @@ export function useQuoteBuilder(): QuoteBuilderState {
     promoValidity: '',
     freebies: [],
 
-    // Term options (start with 1)
+    // Term options
     termOptions: [],
 
     // Trade-ins
@@ -198,5 +198,23 @@ export function useQuoteBuilder(): QuoteBuilderState {
 
     // Validation
     validationErrors: [],
-  })
+  }
+}
+
+/** Shared singleton reactive state instance to persist inputs across tab/route switches */
+const sharedQuoteState = reactive<QuoteBuilderState>(createDefaultQuoteState())
+
+/**
+ * Resets the shared quote state back to default values.
+ */
+export function resetQuoteState(): void {
+  Object.assign(sharedQuoteState, createDefaultQuoteState())
+}
+
+/**
+ * Returns the singleton reactive QuoteBuilderState instance,
+ * preserving form inputs across navigation and tab switches.
+ */
+export function useQuoteBuilder(): QuoteBuilderState {
+  return sharedQuoteState
 }

@@ -13,7 +13,6 @@ import NavBar from '@/components/layout/NavBar.vue'
 import ConnectivityBanner from '@/components/layout/ConnectivityBanner.vue'
 import { useIdleLogout } from '@/composables/useIdleLogout'
 
-
 useIdleLogout()
 
 const router = useRouter()
@@ -193,7 +192,11 @@ function dismissError() {
 
     <!-- Main content area -->
     <main class="app-main" :class="{ 'app-main--with-nav': isAuthenticated }">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <KeepAlive :include="['QuoteBuilderView']">
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
     </main>
   </div>
 </template>
@@ -211,7 +214,7 @@ function dismissError() {
 }
 
 .app-main--with-nav {
-  /* No extra padding � views manage their own layout */
+  /* No extra padding — views manage their own layout */
 }
 
 /* Error banner */
@@ -247,6 +250,4 @@ function dismissError() {
   color: var(--color-white);
   background-color: var(--color-error);
 }
-
-
 </style>
