@@ -39,6 +39,7 @@ const navLinks = computed(() => {
   if (permStore.can('create_quotes')) {
     links.push({ to: '/quotes/new', label: 'Quote Generator' })
   }
+  links.push({ to: '/calculator', label: 'Calculator' })
   if (permStore.can('manage_product_files')) {
     links.push({ to: '/product-info', label: 'Product Info' })
   }
