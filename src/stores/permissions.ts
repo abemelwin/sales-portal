@@ -24,10 +24,12 @@ const DEFAULT_PERMS: RolePermissions = {
 export const usePermissionsStore = defineStore('permissions', () => {
   const permissions = ref<RolePermissions>({ ...DEFAULT_PERMS })
   const loaded = ref(false)
+  const currentRole = ref<string>('')
   let realtimeChannel: RealtimeChannel | null = null
 
   async function fetchPermissions(role: string): Promise<void> {
     if (!role) return
+    currentRole.value = role
 
     // Superadmin always has full access
     if (role === 'superadmin') {
@@ -69,8 +71,8 @@ export const usePermissionsStore = defineStore('permissions', () => {
     loaded.value = true
   }
 
-  function subscribeToRealtime(currentRole: string): void {
-    if (realtimeChannel || !currentRole) return
+  function subscribeToRealtime(roleToSubscribe: string): void {
+    if (realtimeChannel || !roleToSubscribe) return
 
     realtimeChannel = supabase
       .channel('permissions:role_permissions')
@@ -79,7 +81,9 @@ export const usePermissionsStore = defineStore('permissions', () => {
         { event: '*', schema: 'public', table: 'role_permissions' },
         () => {
           // Refetch permissions dynamically whenever an admin edits roles matrix
-          fetchPermissions(currentRole)
+          if (currentRole.value) {
+            fetchPermissions(currentRole.value)
+          }
         }
       )
       .subscribe()
@@ -96,6 +100,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     unsubscribeFromRealtime()
     permissions.value = { ...DEFAULT_PERMS }
     loaded.value = false
+    currentRole.value = ''
   }
 
   // Convenience getters
@@ -106,6 +111,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
   return {
     permissions,
     loaded,
+    currentRole,
     fetchPermissions,
     subscribeToRealtime,
     unsubscribeFromRealtime,

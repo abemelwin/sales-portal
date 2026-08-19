@@ -34,6 +34,9 @@ const isAdmin = computed(() => adminLinks.value.length > 0)
 const roleLabel = computed(() => {
   const labels: Record<string, string> = {
     superadmin: 'Super Admin',
+    product_technical_head: 'Product Technical Head',
+    product_development_manager: 'Product Development Manager',
+    service_manager: 'Service Manager',
     product_manager: 'Product Manager',
     sales_admin_manager: 'Sales Admin Manager',
     sales_admin_supervisor: 'Sales Admin Supervisor',

@@ -129,7 +129,7 @@ router.beforeEach(async (to) => {
     if (currentRole !== 'superadmin') {
       const { usePermissionsStore } = await import('@/stores/permissions')
       const permStore = usePermissionsStore()
-      if (!permStore.loaded) {
+      if (!permStore.loaded || permStore.currentRole !== currentRole) {
         await permStore.fetchPermissions(currentRole)
       }
       return getDefaultRoute(permStore)
@@ -154,7 +154,7 @@ router.beforeEach(async (to) => {
     if (currentRole !== 'superadmin') {
       const { usePermissionsStore } = await import('@/stores/permissions')
       const permStore = usePermissionsStore()
-      if (!permStore.loaded) {
+      if (!permStore.loaded || permStore.currentRole !== currentRole) {
         await permStore.fetchPermissions(currentRole)
       }
 
