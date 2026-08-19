@@ -9,7 +9,6 @@ const termsMonths = ref<number>(12)
 
 // Copy feedback state
 const copied = ref(false)
-const showSchedule = ref(false)
 
 // Presets
 const dpPercentPresets = [0, 10, 20, 30, 50]
@@ -67,25 +66,6 @@ function fmtCurrency(val: number): string {
   const n = Number(val) || 0
   return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
-
-// Generate Month-by-Month Schedule
-const paymentSchedule = computed(() => {
-  const terms = Number(termsMonths.value) || 0
-  const monthly = monthlyAmortization.value
-  let rem = balance.value
-  const rows: { month: number; payment: number; remaining: number }[] = []
-
-  for (let i = 1; i <= terms; i++) {
-    rem = Math.max(0, rem - monthly)
-    rows.push({
-      month: i,
-      payment: monthly,
-      remaining: rem
-    })
-  }
-
-  return rows
-})
 
 // Copy text summary to clipboard
 async function copySummary() {
@@ -316,33 +296,7 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
           <button type="button" class="btn btn-copy" @click="copySummary">
             {{ copied ? '✓ Copied to Clipboard!' : '📋 Copy Summary' }}
           </button>
-          <button type="button" class="btn btn-schedule" @click="showSchedule = !showSchedule">
-            {{ showSchedule ? 'Hide Schedule' : '📅 View Payment Schedule' }}
-          </button>
         </div>
-      </div>
-    </div>
-
-    <!-- MONTH BY MONTH PAYMENT SCHEDULE TABLE -->
-    <div v-if="showSchedule" class="schedule-section">
-      <h2>📅 Month-by-Month Payment Schedule</h2>
-      <div class="table-wrap">
-        <table class="schedule-table">
-          <thead>
-            <tr>
-              <th>MONTH #</th>
-              <th>MONTHLY PAYMENT</th>
-              <th>REMAINING BALANCE</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in paymentSchedule" :key="r.month">
-              <td>Month {{ r.month }}</td>
-              <td>{{ fmtCurrency(r.payment) }}</td>
-              <td>{{ fmtCurrency(r.remaining) }}</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </div>
@@ -671,65 +625,6 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
 
 .btn-copy:hover {
   background: #e5e7eb;
-}
-
-.btn-schedule {
-  background: #ffffff;
-  color: #4b5563;
-  border: 1px solid #d1d5db;
-}
-
-.btn-schedule:hover {
-  background: #f9fafb;
-}
-
-/* Schedule Section */
-.schedule-section {
-  margin-top: 28px;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
-}
-
-.schedule-section h2 {
-  font-size: 16px;
-  color: #1f2937;
-  font-weight: 700;
-  margin: 0 0 16px;
-}
-
-.table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.schedule-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.schedule-table th {
-  background: #c0392b;
-  color: #ffffff;
-  padding: 10px 14px;
-  text-align: left;
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.schedule-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #e5e7eb;
-  color: #374151;
-}
-
-.schedule-table tr:hover td {
-  background: #fef2f2;
 }
 
 /* Responsive (< 768px) */
