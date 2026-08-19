@@ -13,7 +13,7 @@ const showSchedule = ref(false)
 
 // Presets
 const dpPercentPresets = [0, 10, 20, 30, 50]
-const ratePresets = [0, 6, 8, 10, 12, 15, 18, 24]
+const ratePresets = [7, 10, 12, 14, 21, 28]
 const termsPresets = [3, 6, 12, 18, 24, 36, 48, 60]
 
 // Downpayment percentage of base price
@@ -458,6 +458,12 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
   font-size: 12px;
 }
 
+.calc-input::-webkit-outer-spin-button,
+.calc-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .calc-input {
   width: 100%;
   padding: 10px 12px 10px 32px;
@@ -468,6 +474,8 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
   color: #111827;
   background: #f9fafb;
   transition: border-color 0.15s, background-color 0.15s;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .calc-input.suffix-input {
