@@ -116,18 +116,30 @@ async function saveAccess() {
   try {
     for (const r of roles) {
       if (r.isLocked) continue
-      const { error: updateErr } = await supabase
+      const updatePayload: Record<string, any> = {
+        create_quotes: r.create_quotes,
+        manage_product_files: r.manage_product_files,
+        edit_machine_catalog: r.edit_machine_catalog,
+        upload_machine_catalog: r.upload_machine_catalog,
+        manage_users: r.manage_users,
+        manage_roles_access: r.manage_roles_access,
+        updated_at: new Date().toISOString(),
+      }
+
+      let { error: updateErr } = await supabase
         .from('role_permissions' as any)
-        .update({
-          create_quotes: r.create_quotes,
-          manage_product_files: r.manage_product_files,
-          edit_machine_catalog: r.edit_machine_catalog,
-          upload_machine_catalog: r.upload_machine_catalog,
-          manage_users: r.manage_users,
-          manage_roles_access: r.manage_roles_access,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('role', r.role)
+
+      // Fallback if create_quotes column does not exist in Supabase DB schema yet
+      if (updateErr && updateErr.message?.includes('create_quotes')) {
+        delete updatePayload.create_quotes
+        const fallback = await supabase
+          .from('role_permissions' as any)
+          .update(updatePayload)
+          .eq('role', r.role)
+        updateErr = fallback.error
+      }
 
       if (updateErr) {
         error.value = `Failed to save ${ROLE_LABELS[r.role]}: ${updateErr.message}`
