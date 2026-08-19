@@ -837,4 +837,28 @@ h1 {
 .migration-panel {
   margin-top: 8px;
 }
+
+@media screen and (max-width: 768px) {
+  .data-migration-view {
+    padding: 12px;
+  }
+
+  .stats-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .btn {
+    width: 100%;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .skipped-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>

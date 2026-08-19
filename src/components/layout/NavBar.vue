@@ -312,18 +312,23 @@ async function handleLogout() {
 @media screen and (max-width: 767px) {
   .navbar {
     height: auto;
-    min-height: 40px;
+    min-height: 44px;
     overflow: visible;
   }
 
   .navbar-container {
     flex-wrap: wrap;
     padding: 0 12px;
+    min-height: 44px;
   }
 
   .navbar-toggle {
     display: flex;
     margin-left: auto;
+    min-height: 44px;
+    min-width: 44px;
+    align-items: center;
+    justify-content: center;
   }
 
   .navbar-menu {
@@ -331,8 +336,10 @@ async function handleLogout() {
     width: 100%;
     flex-direction: column;
     align-items: stretch;
-    padding: 8px 0;
+    padding: 8px 0 12px;
     border-top: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     overflow: visible;
   }
 
@@ -343,7 +350,7 @@ async function handleLogout() {
   .navbar-nav {
     flex-direction: column;
     align-items: stretch;
-    gap: 0;
+    gap: 2px;
     flex-wrap: wrap;
   }
 
@@ -351,13 +358,35 @@ async function handleLogout() {
     padding: 12px 16px;
     font-size: 14px;
     min-height: 44px;
+    border-radius: 6px;
   }
 
   .navbar-user {
     margin-left: 0;
-    padding: 12px 16px;
+    padding: 12px 16px 4px;
     border-top: 1px solid #e5e7eb;
     margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .navbar-user-name {
+    max-width: 100%;
+    width: 100%;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .navbar-sep {
+    display: none;
+  }
+
+  .navbar-action-link,
+  .navbar-logout-btn {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
   }
 }
 </style>

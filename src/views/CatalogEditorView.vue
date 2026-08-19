@@ -444,48 +444,52 @@ onMounted(() => {
       <!-- Consumables table -->
       <div class="cf-row full">
         <label>Consumables</label>
-        <table class="cf-tbl">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Unit of Measure</th>
-              <th>Unit Price</th>
-              <th><span class="sr-only">Remove</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, idx) in consumables" :key="idx">
-              <td><input v-model="row.name" class="cf-c-name" /></td>
-              <td><input v-model="row.uom" class="cf-c-uom" /></td>
-              <td><input v-model="row.price" class="cf-c-price" inputmode="decimal" /></td>
-              <td><button type="button" class="cf-rowdel" @click="removeConsumableRow(idx)">&times;</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="cf-tbl-wrap">
+          <table class="cf-tbl">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Unit of Measure</th>
+                <th>Unit Price</th>
+                <th><span class="sr-only">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in consumables" :key="idx">
+                <td><input v-model="row.name" class="cf-c-name" /></td>
+                <td><input v-model="row.uom" class="cf-c-uom" /></td>
+                <td><input v-model="row.price" class="cf-c-price" inputmode="decimal" /></td>
+                <td><button type="button" class="cf-rowdel" @click="removeConsumableRow(idx)">&times;</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <button type="button" class="cf-addrow" @click="addConsumableRow()">+ Add Consumable</button>
       </div>
 
       <!-- Optional Add-Ons table -->
       <div class="cf-row full">
         <label>Optional Add-Ons</label>
-        <table class="cf-tbl">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Unit of Measure</th>
-              <th>Unit Price</th>
-              <th><span class="sr-only">Remove</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, idx) in addons" :key="idx">
-              <td><input v-model="row.name" class="cf-c-name" /></td>
-              <td><input v-model="row.uom" class="cf-c-uom" /></td>
-              <td><input v-model="row.price" class="cf-c-price" inputmode="decimal" /></td>
-              <td><button type="button" class="cf-rowdel" @click="removeAddonRow(idx)">&times;</button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="cf-tbl-wrap">
+          <table class="cf-tbl">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Unit of Measure</th>
+                <th>Unit Price</th>
+                <th><span class="sr-only">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in addons" :key="idx">
+                <td><input v-model="row.name" class="cf-c-name" /></td>
+                <td><input v-model="row.uom" class="cf-c-uom" /></td>
+                <td><input v-model="row.price" class="cf-c-price" inputmode="decimal" /></td>
+                <td><button type="button" class="cf-rowdel" @click="removeAddonRow(idx)">&times;</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <button type="button" class="cf-addrow" @click="addAddonRow()">+ Add Add-On</button>
       </div>
     </div>
@@ -824,6 +828,12 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
+.cf-tbl-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .cat-error {
   max-width: 920px;
   margin-top: 10px;
@@ -834,9 +844,48 @@ onMounted(() => {
   font-size: 12px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
+  .cat-page {
+    padding: 12px;
+  }
+
+  .cat-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .cat-machine-sel {
+    max-width: 100%;
+    width: 100%;
+    font-size: 16px;
+    padding: 8px 10px;
+    min-height: 44px;
+  }
+
+  .cat-btn {
+    min-height: 44px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .cat-form {
     grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .cat-form input.fp-in,
+  .cat-form textarea {
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  .cat-save {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
   }
 }
 </style>

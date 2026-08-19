@@ -154,7 +154,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
+  padding: 10px 14px;
   background: #802820;
   border-bottom: 2px solid #561812;
   color: #fff;
@@ -165,8 +165,11 @@ onMounted(async () => {
 .closing-overlay__tabs {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
 }
 
 .co-tab {
@@ -179,6 +182,9 @@ onMounted(async () => {
   background: #c0392b;
   color: #fff;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 38px;
 }
 
 .co-tab:hover {
@@ -196,10 +202,11 @@ onMounted(async () => {
   gap: 8px;
   margin-left: auto;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .co-btn {
-  padding: 8px 16px;
+  padding: 8px 14px;
   border: none;
   border-radius: 6px;
   font-size: 12.5px;
@@ -207,8 +214,11 @@ onMounted(async () => {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   transition: background 0.2s;
+  min-height: 38px;
+  white-space: nowrap;
 }
 
 .co-btn--edit {

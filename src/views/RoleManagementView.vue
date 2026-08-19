@@ -301,13 +301,15 @@ h1 {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 8px rgba(0,0,0,.12);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .roles-table {
   border-collapse: collapse;
   width: 100%;
   font-size: 13px;
+  min-width: 680px;
 }
 
 .roles-table thead th {
@@ -319,6 +321,7 @@ h1 {
   padding: 9px 10px;
   text-align: left;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .col-role {
@@ -346,8 +349,8 @@ h1 {
 }
 
 input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   accent-color: #c0392b;
   cursor: pointer;
 }
@@ -360,6 +363,19 @@ input[type="checkbox"]:disabled {
 @media screen and (max-width: 768px) {
   .roles-view {
     padding: 12px;
+  }
+  .roles-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .save-btn {
+    width: 100%;
+    min-height: 48px;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .table-wrap {
     overflow-x: auto;

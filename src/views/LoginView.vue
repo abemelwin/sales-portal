@@ -276,9 +276,28 @@ async function handleSubmit() {
   text-align: center;
 }
 
-@media screen and (max-width: 374px) {
+@media screen and (max-width: 480px) {
+  .login-view {
+    padding: var(--space-3);
+  }
+
   .login-card {
-    padding: var(--space-6);
+    padding: 24px 18px;
+    border-radius: 10px;
+  }
+
+  .login-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .form-input {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .btn-login {
+    min-height: 48px;
+    font-size: 16px;
   }
 }
 </style>

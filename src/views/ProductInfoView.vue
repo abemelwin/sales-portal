@@ -515,4 +515,37 @@ async function deleteLink(linkId: string) {
   background: #f5f5f5;
   color: #2c3e50;
 }
+
+@media screen and (max-width: 768px) {
+  .product-info-page {
+    padding: 12px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .brand-filter {
+    width: 100%;
+    font-size: 16px;
+    padding: 8px 12px;
+    min-height: 44px;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .btn-upload,
+  .btn-link {
+    min-height: 44px;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 </style>

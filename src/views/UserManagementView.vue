@@ -366,7 +366,8 @@ onMounted(() => {
       </div>
 
       <!-- User Table -->
-      <table v-else class="um-table">
+      <div v-else class="um-table-wrap">
+        <table class="um-table">
         <thead>
           <tr>
             <th class="col-user">Username</th>
@@ -450,18 +451,14 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .um-view {
-  position: fixed;
-  top: 40px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: auto;
+  min-height: calc(100vh - 40px);
   background: #eef0f2;
   padding: 16px 20px;
 }
@@ -482,6 +479,7 @@ onMounted(() => {
 
 .um-content {
   max-width: 840px;
+  margin: 0 auto;
 }
 
 /* --- Add User Row --- */
@@ -494,18 +492,18 @@ onMounted(() => {
 }
 
 .um-input {
-  padding: 5px 8px;
+  padding: 6px 8px;
   border: 1px solid #ccc;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 12px;
   max-width: 180px;
   width: 100%;
 }
 
 .um-select {
-  padding: 5px 8px;
+  padding: 6px 8px;
   border: 1px solid #ccc;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 12px;
   max-width: 180px;
   width: 100%;
@@ -515,12 +513,13 @@ onMounted(() => {
   background: #2e7d32;
   color: #fff;
   border: none;
-  border-radius: 3px;
-  padding: 6px 14px;
+  border-radius: 4px;
+  padding: 8px 16px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  min-height: 38px;
 }
 
 .um-btn-add:hover {
@@ -545,7 +544,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   flex: 1;
-  min-width: 220px;
+  min-width: 200px;
 }
 
 .search-icon {
@@ -559,7 +558,7 @@ onMounted(() => {
   width: 100%;
   padding: 6px 28px 6px 28px;
   border: 1px solid #ccc;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 12px;
 }
 
@@ -581,7 +580,7 @@ onMounted(() => {
 .um-filter-select {
   padding: 6px 10px;
   border: 1px solid #ccc;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 12px;
   background: #fff;
   min-width: 160px;
@@ -606,12 +605,20 @@ onMounted(() => {
 }
 
 /* --- Table --- */
+.um-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
 .um-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
-  background: #fff;
-  border: 1px solid #ddd;
+  min-width: 540px;
 }
 
 .um-table thead {
@@ -620,7 +627,7 @@ onMounted(() => {
 }
 
 .um-table th {
-  padding: 7px 10px;
+  padding: 8px 10px;
   text-align: left;
   font-weight: 600;
   font-size: 11px;
@@ -628,7 +635,7 @@ onMounted(() => {
 }
 
 .um-table td {
-  padding: 6px 10px;
+  padding: 8px 10px;
   border-bottom: 1px solid #eee;
   vertical-align: middle;
 }
@@ -667,28 +674,30 @@ onMounted(() => {
 
 .col-actions {
   width: 40%;
+  white-space: nowrap;
 }
 
 /* --- Role dropdown in table --- */
 .um-role-select {
-  padding: 3px 6px;
+  padding: 4px 6px;
   border: 1px solid #ccc;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 12px;
-  min-width: 160px;
+  min-width: 140px;
   background: #fff;
 }
 
 /* --- Action Buttons --- */
 .um-btn2 {
-  padding: 3px 8px;
+  padding: 5px 10px;
   border: 1px solid #777;
-  border-radius: 3px;
+  border-radius: 4px;
   background: #fff;
   color: #333;
   font-size: 11px;
   cursor: pointer;
   margin-right: 5px;
+  min-height: 32px;
 }
 
 .um-btn2:hover {
@@ -733,6 +742,8 @@ onMounted(() => {
   align-items: center;
   font-size: 12px;
   color: #8b1a1a;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .save-perms-success {
@@ -759,11 +770,70 @@ onMounted(() => {
   color: #333;
   cursor: pointer;
   user-select: none;
+  min-height: 36px;
+}
+
+.access-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #8b1a1a;
 }
 
 .access-actions {
   display: flex;
   gap: 8px;
   margin-top: 4px;
+}
+
+/* Mobile Responsive */
+@media screen and (max-width: 768px) {
+  .um-view {
+    padding: 12px;
+  }
+
+  .um-add {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .um-input,
+  .um-select {
+    max-width: 100%;
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  .um-btn-add {
+    width: 100%;
+  }
+
+  .um-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .um-search-box {
+    min-width: 100%;
+  }
+
+  .um-search-input {
+    font-size: 16px;
+    padding: 8px 30px;
+  }
+
+  .um-filter-select {
+    width: 100%;
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  .um-count {
+    margin-left: 0;
+    text-align: right;
+  }
+
+  .access-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

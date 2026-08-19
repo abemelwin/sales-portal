@@ -249,10 +249,16 @@ onMounted(() => {
     padding: var(--space-4);
   }
 
+  .closing-docs-index__search-input {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
   .closing-docs-index__card {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
+    min-height: 44px;
   }
 
   .closing-docs-index__date {

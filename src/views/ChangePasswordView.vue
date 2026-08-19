@@ -215,4 +215,13 @@ h1 {
   background: #ccc;
   cursor: not-allowed;
 }
+
+@media screen and (max-width: 480px) {
+  .change-password-view {
+    padding: 16px 12px;
+  }
+  .card {
+    padding: 20px 16px;
+  }
+}
 </style>

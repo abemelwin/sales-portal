@@ -328,4 +328,38 @@ function handleConfirm() {
   cursor: pointer;
 }
 .dp-ok:hover { background: #a93226; }
+
+@media screen and (max-width: 576px) {
+  .dp-overlay {
+    padding: 8px;
+  }
+  .dp-card {
+    max-height: 92vh;
+  }
+  .dp-head {
+    padding: 10px 14px;
+  }
+  .dp-body {
+    padding: 10px 14px;
+  }
+  .dp-row {
+    grid-template-columns: 1fr;
+  }
+  .dp-in {
+    font-size: 16px;
+    padding: 8px 10px;
+  }
+  .dp-foot {
+    flex-direction: column;
+    padding: 10px 14px;
+  }
+  .dp-cancel,
+  .dp-ok {
+    width: 100%;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 </style>

@@ -1007,12 +1007,25 @@ function dismissValidationBox() {
   background: #fff;
 }
 
-/* Prevent iOS auto-zoom */
+/* Prevent iOS auto-zoom & enhance mobile inputs */
 @media screen and (max-width: 768px) {
   .fp-in,
   .fp-sel {
     font-size: 16px;
     padding: 8px;
+    min-height: 44px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .fp-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .fp-row .fp-sec {
+    flex: 1 1 100% !important;
+    width: 100%;
   }
 }
 
