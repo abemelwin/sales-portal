@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import type { Role, User } from '@/types'
@@ -25,6 +25,24 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'sales_assistant', label: 'Sales Assistant' },
   { value: 'user', label: 'User' },
 ]
+
+// --- Search & Filter State ---
+const searchQuery = ref('')
+const roleFilter = ref('')
+
+const filteredUsers = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  const r = roleFilter.value
+
+  return userStore.users.filter((user) => {
+    if (r && user.role !== r) return false
+    if (!q) return true
+    const email = (user.email || '').toLowerCase()
+    const dispName = (user.display_name || '').toLowerCase()
+    const knownName = (getUserDisplayName(user) || '').toLowerCase()
+    return email.includes(q) || dispName.includes(q) || knownName.includes(q)
+  })
+})
 
 // --- Add User Form ---
 const newEmail = ref('')
@@ -317,6 +335,31 @@ onMounted(() => {
       </div>
       <div v-if="addError" class="um-error">{{ addError }}</div>
 
+      <!-- Search & Filter Bar -->
+      <div class="um-filter-bar">
+        <div class="um-search-box">
+          <span class="search-icon">&#128269;</span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="um-search-input"
+            placeholder="Search by name or email..."
+          />
+          <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">&times;</button>
+        </div>
+
+        <select v-model="roleFilter" class="um-filter-select">
+          <option value="">All Roles</option>
+          <option v-for="r in ROLES" :key="r.value" :value="r.value">
+            {{ r.label }}
+          </option>
+        </select>
+
+        <div class="um-count">
+          Showing <strong>{{ filteredUsers.length }}</strong> of {{ userStore.users.length }} users
+        </div>
+      </div>
+
       <!-- Loading -->
       <div v-if="userStore.loading && !userStore.users.length" class="um-loading">
         Loading users...
@@ -332,7 +375,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <template v-for="user in userStore.users" :key="user.id">
+          <template v-for="user in filteredUsers" :key="user.id">
             <tr>
               <td class="col-user">
                 <div>{{ user.email || user.display_name }}</div>
@@ -401,6 +444,10 @@ onMounted(() => {
               </td>
             </tr>
           </template>
+
+          <tr v-if="filteredUsers.length === 0">
+            <td colspan="3" class="um-empty-row">No users found matching your search.</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -480,6 +527,72 @@ onMounted(() => {
   background: #1b5e20;
 }
 
+/* --- Search & Filter Bar --- */
+.um-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  background: #fff;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+
+.um-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 8px;
+  font-size: 13px;
+  color: #888;
+}
+
+.um-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 28px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 6px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.clear-search-btn:hover {
+  color: #333;
+}
+
+.um-filter-select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  background: #fff;
+  min-width: 160px;
+}
+
+.um-count {
+  font-size: 11px;
+  color: #666;
+  margin-left: auto;
+}
+
 .um-error {
   color: #c62828;
   font-size: 12px;
@@ -522,6 +635,13 @@ onMounted(() => {
 
 .um-table tbody tr:hover {
   background: #f5f5f5;
+}
+
+.um-empty-row {
+  text-align: center;
+  color: #888;
+  padding: 20px !important;
+  font-style: italic;
 }
 
 .col-user {
