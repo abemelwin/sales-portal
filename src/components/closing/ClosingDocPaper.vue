@@ -137,12 +137,19 @@ const ptDown = computed(() => {
 })
 
 const tradeIns = computed(() => props.quoteState?.trade_ins ?? props.quoteState?.tradeIns ?? [])
-const tradeInSum = computed(() => tradeIns.value.reduce((sum: number, ti: any) => sum + (Number(ti.value ?? ti.val) || 0), 0))
-const tiDesc = computed(() => tradeIns.value.map((t: any) => t.description ?? t.desc).filter(Boolean).join('; '))
+const validTradeIns = computed(() => {
+  return tradeIns.value.filter((ti: any) => {
+    const d = (ti.description ?? ti.desc ?? '').trim()
+    const v = Number(ti.value ?? ti.val) || 0
+    return d.length > 0 || v > 0
+  })
+})
+const tradeInSum = computed(() => validTradeIns.value.reduce((sum: number, ti: any) => sum + (Number(ti.value ?? ti.val) || 0), 0))
+const tiDesc = computed(() => validTradeIns.value.map((t: any) => (t.description ?? t.desc ?? '').trim()).filter(Boolean).join('; '))
 
 const isTI = computed(() => {
   const d = dt.value.toLowerCase()
-  const hasTradeInRecords = tradeIns.value.length > 0 && tradeInSum.value > 0
+  const hasTradeInRecords = validTradeIns.value.length > 0 && tradeInSum.value > 0
   return d.includes('trade') || d.includes('ti_') || hasTradeInRecords
 })
 
@@ -532,12 +539,12 @@ const pdcRows = computed(() => {
             <tr><th>QUANTITY</th><th>DESCRIPTION</th><th>SERIAL NUMBER</th></tr>
           </thead>
           <tbody>
-            <tr v-for="(u, idx) in (tradeIns.length ? tradeIns : [{ description: tiDesc }])" :key="idx">
+            <tr v-for="(u, idx) in (validTradeIns.length ? validTradeIns : (tiDesc ? [{ description: tiDesc }] : []))" :key="idx">
               <td style="text-align:center">1</td>
-              <td>{{ u.description || tiDesc }}</td>
+              <td>{{ u.description || u.desc || tiDesc }}</td>
               <td></td>
             </tr>
-            <tr v-for="b in 10" :key="'blank-' + b">
+            <tr v-for="b in (10 - Math.min(10, validTradeIns.length || (tiDesc ? 1 : 0)))" :key="'blank-' + b">
               <td style="height:7mm"></td>
               <td></td>
               <td></td>
