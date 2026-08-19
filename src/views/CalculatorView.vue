@@ -253,9 +253,9 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
           <div class="excel-divider" />
 
           <!-- Formulated Outputs -->
-          <div class="excel-row highlight-row">
+          <div class="excel-row contract-row">
             <span class="excel-label">CONTRACT PRICE</span>
-            <span class="excel-val grand-val">{{ fmtCurrency(contractPrice) }}</span>
+            <span class="excel-val contract-val">{{ fmtCurrency(contractPrice) }}</span>
           </div>
           <div class="excel-row">
             <span class="excel-label">DOWNPAYMENT</span>
@@ -542,20 +542,23 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
   color: #0f172a;
 }
 
+.contract-row,
 .monthly-row {
   background: #fef2f2;
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #fecaca;
-  margin-top: 6px;
+  margin: 6px 0;
 }
 
+.contract-row .excel-label,
 .monthly-row .excel-label {
   color: #991b1b;
   font-weight: 800;
   font-size: 13px;
 }
 
+.contract-val,
 .monthly-val {
   font-size: 18px;
   font-weight: 800;
