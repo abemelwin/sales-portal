@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 // Input states
 const basePrice = ref<number>(1000000)
@@ -118,18 +115,6 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
     // Fallback if clipboard API fails
     alert('Summary:\n\n' + text)
   }
-}
-
-// Navigate to Quote Builder with calculated contract price
-function applyToQuote() {
-  router.push({
-    path: '/quotes/new',
-    query: {
-      contractPrice: String(Math.round(contractPrice.value)),
-      downPayment: String(Math.round(downpayment.value)),
-      months: String(termsMonths.value)
-    }
-  })
 }
 </script>
 
@@ -330,9 +315,6 @@ function applyToQuote() {
         <div class="action-buttons">
           <button type="button" class="btn btn-copy" @click="copySummary">
             {{ copied ? '✓ Copied to Clipboard!' : '📋 Copy Summary' }}
-          </button>
-          <button type="button" class="btn btn-apply" @click="applyToQuote">
-            📝 Create Quote with this Price
           </button>
           <button type="button" class="btn btn-schedule" @click="showSchedule = !showSchedule">
             {{ showSchedule ? 'Hide Schedule' : '📅 View Payment Schedule' }}
@@ -681,15 +663,6 @@ function applyToQuote() {
 
 .btn-copy:hover {
   background: #e5e7eb;
-}
-
-.btn-apply {
-  background: #c0392b;
-  color: #ffffff;
-}
-
-.btn-apply:hover {
-  background: #a93226;
 }
 
 .btn-schedule {
