@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+// ─── Tab state ──────────────────────────────────────────────────────────────────
+type CalcTab = 'financial' | 'dost'
+const activeCalcTab = ref<CalcTab>('financial')
+
+// ─── Financial Calculator ───────────────────────────────────────────────────────
+
 // Input states
 const basePrice = ref<number>(1000000)
 const downpayment = ref<number>(200000)
-const annualInterestRate = ref<number>(12) // In percent (e.g. 12 = 12%)
+const annualInterestRate = ref<number>(12)
 const termsMonths = ref<number>(12)
 
 // Copy feedback state
@@ -67,6 +73,90 @@ function fmtCurrency(val: number): string {
   return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+// ─── DOST Calculator ────────────────────────────────────────────────────────
+
+interface DostRow {
+  machine: string
+  dostVatIn: number
+}
+
+const dostRows = ref<DostRow[]>([
+  { machine: '', dostVatIn: 0 },
+])
+
+const VAT_RATE = 0.12
+
+function addDostRow() {
+  if (dostRows.value.length >= 10) return
+  dostRows.value.push({ machine: '', dostVatIn: 0 })
+}
+
+function removeDostRow(idx: number) {
+  if (dostRows.value.length <= 1) return
+  dostRows.value.splice(idx, 1)
+}
+
+// Per-row computations
+function dostVat(row: DostRow): number {
+  return row.dostVatIn - (row.dostVatIn / (1 + VAT_RATE))
+}
+
+function dostVatEx(row: DostRow): number {
+  return row.dostVatIn / (1 + VAT_RATE)
+}
+
+// ESPMI price per row (user-editable)
+const espmiPrices = ref<number[]>([0])
+
+function ensureEspmiPrices() {
+  while (espmiPrices.value.length < dostRows.value.length) {
+    espmiPrices.value.push(0)
+  }
+}
+
+function dostOp(idx: number): number {
+  ensureEspmiPrices()
+  return dostVatEx(dostRows.value[idx]) - (espmiPrices.value[idx] || 0)
+}
+
+// Totals
+const dostTotalVatIn = computed(() => dostRows.value.reduce((sum, r) => sum + (r.dostVatIn || 0), 0))
+const dostTotalVat = computed(() => dostRows.value.reduce((sum, r) => sum + dostVat(r), 0))
+const dostTotalEspmi = computed(() => {
+  ensureEspmiPrices()
+  return espmiPrices.value.reduce((sum, p) => sum + (p || 0), 0)
+})
+const dostTotalOp = computed(() => {
+  return dostRows.value.reduce((sum, _, idx) => sum + dostOp(idx), 0)
+})
+const dostTotalForEspmi = computed(() => dostTotalVat.value + dostTotalEspmi.value)
+const dostTotalFromClient = computed(() => dostTotalVatIn.value)
+
+// Copy DOST summary
+async function copyDostSummary() {
+  const lines = dostRows.value.map((r, i) => {
+    ensureEspmiPrices()
+    return `${r.machine || 'Machine ' + (i+1)}: DOST ₱${fmtCurrency(r.dostVatIn).slice(1)} | ESPMI ₱${fmtCurrency(espmiPrices.value[i] || 0).slice(1)} | OP ₱${fmtCurrency(dostOp(i)).slice(1)}`
+  }).join('\n')
+
+  const text = `=== DOST CALCULATOR SUMMARY ===
+${lines}
+
+TOTAL OVERPRICE FOR CLIENT:        ${fmtCurrency(dostTotalOp.value)}
+TOTAL AMOUNT FOR ESPMI (VAT+COST): ${fmtCurrency(dostTotalForEspmi.value)}
+TOTAL FROM CLIENT:                  ${fmtCurrency(dostTotalFromClient.value)}`
+
+  try {
+    await navigator.clipboard.writeText(text)
+    dostCopied.value = true
+    setTimeout(() => { dostCopied.value = false }, 2500)
+  } catch {
+    alert(text)
+  }
+}
+
+const dostCopied = ref(false)
+
 // Copy text summary to clipboard
 async function copySummary() {
   const text = `
@@ -100,6 +190,18 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
 
 <template>
   <div class="calculator-page">
+    <!-- Tab Toggle -->
+    <div class="calc-tab-bar">
+      <button :class="['calc-tab-btn', activeCalcTab === 'financial' && 'calc-tab-btn--active']" @click="activeCalcTab = 'financial'">
+        Financial Calculator
+      </button>
+      <button :class="['calc-tab-btn', activeCalcTab === 'dost' && 'calc-tab-btn--active']" @click="activeCalcTab = 'dost'">
+        DOST Calculator
+      </button>
+    </div>
+
+    <!-- ═══ FINANCIAL CALCULATOR ═══ -->
+    <div v-if="activeCalcTab === 'financial'">
     <div class="calc-header">
       <h1>Financial Installment Calculator</h1>
       <p class="calc-subtitle">Compute Contract Price, Balance, and Monthly Amortizations instantly.</p>
@@ -299,6 +401,91 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
         </div>
       </div>
     </div>
+    </div><!-- end financial tab -->
+
+    <!-- ═══ DOST CALCULATOR ═══ -->
+    <div v-if="activeCalcTab === 'dost'">
+      <div class="calc-header">
+        <h1>DOST Calculator</h1>
+        <p class="calc-subtitle">Compute DOST pricing breakdown: VAT, ESPMI cost, and overprice per machine.</p>
+      </div>
+
+      <div class="calc-card" style="max-width: 900px">
+        <h2 class="card-title"><span class="title-icon">🏛️</span> Machine Pricing</h2>
+
+        <!-- Table -->
+        <div class="dost-table-wrap">
+          <table class="dost-table">
+            <thead>
+              <tr>
+                <th>Machine</th>
+                <th class="num">DOST, VAT IN</th>
+                <th class="num">VAT</th>
+                <th class="num">DOST VAT EX</th>
+                <th class="num">ESPMI, VAT EX</th>
+                <th class="num">OP (Overprice)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in dostRows" :key="idx">
+                <td>
+                  <input v-model="row.machine" class="dost-in dost-in--name" placeholder="Machine name" />
+                </td>
+                <td>
+                  <input v-model.number="row.dostVatIn" class="dost-in dost-in--num" type="number" min="0" step="1000" placeholder="0" />
+                </td>
+                <td class="num computed">{{ fmtCurrency(dostVat(row)) }}</td>
+                <td class="num computed">{{ fmtCurrency(dostVatEx(row)) }}</td>
+                <td>
+                  <input v-model.number="espmiPrices[idx]" class="dost-in dost-in--num" type="number" min="0" step="1000" placeholder="0" @focus="ensureEspmiPrices()" />
+                </td>
+                <td class="num computed op-val">{{ fmtCurrency(dostOp(idx)) }}</td>
+                <td>
+                  <button v-if="dostRows.length > 1" class="dost-del" @click="removeDostRow(idx)">&times;</button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="dost-total-row">
+                <td><strong>TOTAL</strong></td>
+                <td class="num"><strong>{{ fmtCurrency(dostTotalVatIn) }}</strong></td>
+                <td class="num">{{ fmtCurrency(dostTotalVat) }}</td>
+                <td class="num"></td>
+                <td class="num"><strong>{{ fmtCurrency(dostTotalEspmi) }}</strong></td>
+                <td class="num op-val"><strong>{{ fmtCurrency(dostTotalOp) }}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <button v-if="dostRows.length < 10" class="dost-add-btn" @click="addDostRow">+ Add Machine</button>
+
+        <!-- Summary Cards -->
+        <div class="dost-summary">
+          <div class="dost-summary-card">
+            <span class="dost-sum-label">Total Overprice for Client</span>
+            <span class="dost-sum-val">{{ fmtCurrency(dostTotalOp) }}</span>
+          </div>
+          <div class="dost-summary-card">
+            <span class="dost-sum-label">Total Amount for ESPMI (VAT + ESPMI VAT EX)</span>
+            <span class="dost-sum-val">{{ fmtCurrency(dostTotalForEspmi) }}</span>
+          </div>
+          <div class="dost-summary-card dost-summary-card--highlight">
+            <span class="dost-sum-label">Total Amount to be Received from Client</span>
+            <span class="dost-sum-val">{{ fmtCurrency(dostTotalFromClient) }}</span>
+          </div>
+        </div>
+
+        <div class="action-buttons" style="margin-top: 16px">
+          <button type="button" class="btn btn-copy" @click="copyDostSummary">
+            {{ dostCopied ? '✓ Copied!' : '📋 Copy Summary' }}
+          </button>
+        </div>
+      </div>
+    </div><!-- end dost tab -->
+
   </div>
 </template>
 
@@ -651,6 +838,211 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
 
   .calc-input {
     font-size: 16px;
+  }
+}
+
+/* ─── Tab Bar ─── */
+.calc-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 4px;
+  max-width: 400px;
+}
+
+.calc-tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.calc-tab-btn:hover {
+  color: #c0392b;
+}
+
+.calc-tab-btn--active {
+  background: #c0392b;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(192,57,43,0.25);
+}
+
+/* ─── DOST Calculator ─── */
+.dost-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.dost-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.dost-table th {
+  background: #c0392b;
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dost-table th.num {
+  text-align: right;
+}
+
+.dost-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.dost-table td.num {
+  text-align: right;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.dost-table td.computed {
+  color: #555;
+}
+
+.dost-table td.op-val {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.dost-in {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.dost-in:focus {
+  outline: none;
+  border-color: #c0392b;
+}
+
+.dost-in--name {
+  min-width: 140px;
+}
+
+.dost-in--num {
+  min-width: 100px;
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.dost-in--num::-webkit-outer-spin-button,
+.dost-in--num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.dost-del {
+  background: none;
+  border: 1px solid #ddd;
+  color: #c0392b;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dost-del:hover {
+  background: #fdecea;
+}
+
+.dost-total-row td {
+  border-top: 2px solid #c0392b;
+  padding-top: 10px;
+}
+
+.dost-add-btn {
+  padding: 8px 14px;
+  background: #fff;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.dost-add-btn:hover {
+  background: #fdecea;
+}
+
+/* DOST Summary Cards */
+.dost-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dost-summary-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.dost-summary-card--highlight {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.dost-sum-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.dost-sum-val {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  color: #111;
+  font-family: monospace;
+}
+
+.dost-summary-card--highlight .dost-sum-val {
+  color: #c0392b;
+}
+
+@media screen and (max-width: 767px) {
+  .dost-summary {
+    grid-template-columns: 1fr;
+  }
+  .calc-tab-bar {
+    max-width: 100%;
   }
 }
 </style>
