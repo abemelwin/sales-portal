@@ -109,6 +109,7 @@ async function handleRoleChange(user: User, newRoleValue: Role) {
 const editingUserId = ref<string | null>(null)
 const userPermsForm = reactive({
   create_quotes: false,
+  use_calculator: true,
   manage_product_files: false,
   edit_machine_catalog: false,
   upload_machine_catalog: false,
@@ -127,6 +128,7 @@ function openEditAccess(user: User) {
   const isSalesAdminMgr = ['sales_admin_manager', 'sales_admin_supervisor', 'area_sales_manager'].includes(role)
 
   userPermsForm.create_quotes = user.create_quotes ?? isSales
+  userPermsForm.use_calculator = user.use_calculator ?? true
   userPermsForm.manage_product_files = user.manage_product_files ?? (isSales || isProductTech)
   userPermsForm.edit_machine_catalog = user.edit_machine_catalog ?? (isSales || isProductTech)
   userPermsForm.upload_machine_catalog = user.upload_machine_catalog ?? (isProductTech || isSalesAdminMgr)
@@ -456,6 +458,10 @@ onMounted(() => {
                     <label class="access-checkbox-label">
                       <input type="checkbox" v-model="userPermsForm.create_quotes" :disabled="user.role === 'superadmin'" />
                       Create Quotes
+                    </label>
+                    <label class="access-checkbox-label">
+                      <input type="checkbox" v-model="userPermsForm.use_calculator" :disabled="user.role === 'superadmin'" />
+                      Financial Calculator
                     </label>
                     <label class="access-checkbox-label">
                       <input type="checkbox" v-model="userPermsForm.manage_product_files" :disabled="user.role === 'superadmin'" />

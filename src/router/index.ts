@@ -149,6 +149,7 @@ router.beforeEach(async (to) => {
       const routePermissions: Record<string, keyof typeof permStore.permissions> = {
         'quote-new': 'create_quotes',
         'quote-edit': 'create_quotes',
+        'calculator': 'use_calculator',
         'product-info': 'manage_product_files',
         'catalog': 'edit_machine_catalog',
         'users': 'manage_users',
@@ -166,6 +167,7 @@ router.beforeEach(async (to) => {
 
 function getDefaultRoute(permStore: any) {
   if (permStore.can('create_quotes')) return { name: 'quote-new' }
+  if (permStore.can('use_calculator')) return { name: 'calculator' }
   if (permStore.can('manage_product_files')) return { name: 'product-info' }
   if (permStore.can('edit_machine_catalog')) return { name: 'catalog' }
   if (permStore.can('manage_users')) return { name: 'users' }

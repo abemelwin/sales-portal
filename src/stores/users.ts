@@ -365,6 +365,7 @@ export const useUserStore = defineStore('users', () => {
     userId: string,
     perms: {
       create_quotes?: boolean
+      use_calculator?: boolean
       manage_product_files?: boolean
       edit_machine_catalog?: boolean
       upload_machine_catalog?: boolean

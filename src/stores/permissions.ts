@@ -5,6 +5,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface RolePermissions {
   create_quotes: boolean
+  use_calculator: boolean
   manage_product_files: boolean
   edit_machine_catalog: boolean
   upload_machine_catalog: boolean
@@ -14,6 +15,7 @@ export interface RolePermissions {
 
 const DEFAULT_PERMS: RolePermissions = {
   create_quotes: true,
+  use_calculator: true,
   manage_product_files: false,
   edit_machine_catalog: false,
   upload_machine_catalog: false,
@@ -35,6 +37,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     if (role === 'superadmin') {
       permissions.value = {
         create_quotes: true,
+        use_calculator: true,
         manage_product_files: true,
         edit_machine_catalog: true,
         upload_machine_catalog: true,
@@ -51,7 +54,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     if (session?.user?.id) {
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('create_quotes, manage_product_files, edit_machine_catalog, upload_machine_catalog, manage_users, manage_roles_access')
+        .select('create_quotes, use_calculator, manage_product_files, edit_machine_catalog, upload_machine_catalog, manage_users, manage_roles_access')
         .eq('user_id', session.user.id)
         .maybeSingle()
       if (profile) {
@@ -72,6 +75,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
 
     permissions.value = {
       create_quotes: userProfilePerms?.create_quotes ?? (roleData as any)?.create_quotes ?? isSalesRole,
+      use_calculator: userProfilePerms?.use_calculator ?? (roleData as any)?.use_calculator ?? true,
       manage_product_files: userProfilePerms?.manage_product_files ?? (roleData as any)?.manage_product_files ?? (isSalesRole || isProductTechRole),
       edit_machine_catalog: userProfilePerms?.edit_machine_catalog ?? (roleData as any)?.edit_machine_catalog ?? (isSalesRole || isProductTechRole),
       upload_machine_catalog: userProfilePerms?.upload_machine_catalog ?? (roleData as any)?.upload_machine_catalog ?? (isProductTechRole || isSalesAdminRole),

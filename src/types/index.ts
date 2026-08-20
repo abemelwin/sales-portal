@@ -22,6 +22,7 @@ export interface User {
   created_at: string
   updated_at: string
   create_quotes?: boolean | null
+  use_calculator?: boolean | null
   manage_product_files?: boolean | null
   edit_machine_catalog?: boolean | null
   upload_machine_catalog?: boolean | null
