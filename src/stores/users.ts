@@ -377,10 +377,20 @@ export const useUserStore = defineStore('users', () => {
     error.value = null
 
     try {
-      const { error: updateError } = await supabase
+      let { error: updateError } = await supabase
         .from('user_profiles')
         .update(perms)
         .eq('user_id', userId)
+
+      // Fallback if use_calculator column does not exist on remote Supabase yet
+      if (updateError && updateError.message?.includes('use_calculator')) {
+        const { use_calculator: _ignored, ...restPerms } = perms
+        const { error: fallbackError } = await supabase
+          .from('user_profiles')
+          .update(restPerms)
+          .eq('user_id', userId)
+        updateError = fallbackError
+      }
 
       if (updateError) {
         error.value = updateError.message

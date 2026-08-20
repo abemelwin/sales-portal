@@ -54,7 +54,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     if (session?.user?.id) {
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('create_quotes, use_calculator, manage_product_files, edit_machine_catalog, upload_machine_catalog, manage_users, manage_roles_access')
+        .select('*')
         .eq('user_id', session.user.id)
         .maybeSingle()
       if (profile) {
