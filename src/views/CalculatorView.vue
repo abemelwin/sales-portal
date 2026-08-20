@@ -13,7 +13,7 @@ const copied = ref(false)
 // Presets
 const dpPercentPresets = [0, 10, 20, 30, 50]
 const ratePresets = [7, 10, 12, 14, 21, 28]
-const termsPresets = [3, 6, 12, 18, 24, 36, 48, 60]
+const termsPresets = [3, 6, 12, 18, 24]
 
 // Downpayment percentage of base price
 const currentDpPercent = computed(() => {
