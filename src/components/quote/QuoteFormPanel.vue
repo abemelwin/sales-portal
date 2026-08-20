@@ -839,10 +839,6 @@ function dismissValidationBox() {
         <label class="fp-lbl" for="warranty-supplier">Supplier Name (void-warranty line)</label>
         <input id="warranty-supplier" class="fp-in" type="text" v-model="quoteState.warrantySupplier" placeholder="ESPMI" />
       </div>
-      <div class="fp-sec">
-        <label class="fp-lbl" for="warranty-service-fee">Service Fee (after warranty)</label>
-        <input id="warranty-service-fee" class="fp-in" type="number" v-model.number="quoteState.serviceFee" placeholder="500" inputmode="decimal" />
-      </div>
 
       <hr class="fp-hr" />
 
