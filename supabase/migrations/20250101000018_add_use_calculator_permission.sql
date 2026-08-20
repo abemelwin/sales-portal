@@ -28,3 +28,6 @@ FROM public.user_profiles p
 JOIN auth.users u ON u.id = p.user_id;
 
 GRANT SELECT ON public.user_profiles_with_email TO authenticated;
+
+-- 4. Reload PostgREST schema cache
+NOTIFY pgrst, 'reload schema';
