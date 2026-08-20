@@ -383,18 +383,6 @@ onMounted(() => {
         <input v-model="form.category" class="fp-in" />
       </div>
       <div class="cf-row">
-        <label>SRP</label>
-        <input v-model.number="form.srp" class="fp-in" inputmode="decimal" />
-      </div>
-      <div class="cf-row">
-        <label>LBP</label>
-        <input v-model.number="form.lbp" class="fp-in" inputmode="decimal" />
-      </div>
-      <div class="cf-row">
-        <label>Cash Price</label>
-        <input v-model.number="form.cashPrice" class="fp-in" inputmode="decimal" />
-      </div>
-      <div class="cf-row">
         <label>Default Months</label>
         <input v-model.number="form.defaultMonths" class="fp-in" type="number" />
       </div>
