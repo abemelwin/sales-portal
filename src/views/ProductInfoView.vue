@@ -115,6 +115,44 @@ async function addLink(category: CategoryKey) {
   )
 }
 
+// ─── File size and compression constants ────────────────────────────────────
+const MAX_IMAGE_WIDTH = 1200      // px — resize larger images
+const IMAGE_QUALITY = 0.82        // 82% quality — good balance
+const MAX_PDF_SIZE_MB = 10        // PDF/doc files max 10MB
+const MAX_IMAGE_SIZE_MB = 8       // images larger than 8MB get compressed
+
+/**
+ * Compress an image file using Canvas API.
+ * Returns a new Blob at reduced size/quality.
+ */
+async function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      let { width, height } = img
+      // Scale down if wider than max
+      if (width > MAX_IMAGE_WIDTH) {
+        height = Math.round((height * MAX_IMAGE_WIDTH) / width)
+        width = MAX_IMAGE_WIDTH
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('Compression failed')),
+        'image/jpeg',
+        IMAGE_QUALITY
+      )
+    }
+    img.onerror = () => reject(new Error('Could not load image'))
+    img.src = url
+  })
+}
+
 // Upload file
 async function uploadFile(category: CategoryKey) {
   if (!selectedMachineId.value) return
@@ -125,15 +163,41 @@ async function uploadFile(category: CategoryKey) {
   input.onchange = async (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0]
     if (!file) return
-    
+
+    const isImage = file.type.startsWith('image/')
+    const fileSizeMB = file.size / (1024 * 1024)
+
+    // File size validation for non-image files
+    if (!isImage && fileSizeMB > MAX_PDF_SIZE_MB) {
+      alert(`File too large (${fileSizeMB.toFixed(1)} MB). Maximum allowed is ${MAX_PDF_SIZE_MB} MB for documents.`)
+      return
+    }
+
+    let uploadBlob: Blob | File = file
+    let uploadName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+    // Auto-compress images
+    if (isImage) {
+      try {
+        const originalMB = fileSizeMB.toFixed(1)
+        uploadBlob = await compressImage(file)
+        const compressedMB = (uploadBlob.size / (1024 * 1024)).toFixed(1)
+        console.info(`Image compressed: ${originalMB}MB → ${compressedMB}MB`)
+        // Save as .jpg after compression
+        uploadName = uploadName.replace(/\.[^.]+$/, '') + '.jpg'
+      } catch {
+        // Fallback to original if compression fails
+        uploadBlob = file
+      }
+    }
+
     // Upload to Supabase Storage
     const timestamp = Date.now()
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const path = `${selectedMachineId.value}/${category}/${timestamp}_${safeName}`
+    const path = `${selectedMachineId.value}/${category}/${timestamp}_${uploadName}`
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('product-files')
-      .upload(path, file)
+      .upload(path, uploadBlob)
     
     if (uploadError) {
       alert('Upload failed: ' + uploadError.message)
