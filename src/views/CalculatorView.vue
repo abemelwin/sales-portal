@@ -466,11 +466,11 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
 
         <!-- Summary Cards -->
         <div class="dost-summary">
-          <div class="dost-summary-card">
+          <div class="dost-summary-card dost-summary-card--highlight">
             <span class="dost-sum-label">Total Overprice for Client</span>
             <span class="dost-sum-val">{{ fmtCurrency(dostTotalOp) }}</span>
           </div>
-          <div class="dost-summary-card">
+          <div class="dost-summary-card dost-summary-card--highlight">
             <span class="dost-sum-label">Total Amount for ESPMI (VAT + ESPMI VAT EX)</span>
             <span class="dost-sum-val">{{ fmtCurrency(dostTotalForEspmi) }}</span>
           </div>
@@ -875,6 +875,10 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
   background: #c0392b;
   color: #fff;
   box-shadow: 0 2px 6px rgba(192,57,43,0.25);
+}
+
+.calc-tab-btn--active:hover {
+  color: #fff;
 }
 
 /* ─── DOST Calculator ─── */
