@@ -154,11 +154,7 @@ const tradeInDescriptions = computed(() => {
 })
 
 const inclusionsList = computed(() => {
-  const items = getDisplayedInclusions(quoteState).map((item) => item.description)
-  if (quoteState.vatInclusive) {
-    items.push('Value Added Tax (VAT)')
-  }
-  return items
+  return getDisplayedInclusions(quoteState).map((item) => item.description)
 })
 
 const exclusionsList = computed(() => {
@@ -169,14 +165,27 @@ const exclusionsList = computed(() => {
   return items
 })
 
-const addonDisplayItems = computed(() => quoteState.addonItems)
+const addonDisplayItems = computed(() => {
+  if (!quoteState.vatInclusive) return quoteState.addonItems
+  return quoteState.addonItems.map((item) => ({
+    ...item,
+    description: item.description.replace(
+      /([P₱])\s?([\d,]+(?:\.\d{1,2})?)/g,
+      (_match: string, sym: string, num: string) => {
+        const val = parseFloat(num.replace(/,/g, '')) * 1.12
+        return sym + val.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      }
+    ),
+  }))
+})
 
 const consumableDisplayList = computed(() => {
   return quoteState.consumables.map((c) => {
     const customEntry = quoteState.consumablePrices.find(
       (cp) => cp.consumableId === c.id
     )
-    const price = customEntry ? customEntry.customPrice : c.default_price
+    let price = customEntry ? customEntry.customPrice : c.default_price
+    if (quoteState.vatInclusive) price = price * 1.12
     return {
       name: c.item_name,
       package: c.package_description || '',
@@ -253,7 +262,8 @@ const warrantyLines = computed(() => {
 
   lines.push({ text: 'No warranty for package inclusions.', bold: false })
 
-  const feeVal = quoteState.serviceFee ?? selectedMachine.value?.service_fee ?? 500
+  let feeVal = quoteState.serviceFee ?? selectedMachine.value?.service_fee ?? 500
+  if (quoteState.vatInclusive) feeVal = feeVal * 1.12
   const formattedFee = formatCurrency(feeVal)
 
   lines.push({
