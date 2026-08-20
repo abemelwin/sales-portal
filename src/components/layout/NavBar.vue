@@ -36,9 +36,7 @@ const isAdmin = computed(() => adminLinks.value.length > 0)
 /** Navigation links visible to authenticated users based on permissions */
 const navLinks = computed(() => {
   const links: { to: string; label: string }[] = []
-  if (permStore.can('create_quotes')) {
-    links.push({ to: '/quotes/new', label: 'Quote Generator' })
-  }
+  links.push({ to: '/quotes/new', label: 'Quote Generator' })
   links.push({ to: '/calculator', label: 'Calculator' })
   if (permStore.can('manage_product_files')) {
     links.push({ to: '/product-info', label: 'Product Info' })

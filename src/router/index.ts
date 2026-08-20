@@ -20,10 +20,6 @@ const routes: RouteRecordRaw[] = [
     redirect: '/quotes/new'
   },
   {
-    path: '/dashboard',
-    redirect: '/quotes/new'
-  },
-  {
     path: '/quotes/new',
     name: 'quote-new',
     component: () => import('@/views/QuoteBuilderView.vue'),
@@ -33,12 +29,6 @@ const routes: RouteRecordRaw[] = [
     path: '/quotes/:id',
     name: 'quote-edit',
     component: () => import('@/views/QuoteBuilderView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/quotes/:id/closing',
-    name: 'quote-closing',
-    component: () => import('@/views/ClosingDocsView.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -74,12 +64,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/roles',
     redirect: { name: 'users' }
-  },
-  {
-    path: '/migrate',
-    name: 'migrate',
-    component: () => import('@/views/DataMigrationView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/change-password',
