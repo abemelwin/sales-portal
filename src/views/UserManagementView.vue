@@ -2,6 +2,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
+import { useModal } from '@/composables/useModal'
 import type { Role, User } from '@/types'
 
 defineOptions({
@@ -10,6 +11,7 @@ defineOptions({
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
+const modal = useModal()
 
 // --- Roles list matching reference ---
 const ROLES: { value: Role; label: string }[] = [
@@ -323,7 +325,14 @@ async function deleteUser(user: User) {
       return
     }
   }
-  if (!confirm(`Delete user "${user.display_name}"?`)) return
+  const ok = await modal.confirm({
+    title: 'Delete User',
+    message: `Are you sure you want to delete user "${user.display_name}"?`,
+    confirmText: 'Delete User',
+    cancelText: 'Cancel',
+    isDanger: true,
+  })
+  if (!ok) return
   await userStore.deactivateUser(user.user_id)
 }
 

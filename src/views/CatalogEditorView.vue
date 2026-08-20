@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useCatalogStore } from '@/stores/catalog'
+import { useModal } from '@/composables/useModal'
 import type { Machine, MachineInput } from '@/types'
 
 defineOptions({
@@ -8,6 +9,7 @@ defineOptions({
 })
 
 const catalogStore = useCatalogStore()
+const modal = useModal()
 
 // ─── Machine Selector ─────────────────────────────────────────────────────────
 const selectedMachineId = ref('')
@@ -293,7 +295,14 @@ function createNew() {
 
 async function deleteMachine() {
   if (!selectedMachineId.value) return
-  if (!confirm('Delete this machine?')) return
+  const ok = await modal.confirm({
+    title: 'Delete Machine',
+    message: 'Are you sure you want to delete this machine from the catalog?',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDanger: true,
+  })
+  if (!ok) return
   saving.value = true
 
   try {
@@ -314,7 +323,13 @@ async function deleteMachine() {
 }
 
 async function revert() {
-  if (!confirm('Revert catalog to built-in defaults? This will refresh from the server.')) return
+  const ok = await modal.confirm({
+    title: 'Revert Catalog',
+    message: 'Revert catalog to built-in defaults? This will refresh data from the server.',
+    confirmText: 'Revert',
+    cancelText: 'Cancel',
+  })
+  if (!ok) return
   await catalogStore.fetchMachines()
   selectedMachineId.value = ''
   resetForm()

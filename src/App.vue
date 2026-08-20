@@ -13,6 +13,7 @@ import { supabase } from '@/services/supabase'
 import NavBar from '@/components/layout/NavBar.vue'
 import ConnectivityBanner from '@/components/layout/ConnectivityBanner.vue'
 import UpdateBanner from '@/components/layout/UpdateBanner.vue'
+import ModalDialog from '@/components/common/ModalDialog.vue'
 import { useIdleLogout } from '@/composables/useIdleLogout'
 
 useIdleLogout()
@@ -216,6 +217,9 @@ function dismissError() {
         </KeepAlive>
       </RouterView>
     </main>
+
+    <!-- Global Modal Dialog -->
+    <ModalDialog />
   </div>
 </template>
 

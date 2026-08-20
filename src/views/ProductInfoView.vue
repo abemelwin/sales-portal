@@ -5,6 +5,7 @@ import { useProductInfoStore } from '@/stores/productInfo'
 import { useCatalogStore } from '@/stores/catalog'
 import { useAuth } from '@/composables/useAuth'
 import { usePermissionsStore } from '@/stores/permissions'
+import { useModal } from '@/composables/useModal'
 import type { ProductInfoLink } from '@/types'
 
 defineOptions({
@@ -15,6 +16,7 @@ const productInfoStore = useProductInfoStore()
 const catalogStore = useCatalogStore()
 const permStore = usePermissionsStore()
 const { role } = useAuth()
+const modal = useModal()
 
 const canModifyProductFiles = computed(() => {
   if (role.value === 'superadmin') return true
@@ -103,9 +105,20 @@ function backToList() {
 // Add link (prompt)
 async function addLink(category: CategoryKey) {
   if (!selectedMachineId.value) return
-  const url = prompt('Paste the link / URL:')
+  const url = await modal.prompt({
+    title: 'Add Link / URL',
+    message: 'Paste the link or URL below:',
+    placeholder: 'https://...',
+    confirmText: 'Next',
+  })
   if (!url) return
-  const label = prompt('Label for this link:', url)
+  const label = await modal.prompt({
+    title: 'Link Display Label',
+    message: 'Enter a display name / label for this link:',
+    defaultValue: url,
+    placeholder: 'e.g., User Manual PDF',
+    confirmText: 'Add Link',
+  })
   if (label === null) return
   await productInfoStore.addLink(
     selectedMachineId.value,
@@ -223,7 +236,14 @@ async function uploadFile(category: CategoryKey) {
 
 // Delete link
 async function deleteLink(linkId: string) {
-  if (!confirm('Remove this item?')) return
+  const ok = await modal.confirm({
+    title: 'Remove Item',
+    message: 'Are you sure you want to remove this item?',
+    confirmText: 'Remove',
+    cancelText: 'Cancel',
+    isDanger: true,
+  })
+  if (!ok) return
   await productInfoStore.deleteLink(linkId)
 }
 </script>
