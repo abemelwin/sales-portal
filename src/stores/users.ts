@@ -154,6 +154,48 @@ export const useUserStore = defineStore('users', () => {
   }
 
   /**
+   * Reset another user's password via Supabase Edge Function.
+   * Only callable by superadmin/sales_admin_manager/sales_admin_supervisor.
+   */
+  async function resetPassword(
+    userId: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        return { success: false, error: 'Not authenticated.' }
+      }
+
+      const res = await supabase.functions.invoke('reset-password', {
+        body: { userId, newPassword },
+      })
+
+      if (res.error) {
+        const msg = res.error.message || 'Failed to reset password.'
+        error.value = msg
+        return { success: false, error: msg }
+      }
+
+      const data = res.data as { success?: boolean; error?: string }
+      if (data?.error) {
+        error.value = data.error
+        return { success: false, error: data.error }
+      }
+
+      return { success: true }
+    } catch (err) {
+      error.value = 'An unexpected error occurred.'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Deactivate a user account (Requirement 10.3).
    * Invalidates sessions and prevents new logins.
    * Enforces at least one active admin must remain (Requirement 10.6).
@@ -371,6 +413,7 @@ export const useUserStore = defineStore('users', () => {
     fetchUsers,
     createUser,
     updateRole,
+    resetPassword,
     updateUserPermissions,
     deactivateUser,
     reactivateUser,

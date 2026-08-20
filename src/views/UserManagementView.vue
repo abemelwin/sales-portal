@@ -152,14 +152,46 @@ async function saveUserAccess(userId: string) {
 }
 
 // --- Reset Password ---
-async function resetPassword(user: User) {
-  const np = prompt(`New password for "${user.display_name}" (min 4 characters):`)
-  if (np === null) return
-  if (np.length < 4) {
-    alert('Password too short.')
+const resetTarget = ref<User | null>(null)
+const resetNewPassword = ref('')
+const resetConfirm = ref('')
+const resetLoading = ref(false)
+const resetError = ref('')
+const resetSuccess = ref('')
+
+function openReset(user: User) {
+  resetTarget.value = user
+  resetNewPassword.value = ''
+  resetConfirm.value = ''
+  resetError.value = ''
+  resetSuccess.value = ''
+}
+
+function closeReset() {
+  resetTarget.value = null
+}
+
+async function submitReset() {
+  resetError.value = ''
+  resetSuccess.value = ''
+  if (resetNewPassword.value.length < 6) {
+    resetError.value = 'Password must be at least 6 characters.'
     return
   }
-  alert(`Password reset for ${user.display_name}.`)
+  if (resetNewPassword.value !== resetConfirm.value) {
+    resetError.value = 'Passwords do not match.'
+    return
+  }
+  resetLoading.value = true
+  const result = await userStore.resetPassword(resetTarget.value!.user_id, resetNewPassword.value)
+  resetLoading.value = false
+  if (result.success) {
+    resetSuccess.value = 'Password reset successfully.'
+    resetNewPassword.value = ''
+    resetConfirm.value = ''
+  } else {
+    resetError.value = result.error || 'Failed to reset password.'
+  }
 }
 
 const KNOWN_USER_NAMES: Record<string, string> = {
@@ -398,7 +430,7 @@ onMounted(() => {
               </td>
               <td class="col-actions">
                 <button class="um-btn2 um-access" @click="openEditAccess(user)">Edit Access</button>
-                <button class="um-btn2" @click="resetPassword(user)">Reset</button>
+                <button class="um-btn2" @click="openReset(user)">Reset</button>
                 <button class="um-btn2 um-del" @click="deleteUser(user)">Delete</button>
               </td>
             </tr>
@@ -453,6 +485,55 @@ onMounted(() => {
       </table>
       </div>
     </div>
+
+  <!-- ─── Reset Password Modal ─── -->
+  <div v-if="resetTarget" class="um-modal-overlay" @click.self="closeReset">
+    <div class="um-modal">
+      <div class="um-modal-head">
+        <h3>Reset Password</h3>
+        <button class="um-modal-close" @click="closeReset">&times;</button>
+      </div>
+      <div class="um-modal-body">
+        <p class="um-modal-user">
+          {{ resetTarget.email || resetTarget.display_name }}
+          <span v-if="resetTarget.display_name && resetTarget.display_name !== resetTarget.email" class="um-modal-subname">{{ resetTarget.display_name }}</span>
+        </p>
+
+        <div class="um-modal-field">
+          <label>New Password</label>
+          <input
+            v-model="resetNewPassword"
+            type="password"
+            class="um-input"
+            placeholder="Min 6 characters"
+            :disabled="resetLoading"
+          />
+        </div>
+        <div class="um-modal-field">
+          <label>Confirm Password</label>
+          <input
+            v-model="resetConfirm"
+            type="password"
+            class="um-input"
+            placeholder="Re-enter password"
+            :disabled="resetLoading"
+            @keyup.enter="submitReset"
+          />
+        </div>
+
+        <div v-if="resetError" class="um-modal-error">{{ resetError }}</div>
+        <div v-if="resetSuccess" class="um-modal-success">{{ resetSuccess }}</div>
+      </div>
+      <div class="um-modal-foot">
+        <button class="um-btn-cancel" @click="closeReset" :disabled="resetLoading">Cancel</button>
+        <button class="um-btn-reset" @click="submitReset" :disabled="resetLoading || !resetNewPassword || !resetConfirm">
+          <span v-if="resetLoading" class="um-spinner"></span>
+          {{ resetLoading ? 'Resetting...' : 'Reset Password' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   </div>
 </template>
 
@@ -835,5 +916,158 @@ onMounted(() => {
   .access-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ─── Reset Password Modal ─── */
+.um-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.um-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.um-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.um-modal-head h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.um-modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.um-modal-close:hover { color: #333; }
+
+.um-modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.um-modal-user {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+.um-modal-subname {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: #999;
+  margin-top: 2px;
+}
+
+.um-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.um-modal-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.um-modal-error {
+  font-size: 12px;
+  color: #c0392b;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+.um-modal-success {
+  font-size: 12px;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+.um-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #eee;
+}
+
+.um-btn-cancel {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.um-btn-cancel:hover { background: #eee; }
+
+.um-btn-reset {
+  padding: 8px 18px;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.um-btn-reset:hover:not(:disabled) { background: #a93226; }
+.um-btn-reset:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.um-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin-reset 0.6s linear infinite;
+}
+
+@keyframes spin-reset {
+  to { transform: rotate(360deg); }
 }
 </style>
