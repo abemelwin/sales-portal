@@ -165,6 +165,7 @@ export function restoreFromQuote(state: QuoteBuilderState, quote: Quote): void {
   // Warranty (Req 12)
   state.warrantyCompany = quote.warranty_company || ''
   state.warrantySupplier = quote.warranty_supplier || 'ESPMI'
+  state.serviceFee = (quote as any).service_fee ?? null
 
   // Term options
   if (quote.term_options && quote.term_options.length > 0) {

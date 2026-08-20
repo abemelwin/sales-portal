@@ -175,6 +175,7 @@ async function populateMachineData() {
       ? 'ACS / Alternative'
       : 'ES Print Media Inc.'
     quoteState.warrantySupplier = 'ESPMI'
+    quoteState.serviceFee = machine.service_fee ?? null
 
     // Auto-populate availability from catalog
     quoteState.availability = (machine as any).availability ?? machine.warranty_machine_duration ?? ''
@@ -205,6 +206,7 @@ function clearMachineData() {
   quoteState.hasComputerSetOption = false
   quoteState.warrantyMachineDuration = ''
   quoteState.warrantyPrintheadDuration = ''
+  quoteState.serviceFee = null
   quoteState.features = []
   quoteState.consumables = []
   quoteState.inclusions = []

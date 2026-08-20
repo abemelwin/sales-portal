@@ -4,6 +4,7 @@ import { QUOTE_BUILDER_KEY } from '@/composables/useQuoteBuilder'
 import { formatQuoteDate, getDisplayedInclusions, getDisplayedExclusions } from '@/utils/quote-calculations'
 import { supabase } from '@/services/supabase'
 import { useProductInfoStore } from '@/stores/productInfo'
+import { useCatalogStore } from '@/stores/catalog'
 import letterheadEspmiHeader from '@/assets/letterhead-espmi-1.jpg'
 import letterheadEspmiFooter from '@/assets/letterhead-espmi-2.jpg'
 import letterheadAcsHeader from '@/assets/letterhead-acs-1.jpg'
@@ -11,6 +12,12 @@ import letterheadAcsFooter from '@/assets/letterhead-acs-2.jpg'
 
 const quoteState = inject(QUOTE_BUILDER_KEY)!
 const productInfoStore = useProductInfoStore()
+const catalogStore = useCatalogStore()
+
+const selectedMachine = computed(() => {
+  if (!quoteState.selectedModel) return null
+  return catalogStore.machines.find((m) => m.model === quoteState.selectedModel)
+})
 
 // Auto-fetch product info links when component mounts or machine changes
 onMounted(() => {
@@ -259,8 +266,11 @@ const warrantyLines = computed(() => {
 
   lines.push({ text: 'No warranty for package inclusions.', bold: false })
 
+  const feeVal = quoteState.serviceFee ?? selectedMachine.value?.service_fee ?? 500
+  const formattedFee = formatCurrency(feeVal)
+
   lines.push({
-    text: `After warranty, a service fee of ₱500.00 per case will be charged.`,
+    text: `After warranty, a service fee of ${formattedFee} per case will be charged.`,
     bold: false,
   })
 

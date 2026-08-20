@@ -105,6 +105,7 @@ export interface QuoteBuilderState {
   warrantySupplier: string
   warrantyMachineDuration: string
   warrantyPrintheadDuration: string
+  serviceFee: number | null
 
   // Validation (Req 13, 16)
   validationErrors: string[]
@@ -195,6 +196,7 @@ export function createDefaultQuoteState(): QuoteBuilderState {
     warrantySupplier: 'ESPMI',
     warrantyMachineDuration: '',
     warrantyPrintheadDuration: '',
+    serviceFee: null,
 
     // Validation
     validationErrors: [],
