@@ -155,9 +155,9 @@ const tradeInDescriptions = computed(() => {
 
 const inclusionsList = computed(() => {
   const items = getDisplayedInclusions(quoteState).map((item) => item.description)
-
-
-
+  if (quoteState.vatInclusive) {
+    items.push('Value Added Tax (VAT)')
+  }
   return items
 })
 
