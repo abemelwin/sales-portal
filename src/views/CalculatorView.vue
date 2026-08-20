@@ -116,7 +116,9 @@ function ensureEspmiPrices() {
 
 function dostOp(idx: number): number {
   ensureEspmiPrices()
-  return dostVatEx(dostRows.value[idx]) - (espmiPrices.value[idx] || 0)
+  const row = dostRows.value[idx]
+  if (!row) return 0
+  return dostVatEx(row) - (espmiPrices.value[idx] || 0)
 }
 
 // Totals
