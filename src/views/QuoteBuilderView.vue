@@ -252,7 +252,6 @@ watch(
         <div class="closing-overlay__tabs">
           <button :class="['co-tab', (closingDocTab === 'tc' || closingDocTab === 'terms-conditions') && 'co-tab--active']" @click="closingDocTab = 'tc'">Terms &amp; Conditions</button>
           <button :class="['co-tab', (closingDocTab === 'di' || closingDocTab === 'delivery-instructions') && 'co-tab--active']" @click="closingDocTab = 'di'">Delivery Instructions</button>
-          <button :class="['co-tab', (closingDocTab === 'wc' || closingDocTab === 'warranty-card') && 'co-tab--active']" @click="closingDocTab = 'wc'">Warranty Certificate</button>
           <button :class="['co-tab', closingDocTab === 'cac' && 'co-tab--active']" @click="closingDocTab = 'cac'">Customer Acceptance</button>
           <button :class="['co-tab', closingDocTab === 'pdc' && 'co-tab--active']" @click="closingDocTab = 'pdc'">PDC Schedule</button>
           <button :class="['co-tab', (closingDocTab === 'pull' || closingDocTab === 'pullout') && 'co-tab--active']" @click="closingDocTab = 'pull'">Trade-in Pullout</button>

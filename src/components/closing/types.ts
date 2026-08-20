@@ -67,7 +67,6 @@ export interface ClosingDocTabConfig {
 export const CLOSING_DOC_TABS: ClosingDocTabConfig[] = [
   { id: 'terms-conditions', label: 'Terms & Conditions' },
   { id: 'delivery-instructions', label: 'Delivery Instructions' },
-  { id: 'warranty-card', label: 'Warranty Card' },
   { id: 'cac', label: 'CAC' },
   { id: 'pdc', label: 'PDC' },
   { id: 'pullout', label: 'Pullout' },
