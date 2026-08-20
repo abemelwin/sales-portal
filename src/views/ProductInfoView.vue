@@ -119,7 +119,6 @@ async function addLink(category: CategoryKey) {
 const MAX_IMAGE_WIDTH = 1200      // px — resize larger images
 const IMAGE_QUALITY = 0.82        // 82% quality — good balance
 const MAX_PDF_SIZE_MB = 10        // PDF/doc files max 10MB
-const MAX_IMAGE_SIZE_MB = 8       // images larger than 8MB get compressed
 
 /**
  * Compress an image file using Canvas API.
