@@ -124,6 +124,7 @@ function dostOp(idx: number): number {
 // Totals
 const dostTotalVatIn = computed(() => dostRows.value.reduce((sum, r) => sum + (r.dostVatIn || 0), 0))
 const dostTotalVat = computed(() => dostRows.value.reduce((sum, r) => sum + dostVat(r), 0))
+const dostTotalVatEx = computed(() => dostRows.value.reduce((sum, r) => sum + dostVatEx(r), 0))
 const dostTotalEspmi = computed(() => {
   ensureEspmiPrices()
   return espmiPrices.value.reduce((sum, p) => sum + (p || 0), 0)
@@ -205,7 +206,7 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
     <!-- ═══ FINANCIAL CALCULATOR ═══ -->
     <div v-if="activeCalcTab === 'financial'">
     <div class="calc-header">
-      <h1>Financial Installment Calculator</h1>
+      <h1>Machine Installment Calculator</h1>
       <p class="calc-subtitle">Compute Contract Price, Balance, and Monthly Amortizations instantly.</p>
     </div>
 
@@ -453,7 +454,7 @@ Total Interest Charges: ${fmtCurrency(totalInterest.value)}
                 <td><strong>TOTAL</strong></td>
                 <td class="num"><strong>{{ fmtCurrency(dostTotalVatIn) }}</strong></td>
                 <td class="num">{{ fmtCurrency(dostTotalVat) }}</td>
-                <td class="num"></td>
+                <td class="num">{{ fmtCurrency(dostTotalVatEx) }}</td>
                 <td class="num"><strong>{{ fmtCurrency(dostTotalEspmi) }}</strong></td>
                 <td class="num op-val"><strong>{{ fmtCurrency(dostTotalOp) }}</strong></td>
                 <td></td>
