@@ -205,7 +205,10 @@ async function uploadFile(category: CategoryKey) {
 
     // Upload to Supabase Storage
     const timestamp = Date.now()
-    const path = `${selectedMachineId.value}/${category}/${timestamp}_${uploadName}`
+    const machineFolder = selectedMachine.value 
+      ? `${selectedMachine.value.brand} - ${selectedMachine.value.model}`.replace(/[\/\\?%*:|"<>]/g, '_').trim()
+      : selectedMachineId.value
+    const path = `${machineFolder}/${category}/${timestamp}_${uploadName}`
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('product-files')

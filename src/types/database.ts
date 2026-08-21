@@ -21,6 +21,7 @@ export interface Database {
           display_name: string
           role: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
           is_active: boolean
+          must_change_password?: boolean
           created_at: string
           updated_at: string
         }
@@ -30,6 +31,7 @@ export interface Database {
           display_name: string
           role?: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
           is_active?: boolean
+          must_change_password?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -39,6 +41,7 @@ export interface Database {
           display_name?: string
           role?: 'superadmin' | 'product_manager' | 'sales_admin_manager' | 'sales_admin_supervisor' | 'sales_admin_assistant' | 'area_sales_manager' | 'account_executive' | 'sales_assistant' | 'user'
           is_active?: boolean
+          must_change_password?: boolean
           created_at?: string
           updated_at?: string
         }

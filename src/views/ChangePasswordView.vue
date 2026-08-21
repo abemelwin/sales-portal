@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+const router = useRouter()
 const authStore = useAuthStore()
+
+const isMandatory = computed(() => !!authStore.user?.must_change_password)
 
 const form = reactive({
   currentPassword: '',
@@ -44,6 +48,10 @@ async function handleSubmit() {
     form.currentPassword = ''
     form.newPassword = ''
     form.confirmPassword = ''
+
+    setTimeout(() => {
+      router.push('/quotes/new')
+    }, 1200)
   } else {
     error.value = result.error || 'Failed to change password.'
   }
@@ -55,8 +63,13 @@ async function handleSubmit() {
     <div class="card">
       <h1>Change Password</h1>
 
+      <!-- Mandatory notice banner -->
+      <div v-if="isMandatory" class="alert alert-warning" role="alert">
+        <strong>Mandatory Password Change:</strong> For security reasons, you must change your initial/reset password before accessing the system.
+      </div>
+
       <div v-if="success" class="alert alert-success" role="status">
-        Password changed successfully.
+        Password changed successfully. Redirecting...
       </div>
 
       <div v-if="error" class="alert alert-error" role="alert">
@@ -146,6 +159,12 @@ h1 {
   background: #f0fdf4;
   border: 1px solid #86efac;
   color: #16a34a;
+}
+
+.alert-warning {
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  color: #d46b08;
 }
 
 .alert-error {

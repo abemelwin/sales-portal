@@ -111,6 +111,14 @@ router.beforeEach(async (to) => {
 
   const isAuthenticated = hasSession && !!authStore.user
 
+  // Enforce mandatory one-time password change before accessing app features
+  if (isAuthenticated && authStore.user?.must_change_password) {
+    if (to.name !== 'change-password') {
+      return { name: 'change-password' }
+    }
+    return
+  }
+
   // Redirect authenticated users away from login page
   if (to.name === 'login' && isAuthenticated) {
     const currentRole = authStore.role || 'user'

@@ -28,6 +28,7 @@ export interface User {
   upload_machine_catalog?: boolean | null
   manage_users?: boolean | null
   manage_roles_access?: boolean | null
+  must_change_password?: boolean | null
 }
 
 export interface CreateUserInput {

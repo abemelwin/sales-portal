@@ -362,10 +362,10 @@ describe('Catalog Store — Atomic Operations with Rollback', () => {
       expect(result.error).toContain('Failed to update inclusions')
     })
 
-    it('should return error when snapshot fails', async () => {
+    it('should return error when update fails', async () => {
       mockResponses = {
         machines: {
-          select: { data: null, error: { message: 'machine not found' } },
+          update: { error: { message: 'machine not found' } },
         },
       }
 
@@ -375,7 +375,7 @@ describe('Catalog Store — Atomic Operations with Rollback', () => {
       })
 
       expect(result.success).toBe(false)
-      expect(result.error).toContain('Failed to snapshot machine')
+      expect(result.error).toContain('machine not found')
     })
   })
 })

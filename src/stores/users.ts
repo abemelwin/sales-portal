@@ -103,6 +103,7 @@ export const useUserStore = defineStore('users', () => {
           display_name: input.display_name,
           role: input.role,
           is_active: true,
+          must_change_password: true,
         } as never)
 
       if (profileError) {
@@ -184,6 +185,11 @@ export const useUserStore = defineStore('users', () => {
       if (data?.error) {
         error.value = data.error
         return { success: false, error: data.error }
+      }
+
+      const targetUser = users.value.find((u) => u.user_id === userId)
+      if (targetUser) {
+        targetUser.must_change_password = true
       }
 
       return { success: true }

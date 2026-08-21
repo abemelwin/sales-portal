@@ -35,6 +35,7 @@ const isAdmin = computed(() => adminLinks.value.length > 0)
 
 /** Navigation links visible to authenticated users based on permissions */
 const navLinks = computed(() => {
+  if (user.value?.must_change_password) return []
   const links: { to: string; label: string }[] = []
   if (permStore.can('create_quotes')) {
     links.push({ to: '/quotes/new', label: 'Quote Generator' })
@@ -50,6 +51,7 @@ const navLinks = computed(() => {
 
 /** Admin navigation links with permission requirements */
 const adminLinks = computed(() => {
+  if (user.value?.must_change_password) return []
   const links: { to: string; label: string }[] = []
   if (permStore.can('manage_users') || permStore.can('manage_roles_access')) links.push({ to: '/users', label: 'Users & Access' })
   if (permStore.can('edit_machine_catalog')) links.push({ to: '/catalog', label: 'Catalog Editor' })

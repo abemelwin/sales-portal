@@ -266,6 +266,16 @@ export const useAuthStore = defineStore('auth', () => {
         return { success: false, error: updateError.message || 'Failed to update password.' }
       }
 
+      // Update must_change_password flag in user_profiles
+      await supabase
+        .from('user_profiles')
+        .update({ must_change_password: false, updated_at: new Date().toISOString() } as never)
+        .eq('user_id', user.value.user_id)
+
+      if (user.value) {
+        user.value.must_change_password = false
+      }
+
       return { success: true }
     } catch {
       return { success: false, error: 'An unexpected error occurred while changing password.' }

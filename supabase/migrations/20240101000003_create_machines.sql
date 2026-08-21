@@ -11,6 +11,7 @@ CREATE TABLE machines (
     letterhead TEXT NOT NULL DEFAULT 'ES Print Media Inc.' CHECK (letterhead IN ('ES Print Media Inc.', 'ACS / Alternative')),
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE(brand, model, COALESCE(sub_model, ''))
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS machines_brand_model_sub_model_idx ON machines (brand, model, COALESCE(sub_model, ''));

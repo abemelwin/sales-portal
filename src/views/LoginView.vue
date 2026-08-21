@@ -22,8 +22,12 @@ async function handleSubmit() {
     const result = await authStore.login(email.value, password.value)
 
     if (result.success) {
-      const redirectPath = (router.currentRoute.value.query.redirect as string) || '/quotes/new'
-      router.push(redirectPath)
+      if (authStore.user?.must_change_password) {
+        router.push({ name: 'change-password' })
+      } else {
+        const redirectPath = (router.currentRoute.value.query.redirect as string) || '/quotes/new'
+        router.push(redirectPath)
+      }
     }
   } finally {
     isSubmitting.value = false

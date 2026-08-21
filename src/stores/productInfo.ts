@@ -156,6 +156,19 @@ export const useProductInfoStore = defineStore('productInfo', () => {
     error.value = null
 
     try {
+      // Check if item is a Supabase storage file and remove from storage bucket
+      const target = productLinks.value.find((link) => link.id === id)
+      if (target && target.url) {
+        const storagePrefix = '/product-files/'
+        if (target.url.includes(storagePrefix)) {
+          const storagePath = target.url.substring(target.url.indexOf(storagePrefix) + storagePrefix.length)
+          const decodedPath = decodeURIComponent(storagePath)
+          if (decodedPath) {
+            await supabase.storage.from('product-files').remove([decodedPath])
+          }
+        }
+      }
+
       const { error: deleteError } = await supabase
         .from('product_info_links')
         .delete()

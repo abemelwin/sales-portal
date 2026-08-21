@@ -93,6 +93,12 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    // Set must_change_password = true for the user after reset
+    await adminClient
+      .from('user_profiles')
+      .update({ must_change_password: true, updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
