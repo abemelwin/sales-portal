@@ -37,6 +37,8 @@ const filteredUsers = computed(() => {
   const r = roleFilter.value
 
   return userStore.users.filter((user) => {
+    if (user.email === 'espmi@espmi.local' || user.email === 'espmi') return false
+
     if (r && user.role !== r) return false
     if (!q) return true
     const email = (user.email || '').toLowerCase()
