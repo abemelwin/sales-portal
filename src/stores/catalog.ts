@@ -97,6 +97,7 @@ export const useCatalogStore = defineStore('catalog', () => {
           printhead_warranty: input.printhead_warranty ?? null,
           has_trade_in: input.has_trade_in ?? false,
           has_printhead: input.has_printhead ?? false,
+          exclude_software_concerns: input.exclude_software_concerns ?? true,
           service_fee: input.service_fee ?? null,
           default_months: input.default_months ?? null,
           availability: input.availability ?? null,
@@ -223,6 +224,7 @@ export const useCatalogStore = defineStore('catalog', () => {
       if (update.printhead_warranty !== undefined) mainFields.printhead_warranty = update.printhead_warranty
       if (update.has_trade_in !== undefined) mainFields.has_trade_in = update.has_trade_in
       if (update.has_printhead !== undefined) mainFields.has_printhead = update.has_printhead
+      if (update.exclude_software_concerns !== undefined) mainFields.exclude_software_concerns = update.exclude_software_concerns
       if (update.service_fee !== undefined) mainFields.service_fee = update.service_fee
       if (update.default_months !== undefined) mainFields.default_months = update.default_months
       if (update.availability !== undefined) mainFields.availability = update.availability
