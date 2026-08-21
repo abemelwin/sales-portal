@@ -335,7 +335,10 @@ async function deleteUser(user: User) {
     isDanger: true,
   })
   if (!ok) return
-  await userStore.deactivateUser(user.user_id)
+  const result = await userStore.deleteUserPermanent(user.user_id)
+  if (!result.success) {
+    alert(result.error || 'Failed to delete user.')
+  }
 }
 
 // --- Lifecycle ---

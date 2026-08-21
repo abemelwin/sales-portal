@@ -266,6 +266,58 @@ export const useUserStore = defineStore('users', () => {
   }
 
   /**
+   * Permanently delete a user account and profile.
+   */
+  async function deleteUserPermanent(userId: string): Promise<{ success: boolean; error?: string }> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const targetUser = users.value.find((u) => u.user_id === userId)
+      if (!targetUser) {
+        error.value = 'User not found.'
+        return { success: false, error: error.value }
+      }
+
+      if (targetUser.role === 'superadmin') {
+        const activeAdmins = users.value.filter(
+          (u) => u.role === 'superadmin' && u.is_active && u.user_id !== userId
+        )
+        if (activeAdmins.length === 0) {
+          error.value = 'Cannot delete the last active admin user.'
+          return { success: false, error: error.value }
+        }
+      }
+
+      // Delete from user_profiles table first
+      const { error: profError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', userId)
+
+      if (profError) {
+        error.value = profError.message
+        return { success: false, error: profError.message }
+      }
+
+      // Delete from auth.users via admin API
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId)
+      if (authError) {
+        console.warn('Auth delete notice:', authError.message)
+      }
+
+      // Refresh users list
+      await fetchUsers()
+      return { success: true }
+    } catch (err) {
+      error.value = 'An unexpected error occurred while deleting the user.'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Reactivate a previously deactivated user account (Requirement 10.8).
    * Restores the user's prior role and allows new sessions to be established.
    */
@@ -433,6 +485,7 @@ export const useUserStore = defineStore('users', () => {
     resetPassword,
     updateUserPermissions,
     deactivateUser,
+    deleteUserPermanent,
     reactivateUser,
     subscribeToRealtime,
     unsubscribeFromRealtime,
