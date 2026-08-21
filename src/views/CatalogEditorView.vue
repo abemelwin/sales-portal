@@ -398,16 +398,20 @@ onMounted(() => {
         <input v-model="form.category" class="fp-in" />
       </div>
       <div class="cf-row">
-        <label>Default Months</label>
-        <input v-model.number="form.defaultMonths" class="fp-in" type="number" />
-      </div>
-      <div class="cf-row">
         <label>Has Trade-In</label>
-        <input v-model="form.hasTradeIn" type="checkbox" />
+        <div class="cf-check-wrap">
+          <input v-model="form.hasTradeIn" type="checkbox" />
+        </div>
       </div>
       <div class="cf-row">
         <label>Has Printhead / Laser Tube</label>
-        <input v-model="form.hasPrinthead" type="checkbox" />
+        <div class="cf-check-wrap">
+          <input v-model="form.hasPrinthead" type="checkbox" />
+        </div>
+      </div>
+      <div class="cf-row">
+        <label>Default Months</label>
+        <input v-model.number="form.defaultMonths" class="fp-in" type="number" />
       </div>
       <div class="cf-row">
         <label>Machine Warranty (months)</label>
@@ -421,7 +425,7 @@ onMounted(() => {
         <label>Service Fee (after warranty)</label>
         <input v-model.number="form.serviceFee" class="fp-in" inputmode="decimal" />
       </div>
-      <div class="cf-row">
+      <div class="cf-row full">
         <label>Image Key (optional)</label>
         <input v-model="form.imageKey" class="fp-in" />
       </div>
@@ -614,6 +618,12 @@ onMounted(() => {
   width: 16px;
   height: 16px;
   accent-color: #c0392b;
+}
+
+.cf-check-wrap {
+  min-height: 29px;
+  display: flex;
+  align-items: center;
 }
 
 .cat-form input.fp-in {

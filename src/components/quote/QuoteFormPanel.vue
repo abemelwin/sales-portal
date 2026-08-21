@@ -839,6 +839,12 @@ function dismissValidationBox() {
         <label class="fp-lbl" for="warranty-supplier">Supplier Name (void-warranty line)</label>
         <input id="warranty-supplier" class="fp-in" type="text" v-model="quoteState.warrantySupplier" placeholder="ESPMI" />
       </div>
+      <div class="fp-sec">
+        <label class="fp-lbl" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+          <input type="checkbox" v-model="quoteState.excludeSoftwareConcerns" style="width: 16px; height: 16px; accent-color: #c0392b;" />
+          <span>Include "excluding software related concerns" clause in warranty</span>
+        </label>
+      </div>
 
       <hr class="fp-hr" />
 

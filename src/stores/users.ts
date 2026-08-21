@@ -101,6 +101,7 @@ export const useUserStore = defineStore('users', () => {
         .insert({
           user_id: authData.user.id,
           display_name: input.display_name,
+          email: `${input.username}@espmi.local`,
           role: input.role,
           is_active: true,
           must_change_password: true,

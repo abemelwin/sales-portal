@@ -29,7 +29,6 @@ watch(() => quoteState.machineId, () => {
 
 
 // --- Responsive scaling ---
-const paperRef = ref<HTMLElement | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
 const scale = ref(1)
 
@@ -243,8 +242,11 @@ const warrantyLines = computed(() => {
   const lines: { text: string; bold: boolean }[] = []
 
   if (quoteState.warrantyMachineDuration.trim()) {
+    const softwareClause = (quoteState.excludeSoftwareConcerns ?? true)
+      ? ' excluding software related concerns'
+      : ''
     lines.push({
-      text: `${quoteState.warrantyMachineDuration} limited warranty on Main unit excluding software related concerns. Terms and conditions apply.`,
+      text: `${quoteState.warrantyMachineDuration} limited warranty on Main unit${softwareClause}. Terms and conditions apply.`,
       bold: false,
     })
   }
@@ -746,7 +748,6 @@ function formatCurrency(value: number | null | undefined): string {
   margin-bottom: 1.5mm;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
-  color-adjust: exact !important;
 }
 
 .q-section-divider {
