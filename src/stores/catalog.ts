@@ -82,36 +82,51 @@ export const useCatalogStore = defineStore('catalog', () => {
 
     try {
       // Insert the main machine record
-      const { data: machineData, error: machineError } = await supabase
+      const insertPayload: Record<string, unknown> = {
+        brand: input.brand,
+        model: input.model,
+        sub_model: input.sub_model ?? null,
+        unit_condition: input.unit_condition,
+        letterhead: input.letterhead ?? 'ES Print Media Inc.',
+        srp: input.srp ?? 0,
+        lbp: input.lbp ?? 0,
+        cash_price: input.cash_price ?? 0,
+        machine_warranty_months: input.machine_warranty_months ?? 0,
+        printhead_warranty: input.printhead_warranty ?? null,
+        has_trade_in: input.has_trade_in ?? false,
+        has_printhead: input.has_printhead ?? false,
+        exclude_software_concerns: input.exclude_software_concerns ?? true,
+        service_fee: input.service_fee ?? null,
+        default_months: input.default_months ?? null,
+        availability: input.availability ?? null,
+        image_key: input.image_key ?? null,
+      }
+
+      let { data: machineData, error: machineError } = await supabase
         .from('machines')
-        .insert({
-          brand: input.brand,
-          model: input.model,
-          sub_model: input.sub_model ?? null,
-          unit_condition: input.unit_condition,
-          letterhead: input.letterhead ?? 'ES Print Media Inc.',
-          srp: input.srp ?? 0,
-          lbp: input.lbp ?? 0,
-          cash_price: input.cash_price ?? 0,
-          machine_warranty_months: input.machine_warranty_months ?? 0,
-          printhead_warranty: input.printhead_warranty ?? null,
-          has_trade_in: input.has_trade_in ?? false,
-          has_printhead: input.has_printhead ?? false,
-          exclude_software_concerns: input.exclude_software_concerns ?? true,
-          service_fee: input.service_fee ?? null,
-          default_months: input.default_months ?? null,
-          availability: input.availability ?? null,
-          image_key: input.image_key ?? null,
-        } as never)
+        .insert(insertPayload as never)
         .select()
         .single()
 
-      if (machineError) {
-        error.value = machineError.message
-        return { success: false, error: machineError.message }
+      // Fallback if exclude_software_concerns column does not exist on remote Supabase yet
+      if (machineError && machineError.message?.includes('exclude_software_concerns')) {
+        delete insertPayload.exclude_software_concerns
+        const fallbackRes = await supabase
+          .from('machines')
+          .insert(insertPayload as never)
+          .select()
+          .single()
+        machineData = fallbackRes.data
+        machineError = fallbackRes.error
       }
 
-      const machineId = machineData.id
+      if (machineError || !machineData) {
+        const msg = machineError?.message || 'Failed to create machine record.'
+        error.value = msg
+        return { success: false, error: msg }
+      }
+
+      const machineId = (machineData as { id: string }).id
 
       // Insert sub-records sequentially — rollback on any failure
       const subRecordResult = await _insertSubRecords(machineId, input)
@@ -232,10 +247,20 @@ export const useCatalogStore = defineStore('catalog', () => {
 
       if (Object.keys(mainFields).length > 0) {
         mainFields.updated_at = new Date().toISOString()
-        const { error: updateErr } = await supabase
+        let { error: updateErr } = await supabase
           .from('machines')
           .update(mainFields as never)
           .eq('id', id)
+
+        // Fallback if exclude_software_concerns column does not exist on remote Supabase yet
+        if (updateErr && updateErr.message?.includes('exclude_software_concerns')) {
+          delete mainFields.exclude_software_concerns
+          const { error: fallbackErr } = await supabase
+            .from('machines')
+            .update(mainFields as never)
+            .eq('id', id)
+          updateErr = fallbackErr
+        }
 
         if (updateErr) {
           error.value = updateErr.message
