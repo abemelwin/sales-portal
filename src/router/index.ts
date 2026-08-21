@@ -122,15 +122,12 @@ router.beforeEach(async (to) => {
   // Redirect authenticated users away from login page
   if (to.name === 'login' && isAuthenticated) {
     const currentRole = authStore.role || 'user'
-    if (currentRole !== 'superadmin') {
-      const { usePermissionsStore } = await import('@/stores/permissions')
-      const permStore = usePermissionsStore()
-      if (!permStore.loaded || permStore.currentRole !== currentRole) {
-        await permStore.fetchPermissions(currentRole)
-      }
-      return getDefaultRoute(permStore)
+    const { usePermissionsStore } = await import('@/stores/permissions')
+    const permStore = usePermissionsStore()
+    if (!permStore.loaded || permStore.currentRole !== currentRole) {
+      await permStore.fetchPermissions(currentRole)
     }
-    return { name: 'quote-new' }
+    return getDefaultRoute(permStore)
   }
 
   // Redirect unauthenticated users to login
@@ -147,28 +144,26 @@ router.beforeEach(async (to) => {
   // Dynamic permission check based on Roles & Access matrix
   if (isAuthenticated) {
     const currentRole = authStore.role || 'user'
-    if (currentRole !== 'superadmin') {
-      const { usePermissionsStore } = await import('@/stores/permissions')
-      const permStore = usePermissionsStore()
-      if (!permStore.loaded || permStore.currentRole !== currentRole) {
-        await permStore.fetchPermissions(currentRole)
-      }
+    const { usePermissionsStore } = await import('@/stores/permissions')
+    const permStore = usePermissionsStore()
+    if (!permStore.loaded || permStore.currentRole !== currentRole) {
+      await permStore.fetchPermissions(currentRole)
+    }
 
-      const routePermissions: Record<string, keyof typeof permStore.permissions> = {
-        'quote-new': 'create_quotes',
-        'quote-edit': 'create_quotes',
-        'calculator': 'use_calculator',
-        'product-info': 'manage_product_files',
-        'catalog': 'edit_machine_catalog',
-        'users': 'manage_users',
-        'roles': 'manage_roles_access',
-        'migrate': 'manage_roles_access',
-      }
+    const routePermissions: Record<string, keyof typeof permStore.permissions> = {
+      'quote-new': 'create_quotes',
+      'quote-edit': 'create_quotes',
+      'calculator': 'use_calculator',
+      'product-info': 'manage_product_files',
+      'catalog': 'edit_machine_catalog',
+      'users': 'manage_users',
+      'roles': 'manage_roles_access',
+      'migrate': 'manage_roles_access',
+    }
 
-      const requiredPermission = routePermissions[to.name as string]
-      if (requiredPermission && !permStore.can(requiredPermission)) {
-        return getDefaultRoute(permStore)
-      }
+    const requiredPermission = routePermissions[to.name as string]
+    if (requiredPermission && !permStore.can(requiredPermission)) {
+      return getDefaultRoute(permStore)
     }
   }
 })
