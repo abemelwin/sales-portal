@@ -459,31 +459,31 @@ onMounted(() => {
                   </div>
                   <div class="access-grid">
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.create_quotes" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.create_quotes" />
                       Create Quotes
                     </label>
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.use_calculator" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.use_calculator" />
                       Financial Calculator
                     </label>
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.manage_product_files" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.manage_product_files" />
                       Manage Product Files
                     </label>
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.edit_machine_catalog" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.edit_machine_catalog" />
                       Edit Machine Catalog
                     </label>
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.upload_machine_catalog" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.upload_machine_catalog" />
                       Upload Machine Catalog
                     </label>
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.manage_users" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.manage_users" />
                       Manage Users
                     </label>
                     <label class="access-checkbox-label">
-                      <input type="checkbox" v-model="userPermsForm.manage_roles_access" :disabled="user.role === 'superadmin'" />
+                      <input type="checkbox" v-model="userPermsForm.manage_roles_access" />
                       Manage Access
                     </label>
                   </div>

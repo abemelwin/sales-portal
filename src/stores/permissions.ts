@@ -33,21 +33,6 @@ export const usePermissionsStore = defineStore('permissions', () => {
     if (!role) return
     currentRole.value = role
 
-    // Superadmin always has full access
-    if (role === 'superadmin') {
-      permissions.value = {
-        create_quotes: true,
-        use_calculator: true,
-        manage_product_files: true,
-        edit_machine_catalog: true,
-        upload_machine_catalog: true,
-        manage_users: true,
-        manage_roles_access: true,
-      }
-      loaded.value = true
-      return
-    }
-
     // Check user_profiles for individual user permissions override first
     let userProfilePerms: Partial<RolePermissions> | null = null
     const { data: { session } } = await supabase.auth.getSession()
@@ -74,13 +59,13 @@ export const usePermissionsStore = defineStore('permissions', () => {
     const isSalesAdminRole = ['sales_admin_manager', 'sales_admin_supervisor', 'area_sales_manager'].includes(role)
 
     permissions.value = {
-      create_quotes: userProfilePerms?.create_quotes ?? (roleData as any)?.create_quotes ?? isSalesRole,
+      create_quotes: userProfilePerms?.create_quotes ?? (roleData as any)?.create_quotes ?? (isSalesRole || role === 'superadmin'),
       use_calculator: userProfilePerms?.use_calculator ?? (roleData as any)?.use_calculator ?? true,
-      manage_product_files: userProfilePerms?.manage_product_files ?? (roleData as any)?.manage_product_files ?? (isSalesRole || isProductTechRole),
-      edit_machine_catalog: userProfilePerms?.edit_machine_catalog ?? (roleData as any)?.edit_machine_catalog ?? (isSalesRole || isProductTechRole),
-      upload_machine_catalog: userProfilePerms?.upload_machine_catalog ?? (roleData as any)?.upload_machine_catalog ?? (isProductTechRole || isSalesAdminRole),
-      manage_users: userProfilePerms?.manage_users ?? (roleData as any)?.manage_users ?? isSalesAdminRole,
-      manage_roles_access: userProfilePerms?.manage_roles_access ?? (roleData as any)?.manage_roles_access ?? isSalesAdminRole,
+      manage_product_files: userProfilePerms?.manage_product_files ?? (roleData as any)?.manage_product_files ?? (isSalesRole || isProductTechRole || role === 'superadmin'),
+      edit_machine_catalog: userProfilePerms?.edit_machine_catalog ?? (roleData as any)?.edit_machine_catalog ?? (isSalesRole || isProductTechRole || role === 'superadmin'),
+      upload_machine_catalog: userProfilePerms?.upload_machine_catalog ?? (roleData as any)?.upload_machine_catalog ?? (isProductTechRole || isSalesAdminRole || role === 'superadmin'),
+      manage_users: userProfilePerms?.manage_users ?? (roleData as any)?.manage_users ?? (isSalesAdminRole || role === 'superadmin'),
+      manage_roles_access: userProfilePerms?.manage_roles_access ?? (roleData as any)?.manage_roles_access ?? (isSalesAdminRole || role === 'superadmin'),
     }
     loaded.value = true
   }
