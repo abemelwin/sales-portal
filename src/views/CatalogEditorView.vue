@@ -54,6 +54,7 @@ const form = reactive({
   defaultMonths: null as number | null,
   hasTradeIn: false,
   hasPrinthead: false,
+  excludeSoftwareConcerns: true,
   machineWarranty: null as number | null,
   printheadWarranty: '',
   serviceFee: null as number | null,
@@ -109,6 +110,7 @@ function resetForm() {
   form.defaultMonths = null
   form.hasTradeIn = false
   form.hasPrinthead = false
+  form.excludeSoftwareConcerns = true
   form.machineWarranty = null
   form.printheadWarranty = ''
   form.serviceFee = null
@@ -137,6 +139,7 @@ function populateForm(machine: Machine) {
   form.defaultMonths = machine.default_months ?? machine.machine_warranty_months ?? null
   form.hasTradeIn = machine.has_trade_in ?? false
   form.hasPrinthead = machine.has_printhead ?? false
+  form.excludeSoftwareConcerns = machine.exclude_software_concerns ?? true
   form.machineWarranty = machine.machine_warranty_months ?? null
   form.printheadWarranty = machine.printhead_warranty ?? machine.warranty_printhead_duration ?? ''
   form.serviceFee = machine.service_fee ?? null
@@ -225,6 +228,7 @@ function buildInput(): MachineInput {
     printhead_warranty: printheadWarranty,
     has_trade_in: form.hasTradeIn,
     has_printhead: form.hasPrinthead,
+    exclude_software_concerns: form.excludeSoftwareConcerns,
     service_fee: form.serviceFee ?? null,
     default_months: form.defaultMonths ?? null,
     availability,
@@ -407,6 +411,13 @@ onMounted(() => {
         <label>Has Printhead / Laser Tube</label>
         <div class="cf-check-wrap">
           <input v-model="form.hasPrinthead" type="checkbox" />
+        </div>
+      </div>
+      <div class="cf-row full">
+        <label>Software Related Concerns Clause</label>
+        <div class="cf-check-wrap" style="gap: 8px;">
+          <input v-model="form.excludeSoftwareConcerns" type="checkbox" id="cat-exclude-sw" />
+          <label for="cat-exclude-sw" style="font-weight: 500; cursor: pointer; font-size: 12px; color: #333;">Include "excluding software related concerns" clause in warranty</label>
         </div>
       </div>
       <div class="cf-row">

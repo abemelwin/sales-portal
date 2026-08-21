@@ -98,6 +98,7 @@ export interface Machine {
   printhead_warranty: string | null
   has_trade_in: boolean
   has_printhead: boolean
+  exclude_software_concerns?: boolean | null
   service_fee: number | null
   default_months: number | null
   availability: string | null
@@ -124,6 +125,7 @@ export interface MachineInput {
   printhead_warranty?: string | null
   has_trade_in?: boolean
   has_printhead?: boolean
+  exclude_software_concerns?: boolean | null
   service_fee?: number | null
   default_months?: number | null
   availability?: string | null

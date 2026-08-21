@@ -176,6 +176,7 @@ async function populateMachineData() {
       : 'ES Print Media Inc.'
     quoteState.warrantySupplier = 'ESPMI'
     quoteState.serviceFee = machine.service_fee ?? null
+    quoteState.excludeSoftwareConcerns = (machine as any).exclude_software_concerns ?? true
 
     // Auto-populate availability from catalog
     quoteState.availability = (machine as any).availability ?? machine.warranty_machine_duration ?? ''
